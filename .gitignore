@@ -1,0 +1,9 @@
+__pycache__
+.pytest_cache
+*.DS_Store
+logs
+.vscode
+.env
+contrib/prepare_custom_messages/messages_data/*
+
+

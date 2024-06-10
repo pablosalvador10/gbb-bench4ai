@@ -1,0 +1,170 @@
+{
+  "gpt-4-turbo-2024-04-09-payg_100": {
+    "median_time": 6.17547881603241,
+    "regions": [
+      "East US 2"
+    ],
+    "iqr_time": 7.43920761346817,
+    "percentile_95_time": 19.570172917842843,
+    "percentile_99_time": 28.829380338191978,
+    "cv_time": 0.6450304550530037,
+    "median_completion_tokens": 100.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 100.0,
+    "percentile_99_completion_tokens": 100.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1006.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.55,
+    "percentile_99_prompt_tokens": 1008.0,
+    "cv_prompt_tokens": 0.0014148063092363156,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 3.0542924404144287,
+      "completion_tokens": 100,
+      "prompt_tokens": 1004,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:15:26 EDT"
+    },
+    "worst_run": {
+      "time": 31.067875146865845,
+      "completion_tokens": 100,
+      "prompt_tokens": 1007,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:10:59 EDT"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-payg_500": {
+    "median_time": 25.9956237077713,
+    "regions": [
+      "East US 2"
+    ],
+    "iqr_time": 13.618367075920105,
+    "percentile_95_time": 69.28253968954084,
+    "percentile_99_time": 103.17811473846434,
+    "cv_time": 0.5807074121103161,
+    "median_completion_tokens": 500.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 500.0,
+    "percentile_99_completion_tokens": 500.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.55,
+    "percentile_99_prompt_tokens": 1008.0,
+    "cv_prompt_tokens": 0.001374041399201699,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 16.829761266708374,
+      "completion_tokens": 500,
+      "prompt_tokens": 1004,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:10:27 EDT"
+    },
+    "worst_run": {
+      "time": 104.12679719924927,
+      "completion_tokens": 500,
+      "prompt_tokens": 1005,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:29:40 EDT"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-payg_800": {
+    "median_time": 39.75849103927612,
+    "regions": [
+      "East US 2"
+    ],
+    "iqr_time": 30.617292165756226,
+    "percentile_95_time": 94.91906614303588,
+    "percentile_99_time": 97.18699889659881,
+    "cv_time": 0.4441694616316848,
+    "median_completion_tokens": 772.5,
+    "iqr_completion_tokens": 48.0,
+    "percentile_95_completion_tokens": 800.0,
+    "percentile_99_completion_tokens": 800.0,
+    "cv_completion_tokens": 0.03738286710257184,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 1.75,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1007.51,
+    "cv_prompt_tokens": 0.001278472280807572,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 26.65349006652832,
+      "completion_tokens": 735,
+      "prompt_tokens": 1005,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:53:30 EDT"
+    },
+    "worst_run": {
+      "time": 97.94500946998596,
+      "completion_tokens": 800,
+      "prompt_tokens": 1004,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:15:04 EDT"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-payg_700": {
+    "median_time": 37.20966982841492,
+    "regions": [
+      "East US 2"
+    ],
+    "iqr_time": 18.55128812789917,
+    "percentile_95_time": 74.72661074399947,
+    "percentile_99_time": 88.92548226118086,
+    "cv_time": 0.3771988850546797,
+    "median_completion_tokens": 700.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 700.0,
+    "percentile_99_completion_tokens": 700.0,
+    "cv_completion_tokens": 0.014160478576178276,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 1.0,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1007.0,
+    "cv_prompt_tokens": 0.0009924581498153074,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 23.38952112197876,
+      "completion_tokens": 675,
+      "prompt_tokens": 1005,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:25:57 EDT"
+    },
+    "worst_run": {
+      "time": 92.06198453903198,
+      "completion_tokens": 700,
+      "prompt_tokens": 1004,
+      "region": "East US 2",
+      "utilization": "NA",
+      "local_time": "2024-05-15 19:13:09 EDT"
+    }
+  }
+}

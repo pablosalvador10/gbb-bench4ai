@@ -1,0 +1,514 @@
+2024-05-13 23:25:37 INFO     User pablosal is running tests with Clients: 10, Requests: None, Duration: 180, Deployment: gpt-4-0613-ptu, API Version: 2024-02-15-preview, Region: swedencentral
+2024-05-13 23:25:37 INFO     Load test args: {"api_base_endpoint": "https://gbb-ea-openai-swedencentral-02.openai.azure.com/", "deployment": "gpt-4-0613-ptu", "clients": 10, "requests": null, "duration": 180, "run_end_condition_mode": "or", "rate": 13.0, "aggregation_window": 60.0, "context_generation_method": "generate", "replay_path": null, "shape_profile": "custom", "context_tokens": 1000, "max_tokens": 500, "prevent_server_caching": true, "completions": 1, "retry": "none", "api_version": "2024-02-15-preview", "frequency_penalty": null, "presence_penalty": null, "temperature": null, "top_p": null, "output_format": "human"}
+2024-05-13 23:25:37 INFO     using random messages generation with shape profile custom: context tokens: 1000, max tokens: 500
+2024-05-13 23:25:37 INFO     warming up prompt cache
+2024-05-13 23:25:38 INFO     run-end-condition-mode='or': run will end when EITHER the `requests` or `duration` limit is reached
+2024-05-13 23:25:38 INFO     starting load...
+2024-05-13 23:25:39 INFO     rpm: n/a   processing: 2    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:40 INFO     rpm: n/a   processing: 2    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:41 INFO     rpm: n/a   processing: 2    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:42 INFO     rpm: n/a   processing: 2    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:43 INFO     rpm: n/a   processing: 2    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:44 INFO     rpm: n/a   processing: 3    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:45 INFO     rpm: n/a   processing: 3    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:46 INFO     rpm: n/a   processing: 3    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:47 INFO     rpm: n/a   processing: 3    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:48 INFO     rpm: n/a   processing: 3    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:49 INFO     rpm: n/a   processing: 4    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:50 INFO     rpm: n/a   processing: 4    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:51 INFO     rpm: n/a   processing: 4    completed: 0     failures: 0    throttled: 0    requests: 0     tpm: 0      ttft_avg: n/a    ttft_95th: n/a    tbt_avg: n/a    tbt_95th: n/a    e2e_avg: n/a    e2e_95th: n/a    context_tpr_avg n/a  gen_tpr_10th n/a  gen_tpr_avg n/a  gen_tpr_90th n/a  util_avg: n/a    util_95th: n/a   
+2024-05-13 23:25:52 INFO     rpm: 4.3   processing: 3    completed: 1     failures: 0    throttled: 0    requests: 1     tpm: 6463.0 ttft_avg: 1.133  ttft_95th: n/a    tbt_avg: 0.026  tbt_95th: n/a    e2e_avg: 14.016 e2e_95th: n/a    context_tpr_avg 1005 gen_tpr_10th n/a  gen_tpr_avg 503  gen_tpr_90th n/a  util_avg: 0.0%   util_95th: n/a   
+2024-05-13 23:25:53 INFO     rpm: 4.0   processing: 3    completed: 1     failures: 0    throttled: 0    requests: 1     tpm: 6032.0 ttft_avg: 1.133  ttft_95th: n/a    tbt_avg: 0.026  tbt_95th: n/a    e2e_avg: 14.016 e2e_95th: n/a    context_tpr_avg 1005 gen_tpr_10th n/a  gen_tpr_avg 503  gen_tpr_90th n/a  util_avg: 0.0%   util_95th: n/a   
+2024-05-13 23:25:54 INFO     rpm: 3.8   processing: 3    completed: 1     failures: 0    throttled: 0    requests: 1     tpm: 5655.0 ttft_avg: 1.133  ttft_95th: n/a    tbt_avg: 0.026  tbt_95th: n/a    e2e_avg: 14.016 e2e_95th: n/a    context_tpr_avg 1005 gen_tpr_10th n/a  gen_tpr_avg 503  gen_tpr_90th n/a  util_avg: 0.0%   util_95th: n/a   
+2024-05-13 23:25:55 INFO     rpm: 7.1   processing: 3    completed: 2     failures: 0    throttled: 0    requests: 2     tpm: 10645.0 ttft_avg: 1.165  ttft_95th: 1.193  tbt_avg: 0.028  tbt_95th: 0.03   e2e_avg: 15.19  e2e_95th: 16.247 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 3.0%  
+2024-05-13 23:25:56 INFO     rpm: 6.7   processing: 3    completed: 2     failures: 0    throttled: 0    requests: 2     tpm: 10053.0 ttft_avg: 1.165  ttft_95th: 1.193  tbt_avg: 0.028  tbt_95th: 0.03   e2e_avg: 15.19  e2e_95th: 16.247 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 3.0%  
+2024-05-13 23:25:57 INFO     rpm: 6.3   processing: 3    completed: 2     failures: 0    throttled: 0    requests: 2     tpm: 9524.0 ttft_avg: 1.165  ttft_95th: 1.193  tbt_avg: 0.028  tbt_95th: 0.03   e2e_avg: 15.19  e2e_95th: 16.247 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 3.0%  
+2024-05-13 23:25:58 INFO     rpm: 9.0   processing: 2    completed: 3     failures: 0    throttled: 0    requests: 3     tpm: 13572.0 ttft_avg: 1.116  ttft_95th: 1.19   tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.82  e2e_95th: 16.136 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.1%   util_95th: 2.9%  
+2024-05-13 23:25:59 INFO     rpm: 8.6   processing: 2    completed: 3     failures: 0    throttled: 0    requests: 3     tpm: 12925.0 ttft_avg: 1.116  ttft_95th: 1.19   tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.82  e2e_95th: 16.136 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.1%   util_95th: 2.9%  
+2024-05-13 23:26:00 INFO     rpm: 8.2   processing: 3    completed: 3     failures: 0    throttled: 0    requests: 3     tpm: 12338.0 ttft_avg: 1.116  ttft_95th: 1.19   tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.82  e2e_95th: 16.136 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.1%   util_95th: 2.9%  
+2024-05-13 23:26:01 INFO     rpm: 7.8   processing: 3    completed: 3     failures: 0    throttled: 0    requests: 3     tpm: 11802.0 ttft_avg: 1.116  ttft_95th: 1.19   tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.82  e2e_95th: 16.136 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.1%   util_95th: 2.9%  
+2024-05-13 23:26:02 INFO     rpm: 7.5   processing: 3    completed: 3     failures: 0    throttled: 0    requests: 3     tpm: 11310.0 ttft_avg: 1.116  ttft_95th: 1.19   tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.82  e2e_95th: 16.136 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.1%   util_95th: 2.9%  
+2024-05-13 23:26:03 INFO     rpm: 9.6   processing: 2    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 14477.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:04 INFO     rpm: 9.2   processing: 2    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 13920.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:05 INFO     rpm: 8.9   processing: 2    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 13404.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:06 INFO     rpm: 8.6   processing: 3    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 12925.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:07 INFO     rpm: 8.3   processing: 3    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 12480.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:08 INFO     rpm: 8.0   processing: 3    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 12064.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:09 INFO     rpm: 7.7   processing: 3    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 11675.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:10 INFO     rpm: 7.5   processing: 3    completed: 4     failures: 0    throttled: 0    requests: 4     tpm: 11310.0 ttft_avg: 1.119  ttft_95th: 1.187  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.623 e2e_95th: 16.022 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 0.8%   util_95th: 2.7%  
+2024-05-13 23:26:11 INFO     rpm: 9.1   processing: 3    completed: 5     failures: 0    throttled: 0    requests: 5     tpm: 13709.0 ttft_avg: 1.047  ttft_95th: 1.184  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.948 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.4%  
+2024-05-13 23:26:12 INFO     rpm: 8.8   processing: 3    completed: 5     failures: 0    throttled: 0    requests: 5     tpm: 13306.0 ttft_avg: 1.047  ttft_95th: 1.184  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.948 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.4%  
+2024-05-13 23:26:13 INFO     rpm: 8.6   processing: 3    completed: 5     failures: 0    throttled: 0    requests: 5     tpm: 12925.0 ttft_avg: 1.047  ttft_95th: 1.184  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.948 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.4%  
+2024-05-13 23:26:14 INFO     rpm: 8.3   processing: 3    completed: 5     failures: 0    throttled: 0    requests: 5     tpm: 12567.0 ttft_avg: 1.047  ttft_95th: 1.184  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.948 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.4%  
+2024-05-13 23:26:15 INFO     rpm: 9.7   processing: 2    completed: 6     failures: 0    throttled: 0    requests: 6     tpm: 14672.0 ttft_avg: 0.97   ttft_95th: 1.181  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.971 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.4%  
+2024-05-13 23:26:16 INFO     rpm: 9.5   processing: 3    completed: 6     failures: 0    throttled: 0    requests: 6     tpm: 14286.0 ttft_avg: 0.97   ttft_95th: 1.181  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.971 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.4%  
+2024-05-13 23:26:17 INFO     rpm: 9.2   processing: 3    completed: 6     failures: 0    throttled: 0    requests: 6     tpm: 13920.0 ttft_avg: 0.97   ttft_95th: 1.181  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.971 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.4%  
+2024-05-13 23:26:18 INFO     rpm: 9.0   processing: 3    completed: 6     failures: 0    throttled: 0    requests: 6     tpm: 13572.0 ttft_avg: 0.97   ttft_95th: 1.181  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.971 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.4%  
+2024-05-13 23:26:19 INFO     rpm: 10.2  processing: 2    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 15448.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:20 INFO     rpm: 10.0  processing: 2    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 15080.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:21 INFO     rpm: 9.8   processing: 2    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 14729.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:22 INFO     rpm: 9.5   processing: 3    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 14394.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:23 INFO     rpm: 9.3   processing: 3    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 14075.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:24 INFO     rpm: 9.1   processing: 3    completed: 7     failures: 0    throttled: 0    requests: 7     tpm: 13769.0 ttft_avg: 0.911  ttft_95th: 1.178  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.775 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 2.0%   util_95th: 4.3%  
+2024-05-13 23:26:25 INFO     rpm: 10.2  processing: 2    completed: 8     failures: 0    throttled: 0    requests: 8     tpm: 15401.0 ttft_avg: 0.875  ttft_95th: 1.174  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.662 e2e_95th: 16.325 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.3%  
+2024-05-13 23:26:26 INFO     rpm: 10.0  processing: 2    completed: 8     failures: 0    throttled: 0    requests: 8     tpm: 15080.0 ttft_avg: 0.875  ttft_95th: 1.174  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.662 e2e_95th: 16.325 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.3%  
+2024-05-13 23:26:27 INFO     rpm: 9.8   processing: 3    completed: 8     failures: 0    throttled: 0    requests: 8     tpm: 14772.0 ttft_avg: 0.875  ttft_95th: 1.174  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.662 e2e_95th: 16.325 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.3%  
+2024-05-13 23:26:28 INFO     rpm: 9.6   processing: 3    completed: 8     failures: 0    throttled: 0    requests: 8     tpm: 14477.0 ttft_avg: 0.875  ttft_95th: 1.174  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.662 e2e_95th: 16.325 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.3%  
+2024-05-13 23:26:29 INFO     rpm: 9.4   processing: 3    completed: 8     failures: 0    throttled: 0    requests: 8     tpm: 14193.0 ttft_avg: 0.875  ttft_95th: 1.174  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.662 e2e_95th: 16.325 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.9%   util_95th: 4.3%  
+2024-05-13 23:26:30 INFO     rpm: 10.4  processing: 2    completed: 9     failures: 0    throttled: 0    requests: 9     tpm: 15660.0 ttft_avg: 0.842  ttft_95th: 1.171  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.538 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.7%   util_95th: 4.2%  
+2024-05-13 23:26:31 INFO     rpm: 10.2  processing: 2    completed: 9     failures: 0    throttled: 0    requests: 9     tpm: 15365.0 ttft_avg: 0.842  ttft_95th: 1.171  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.538 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.7%   util_95th: 4.2%  
+2024-05-13 23:26:32 INFO     rpm: 10.0  processing: 2    completed: 9     failures: 0    throttled: 0    requests: 9     tpm: 15080.0 ttft_avg: 0.842  ttft_95th: 1.171  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.538 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.7%   util_95th: 4.2%  
+2024-05-13 23:26:33 INFO     rpm: 9.8   processing: 3    completed: 9     failures: 0    throttled: 0    requests: 9     tpm: 14806.0 ttft_avg: 0.842  ttft_95th: 1.171  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.538 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.7%   util_95th: 4.2%  
+2024-05-13 23:26:34 INFO     rpm: 9.6   processing: 3    completed: 9     failures: 0    throttled: 0    requests: 9     tpm: 14541.0 ttft_avg: 0.842  ttft_95th: 1.171  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.538 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.7%   util_95th: 4.2%  
+2024-05-13 23:26:35 INFO     rpm: 10.5  processing: 2    completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 15874.0 ttft_avg: 0.817  ttft_95th: 1.168  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.2%  
+2024-05-13 23:26:36 INFO     rpm: 10.2  processing: 2    completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 15335.0 ttft_avg: 0.817  ttft_95th: 1.168  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.2%  
+2024-05-13 23:26:37 INFO     rpm: 10.0  processing: 2    completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 15080.0 ttft_avg: 0.817  ttft_95th: 1.168  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.2%  
+2024-05-13 23:26:38 INFO     rpm: 10.0  processing: 10   completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 15080.0 ttft_avg: 0.817  ttft_95th: 1.168  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.6%   util_95th: 4.2%  
+2024-05-13 23:26:39 INFO     rpm: 8.0   processing: 10   completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 12064.0 ttft_avg: 0.73   ttft_95th: 1.091  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:40 INFO     rpm: 8.0   processing: 10   completed: 10    failures: 0    throttled: 0    requests: 10    tpm: 12064.0 ttft_avg: 0.73   ttft_95th: 1.091  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.425 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:40 WARNING  falling behind committed rate by 2.618s, consider increasing number of clients.
+2024-05-13 23:26:41 INFO     rpm: 9.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 13572.0 ttft_avg: 0.721  ttft_95th: 1.085  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:42 INFO     rpm: 9.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 13572.0 ttft_avg: 0.721  ttft_95th: 1.085  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:43 INFO     rpm: 9.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 13572.0 ttft_avg: 0.721  ttft_95th: 1.085  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:44 INFO     rpm: 8.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 12064.0 ttft_avg: 0.684  ttft_95th: 1.0    tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:45 INFO     rpm: 8.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 12064.0 ttft_avg: 0.684  ttft_95th: 1.0    tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:46 INFO     rpm: 8.0   processing: 10   completed: 11    failures: 0    throttled: 0    requests: 11    tpm: 12064.0 ttft_avg: 0.684  ttft_95th: 1.0    tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.344 e2e_95th: 16.307 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:47 WARNING  falling behind committed rate by 3.544s, consider increasing number of clients.
+2024-05-13 23:26:47 INFO     rpm: 9.0   processing: 10   completed: 12    failures: 0    throttled: 0    requests: 12    tpm: 13572.0 ttft_avg: 0.677  ttft_95th: 0.981  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.353 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:48 INFO     rpm: 9.0   processing: 10   completed: 12    failures: 0    throttled: 0    requests: 12    tpm: 13572.0 ttft_avg: 0.677  ttft_95th: 0.981  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.353 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:49 INFO     rpm: 9.0   processing: 10   completed: 12    failures: 0    throttled: 0    requests: 12    tpm: 13572.0 ttft_avg: 0.677  ttft_95th: 0.981  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.353 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.4%   util_95th: 4.2%  
+2024-05-13 23:26:50 INFO     rpm: 8.0   processing: 10   completed: 12    failures: 0    throttled: 0    requests: 12    tpm: 12064.0 ttft_avg: 0.62   ttft_95th: 0.719  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.353 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:51 INFO     rpm: 8.0   processing: 10   completed: 12    failures: 0    throttled: 0    requests: 12    tpm: 12064.0 ttft_avg: 0.62   ttft_95th: 0.719  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.353 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 1.5%   util_95th: 4.3%  
+2024-05-13 23:26:51 WARNING  falling behind committed rate by 2.814s, consider increasing number of clients.
+2024-05-13 23:26:52 INFO     rpm: 13.0  processing: 7    completed: 17    failures: 0    throttled: 0    requests: 17    tpm: 19604.0 ttft_avg: 0.763  ttft_95th: 1.1    tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.261 e2e_95th: 16.273 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 4.6%   util_95th: 19.6% 
+2024-05-13 23:26:53 INFO     rpm: 16.0  processing: 4    completed: 20    failures: 0    throttled: 0    requests: 20    tpm: 24128.0 ttft_avg: 0.852  ttft_95th: 1.258  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.416 e2e_95th: 16.256 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.0%   util_95th: 22.3% 
+2024-05-13 23:26:54 INFO     rpm: 17.0  processing: 4    completed: 21    failures: 0    throttled: 0    requests: 21    tpm: 25636.0 ttft_avg: 0.87   ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.476 e2e_95th: 16.25  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.1%   util_95th: 22.2% 
+2024-05-13 23:26:55 INFO     rpm: 16.0  processing: 4    completed: 21    failures: 0    throttled: 0    requests: 21    tpm: 24128.0 ttft_avg: 0.877  ttft_95th: 1.258  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.476 e2e_95th: 16.25  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.3%   util_95th: 22.3% 
+2024-05-13 23:26:56 INFO     rpm: 16.0  processing: 4    completed: 21    failures: 0    throttled: 0    requests: 21    tpm: 24128.0 ttft_avg: 0.877  ttft_95th: 1.258  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.476 e2e_95th: 16.25  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.3%   util_95th: 22.3% 
+2024-05-13 23:26:57 INFO     rpm: 16.0  processing: 4    completed: 21    failures: 0    throttled: 0    requests: 21    tpm: 24128.0 ttft_avg: 0.877  ttft_95th: 1.258  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.476 e2e_95th: 16.25  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.3%   util_95th: 22.3% 
+2024-05-13 23:26:58 INFO     rpm: 16.0  processing: 4    completed: 21    failures: 0    throttled: 0    requests: 21    tpm: 24128.0 ttft_avg: 0.877  ttft_95th: 1.258  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.476 e2e_95th: 16.25  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 7.3%   util_95th: 22.3% 
+2024-05-13 23:26:59 INFO     rpm: 17.0  processing: 3    completed: 22    failures: 0    throttled: 0    requests: 22    tpm: 25636.0 ttft_avg: 0.862  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.66  e2e_95th: 16.359 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 8.6%   util_95th: 25.6% 
+2024-05-13 23:27:00 INFO     rpm: 17.0  processing: 10   completed: 22    failures: 0    throttled: 0    requests: 22    tpm: 25636.0 ttft_avg: 0.862  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.66  e2e_95th: 16.359 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 8.6%   util_95th: 25.6% 
+2024-05-13 23:27:01 WARNING  falling behind committed rate by 1.205s, consider increasing number of clients.
+2024-05-13 23:27:01 INFO     rpm: 17.0  processing: 10   completed: 23    failures: 0    throttled: 0    requests: 23    tpm: 25636.0 ttft_avg: 0.865  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.634 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 9.9%   util_95th: 27.1% 
+2024-05-13 23:27:02 INFO     rpm: 17.0  processing: 10   completed: 23    failures: 0    throttled: 0    requests: 23    tpm: 25636.0 ttft_avg: 0.865  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.634 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 9.9%   util_95th: 27.1% 
+2024-05-13 23:27:03 INFO     rpm: 17.0  processing: 10   completed: 23    failures: 0    throttled: 0    requests: 23    tpm: 25636.0 ttft_avg: 0.865  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.634 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 9.9%   util_95th: 27.1% 
+2024-05-13 23:27:04 INFO     rpm: 17.0  processing: 10   completed: 23    failures: 0    throttled: 0    requests: 23    tpm: 25636.0 ttft_avg: 0.865  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.634 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 9.9%   util_95th: 27.1% 
+2024-05-13 23:27:05 INFO     rpm: 18.0  processing: 10   completed: 24    failures: 0    throttled: 0    requests: 24    tpm: 27144.0 ttft_avg: 0.853  ttft_95th: 1.234  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.607 e2e_95th: 16.348 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 10.8%  util_95th: 27.0% 
+2024-05-13 23:27:06 INFO     rpm: 17.0  processing: 10   completed: 24    failures: 0    throttled: 0    requests: 24    tpm: 25636.0 ttft_avg: 0.87   ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.607 e2e_95th: 16.348 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 11.3%  util_95th: 27.2% 
+2024-05-13 23:27:07 INFO     rpm: 18.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 27144.0 ttft_avg: 0.854  ttft_95th: 1.234  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 14.2%  util_95th: 34.4% 
+2024-05-13 23:27:08 INFO     rpm: 18.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 27144.0 ttft_avg: 0.854  ttft_95th: 1.234  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 14.2%  util_95th: 34.4% 
+2024-05-13 23:27:09 INFO     rpm: 18.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 27144.0 ttft_avg: 0.854  ttft_95th: 1.234  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 14.2%  util_95th: 34.4% 
+2024-05-13 23:27:10 INFO     rpm: 18.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 27144.0 ttft_avg: 0.854  ttft_95th: 1.234  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 14.2%  util_95th: 34.4% 
+2024-05-13 23:27:11 INFO     rpm: 17.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 25636.0 ttft_avg: 0.868  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 15.0%  util_95th: 36.1% 
+2024-05-13 23:27:12 INFO     rpm: 17.0  processing: 10   completed: 25    failures: 0    throttled: 0    requests: 25    tpm: 25636.0 ttft_avg: 0.868  ttft_95th: 1.246  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.557 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 15.0%  util_95th: 36.1% 
+2024-05-13 23:27:13 WARNING  falling behind committed rate by 2.538s, consider increasing number of clients.
+2024-05-13 23:27:13 INFO     rpm: 19.0  processing: 10   completed: 27    failures: 0    throttled: 0    requests: 27    tpm: 28652.0 ttft_avg: 0.839  ttft_95th: 1.222  tbt_avg: 0.027  tbt_95th: 0.03   e2e_avg: 14.492 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 21.5%  util_95th: 75.8% 
+2024-05-13 23:27:14 INFO     rpm: 25.0  processing: 4    completed: 33    failures: 0    throttled: 0    requests: 33    tpm: 37700.0 ttft_avg: 0.813  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.475 e2e_95th: 16.296 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 34.2%  util_95th: 83.0% 
+2024-05-13 23:27:15 INFO     rpm: 25.0  processing: 4    completed: 33    failures: 0    throttled: 0    requests: 33    tpm: 37700.0 ttft_avg: 0.813  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.475 e2e_95th: 16.296 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 34.2%  util_95th: 83.0% 
+2024-05-13 23:27:16 INFO     rpm: 25.0  processing: 4    completed: 38    failures: 5    throttled: 5    requests: 38    tpm: 37700.0 ttft_avg: 0.813  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.475 e2e_95th: 16.296 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 49.6%  util_95th: 126.6%
+2024-05-13 23:27:17 INFO     rpm: 25.0  processing: 3    completed: 39    failures: 5    throttled: 5    requests: 39    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.576 e2e_95th: 16.908 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 52.3%  util_95th: 126.6%
+2024-05-13 23:27:18 INFO     rpm: 25.0  processing: 3    completed: 39    failures: 5    throttled: 5    requests: 39    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.576 e2e_95th: 16.908 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 52.3%  util_95th: 126.6%
+2024-05-13 23:27:19 INFO     rpm: 26.0  processing: 2    completed: 40    failures: 5    throttled: 5    requests: 40    tpm: 39208.0 ttft_avg: 0.81   ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 53.6%  util_95th: 126.6%
+2024-05-13 23:27:20 INFO     rpm: 26.0  processing: 2    completed: 40    failures: 5    throttled: 5    requests: 40    tpm: 39208.0 ttft_avg: 0.81   ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 53.6%  util_95th: 126.6%
+2024-05-13 23:27:21 INFO     rpm: 26.0  processing: 2    completed: 44    failures: 9    throttled: 9    requests: 44    tpm: 39208.0 ttft_avg: 0.81   ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 62.0%  util_95th: 127.2%
+2024-05-13 23:27:23 INFO     rpm: 25.0  processing: 2    completed: 44    failures: 9    throttled: 9    requests: 44    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 63.8%  util_95th: 127.2%
+2024-05-13 23:27:24 INFO     rpm: 25.0  processing: 2    completed: 44    failures: 9    throttled: 9    requests: 44    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 63.8%  util_95th: 127.2%
+2024-05-13 23:27:25 INFO     rpm: 25.0  processing: 2    completed: 44    failures: 9    throttled: 9    requests: 44    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.541 e2e_95th: 16.83  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 63.8%  util_95th: 127.2%
+2024-05-13 23:27:26 INFO     rpm: 26.0  processing: 1    completed: 45    failures: 9    throttled: 9    requests: 45    tpm: 39208.0 ttft_avg: 0.809  ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.548 e2e_95th: 16.753 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 64.6%  util_95th: 127.2%
+2024-05-13 23:27:27 INFO     rpm: 26.0  processing: 1    completed: 45    failures: 9    throttled: 9    requests: 45    tpm: 39208.0 ttft_avg: 0.809  ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.548 e2e_95th: 16.753 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 64.6%  util_95th: 127.2%
+2024-05-13 23:27:28 INFO     rpm: 26.0  processing: 1    completed: 48    failures: 12   throttled: 12   requests: 48    tpm: 39208.0 ttft_avg: 0.809  ttft_95th: 1.271  tbt_avg: 0.027  tbt_95th: 0.033  e2e_avg: 14.548 e2e_95th: 16.753 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 69.2%  util_95th: 127.2%
+2024-05-13 23:27:29 INFO     rpm: 26.0  processing: 0    completed: 49    failures: 12   throttled: 12   requests: 49    tpm: 39208.0 ttft_avg: 0.811  ttft_95th: 1.271  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 71.7%  util_95th: 127.2%
+2024-05-13 23:27:30 INFO     rpm: 26.0  processing: 0    completed: 49    failures: 12   throttled: 12   requests: 49    tpm: 39208.0 ttft_avg: 0.811  ttft_95th: 1.271  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 71.7%  util_95th: 127.2%
+2024-05-13 23:27:31 INFO     rpm: 26.0  processing: 0    completed: 49    failures: 12   throttled: 12   requests: 49    tpm: 39208.0 ttft_avg: 0.811  ttft_95th: 1.271  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 71.7%  util_95th: 127.2%
+2024-05-13 23:27:32 INFO     rpm: 26.0  processing: 0    completed: 49    failures: 12   throttled: 12   requests: 49    tpm: 39208.0 ttft_avg: 0.811  ttft_95th: 1.271  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 71.7%  util_95th: 127.2%
+2024-05-13 23:27:33 INFO     rpm: 26.0  processing: 0    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 39208.0 ttft_avg: 0.811  ttft_95th: 1.271  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 72.9%  util_95th: 127.2%
+2024-05-13 23:27:34 INFO     rpm: 25.0  processing: 0    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 74.8%  util_95th: 127.2%
+2024-05-13 23:27:35 INFO     rpm: 25.0  processing: 0    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 74.8%  util_95th: 127.2%
+2024-05-13 23:27:36 INFO     rpm: 25.0  processing: 0    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 74.8%  util_95th: 127.2%
+2024-05-13 23:27:37 INFO     rpm: 25.0  processing: 0    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 74.8%  util_95th: 127.2%
+2024-05-13 23:27:38 INFO     rpm: 25.0  processing: 1    completed: 50    failures: 13   throttled: 13   requests: 50    tpm: 37700.0 ttft_avg: 0.818  ttft_95th: 1.276  tbt_avg: 0.028  tbt_95th: 0.033  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 74.8%  util_95th: 127.2%
+2024-05-13 23:27:39 INFO     rpm: 16.0  processing: 0    completed: 51    failures: 14   throttled: 14   requests: 51    tpm: 24128.0 ttft_avg: 0.664  ttft_95th: 0.856  tbt_avg: 0.028  tbt_95th: 0.035  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 94.8%  util_95th: 127.2%
+2024-05-13 23:27:40 INFO     rpm: 16.0  processing: 0    completed: 51    failures: 14   throttled: 14   requests: 51    tpm: 24128.0 ttft_avg: 0.664  ttft_95th: 0.856  tbt_avg: 0.028  tbt_95th: 0.035  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 94.8%  util_95th: 127.2%
+2024-05-13 23:27:41 INFO     rpm: 16.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 24128.0 ttft_avg: 0.664  ttft_95th: 0.856  tbt_avg: 0.028  tbt_95th: 0.035  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 95.1%  util_95th: 127.2%
+2024-05-13 23:27:42 INFO     rpm: 15.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:43 INFO     rpm: 15.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:44 INFO     rpm: 15.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:45 INFO     rpm: 15.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:46 INFO     rpm: 15.0  processing: 0    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:47 INFO     rpm: 15.0  processing: 6    completed: 52    failures: 15   throttled: 15   requests: 52    tpm: 22620.0 ttft_avg: 0.666  ttft_95th: 0.885  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 97.3%  util_95th: 127.2%
+2024-05-13 23:27:48 INFO     rpm: 14.0  processing: 2    completed: 56    failures: 19   throttled: 19   requests: 56    tpm: 21112.0 ttft_avg: 0.669  ttft_95th: 0.914  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 99.8%  util_95th: 127.2%
+2024-05-13 23:27:49 INFO     rpm: 14.0  processing: 2    completed: 56    failures: 19   throttled: 19   requests: 56    tpm: 21112.0 ttft_avg: 0.669  ttft_95th: 0.914  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 99.8%  util_95th: 127.2%
+2024-05-13 23:27:50 INFO     rpm: 14.0  processing: 2    completed: 56    failures: 19   throttled: 19   requests: 56    tpm: 21112.0 ttft_avg: 0.669  ttft_95th: 0.914  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 99.8%  util_95th: 127.2%
+2024-05-13 23:27:51 INFO     rpm: 14.0  processing: 2    completed: 56    failures: 19   throttled: 19   requests: 56    tpm: 21112.0 ttft_avg: 0.669  ttft_95th: 0.914  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 99.8%  util_95th: 127.2%
+2024-05-13 23:27:52 INFO     rpm: 14.0  processing: 10   completed: 58    failures: 21   throttled: 21   requests: 58    tpm: 21112.0 ttft_avg: 0.669  ttft_95th: 0.914  tbt_avg: 0.027  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 100.0% util_95th: 127.2%
+2024-05-13 23:27:53 INFO     rpm: 13.0  processing: 5    completed: 63    failures: 26   throttled: 26   requests: 63    tpm: 19604.0 ttft_avg: 0.671  ttft_95th: 0.943  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 102.1% util_95th: 127.2%
+2024-05-13 23:27:54 INFO     rpm: 13.0  processing: 5    completed: 63    failures: 26   throttled: 26   requests: 63    tpm: 19604.0 ttft_avg: 0.671  ttft_95th: 0.943  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 102.1% util_95th: 127.2%
+2024-05-13 23:27:55 INFO     rpm: 13.0  processing: 6    completed: 66    failures: 29   throttled: 29   requests: 66    tpm: 19604.0 ttft_avg: 0.671  ttft_95th: 0.943  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 102.0% util_95th: 127.2%
+2024-05-13 23:27:56 INFO     rpm: 12.0  processing: 6    completed: 66    failures: 29   throttled: 29   requests: 66    tpm: 18096.0 ttft_avg: 0.678  ttft_95th: 0.973  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 103.0% util_95th: 127.2%
+2024-05-13 23:27:57 INFO     rpm: 12.0  processing: 6    completed: 66    failures: 29   throttled: 29   requests: 66    tpm: 18096.0 ttft_avg: 0.678  ttft_95th: 0.973  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 103.0% util_95th: 127.2%
+2024-05-13 23:27:58 INFO     rpm: 12.0  processing: 6    completed: 66    failures: 29   throttled: 29   requests: 66    tpm: 18096.0 ttft_avg: 0.678  ttft_95th: 0.973  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 103.0% util_95th: 127.2%
+2024-05-13 23:27:59 INFO     rpm: 12.0  processing: 6    completed: 66    failures: 29   throttled: 29   requests: 66    tpm: 18096.0 ttft_avg: 0.678  ttft_95th: 0.973  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 103.0% util_95th: 127.2%
+2024-05-13 23:28:00 INFO     rpm: 12.0  processing: 9    completed: 69    failures: 32   throttled: 32   requests: 69    tpm: 18096.0 ttft_avg: 0.678  ttft_95th: 0.973  tbt_avg: 0.028  tbt_95th: 0.031  e2e_avg: 14.571 e2e_95th: 16.675 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 102.9% util_95th: 127.2%
+2024-05-13 23:28:01 INFO     rpm: 8.0   processing: 7    completed: 76    failures: 37   throttled: 37   requests: 76    tpm: 12064.0 ttft_avg: 0.763  ttft_95th: 1.201  tbt_avg: 0.028  tbt_95th: 0.032  e2e_avg: 14.528 e2e_95th: 16.52  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.6% util_95th: 127.2%
+2024-05-13 23:28:02 INFO     rpm: 5.0   processing: 7    completed: 76    failures: 37   throttled: 37   requests: 76    tpm: 7540.0 ttft_avg: 0.695  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.528 e2e_95th: 16.52  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 108.5% util_95th: 127.2%
+2024-05-13 23:28:03 INFO     rpm: 5.0   processing: 7    completed: 76    failures: 37   throttled: 37   requests: 76    tpm: 7540.0 ttft_avg: 0.695  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.528 e2e_95th: 16.52  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 108.5% util_95th: 127.2%
+2024-05-13 23:28:04 INFO     rpm: 5.0   processing: 7    completed: 76    failures: 37   throttled: 37   requests: 76    tpm: 7540.0 ttft_avg: 0.695  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.528 e2e_95th: 16.52  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 108.5% util_95th: 127.2%
+2024-05-13 23:28:05 INFO     rpm: 5.0   processing: 7    completed: 76    failures: 37   throttled: 37   requests: 76    tpm: 7540.0 ttft_avg: 0.695  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.528 e2e_95th: 16.52  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 108.5% util_95th: 127.2%
+2024-05-13 23:28:06 INFO     rpm: 8.0   processing: 4    completed: 84    failures: 42   throttled: 42   requests: 84    tpm: 12064.0 ttft_avg: 0.699  ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.523 e2e_95th: 16.359 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.1% util_95th: 127.2%
+2024-05-13 23:28:07 INFO     rpm: 7.0   processing: 4    completed: 84    failures: 42   throttled: 42   requests: 84    tpm: 10556.0 ttft_avg: 0.714  ttft_95th: 0.974  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.523 e2e_95th: 16.359 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.1% util_95th: 127.2%
+2024-05-13 23:28:08 INFO     rpm: 8.0   processing: 3    completed: 85    failures: 42   throttled: 42   requests: 85    tpm: 12064.0 ttft_avg: 0.704  ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.505 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.9% util_95th: 127.2%
+2024-05-13 23:28:09 INFO     rpm: 8.0   processing: 3    completed: 85    failures: 42   throttled: 42   requests: 85    tpm: 12064.0 ttft_avg: 0.704  ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.505 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.9% util_95th: 127.2%
+2024-05-13 23:28:10 INFO     rpm: 8.0   processing: 3    completed: 85    failures: 42   throttled: 42   requests: 85    tpm: 12064.0 ttft_avg: 0.704  ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.505 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.9% util_95th: 127.2%
+2024-05-13 23:28:11 INFO     rpm: 8.0   processing: 3    completed: 94    failures: 51   throttled: 51   requests: 94    tpm: 12064.0 ttft_avg: 0.704  ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.505 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.8% util_95th: 127.2%
+2024-05-13 23:28:12 INFO     rpm: 7.0   processing: 3    completed: 94    failures: 51   throttled: 51   requests: 94    tpm: 10556.0 ttft_avg: 0.721  ttft_95th: 0.974  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.505 e2e_95th: 16.353 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.8% util_95th: 127.2%
+2024-05-13 23:28:13 INFO     rpm: 8.0   processing: 2    completed: 97    failures: 53   throttled: 53   requests: 97    tpm: 12064.0 ttft_avg: 0.7    ttft_95th: 0.966  tbt_avg: 0.027  tbt_95th: 0.029  e2e_avg: 14.482 e2e_95th: 16.348 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.8% util_95th: 127.1%
+2024-05-13 23:28:14 INFO     rpm: 8.0   processing: 1    completed: 98    failures: 53   throttled: 53   requests: 98    tpm: 12064.0 ttft_avg: 0.689  ttft_95th: 0.966  tbt_avg: 0.026  tbt_95th: 0.027  e2e_avg: 14.465 e2e_95th: 16.342 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.6% util_95th: 127.1%
+2024-05-13 23:28:15 INFO     rpm: 9.0   processing: 0    completed: 99    failures: 53   throttled: 53   requests: 99    tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.4% util_95th: 127.1%
+2024-05-13 23:28:16 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.8% util_95th: 127.0%
+2024-05-13 23:28:17 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.0% util_95th: 127.0%
+2024-05-13 23:28:18 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.0% util_95th: 127.0%
+2024-05-13 23:28:19 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.0% util_95th: 127.0%
+2024-05-13 23:28:20 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.0% util_95th: 127.0%
+2024-05-13 23:28:21 INFO     rpm: 9.0   processing: 0    completed: 102   failures: 56   throttled: 56   requests: 102   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.0% util_95th: 127.0%
+2024-05-13 23:28:22 INFO     rpm: 9.0   processing: 0    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 107.1% util_95th: 125.9%
+2024-05-13 23:28:23 INFO     rpm: 9.0   processing: 0    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.1% util_95th: 118.6%
+2024-05-13 23:28:24 INFO     rpm: 9.0   processing: 0    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.1% util_95th: 118.6%
+2024-05-13 23:28:25 INFO     rpm: 9.0   processing: 0    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.1% util_95th: 118.6%
+2024-05-13 23:28:26 INFO     rpm: 9.0   processing: 0    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.1% util_95th: 118.6%
+2024-05-13 23:28:27 INFO     rpm: 9.0   processing: 1    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 106.1% util_95th: 118.6%
+2024-05-13 23:28:28 INFO     rpm: 9.0   processing: 1    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 105.4% util_95th: 117.8%
+2024-05-13 23:28:29 INFO     rpm: 9.0   processing: 1    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 105.4% util_95th: 117.8%
+2024-05-13 23:28:30 INFO     rpm: 9.0   processing: 1    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 105.4% util_95th: 117.8%
+2024-05-13 23:28:31 INFO     rpm: 9.0   processing: 1    completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 105.4% util_95th: 117.8%
+2024-05-13 23:28:32 INFO     rpm: 9.0   processing: 10   completed: 107   failures: 61   throttled: 61   requests: 107   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 105.4% util_95th: 117.8%
+2024-05-13 23:28:33 INFO     rpm: 9.0   processing: 4    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:34 INFO     rpm: 9.0   processing: 4    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:35 INFO     rpm: 9.0   processing: 4    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:36 INFO     rpm: 9.0   processing: 4    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:37 INFO     rpm: 9.0   processing: 4    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:38 INFO     rpm: 9.0   processing: 6    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.8% util_95th: 113.1%
+2024-05-13 23:28:39 INFO     rpm: 9.0   processing: 6    completed: 115   failures: 69   throttled: 69   requests: 115   tpm: 13572.0 ttft_avg: 0.683  ttft_95th: 0.957  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.475 e2e_95th: 16.336 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.7% util_95th: 113.1%
+2024-05-13 23:28:40 INFO     waiting for 7 requests to drain
+2024-05-13 23:28:40 INFO     rpm: 10.0  processing: 6    completed: 116   failures: 69   throttled: 69   requests: 116   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:41 INFO     rpm: 10.0  processing: 5    completed: 117   failures: 70   throttled: 70   requests: 117   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:42 INFO     rpm: 10.0  processing: 5    completed: 117   failures: 70   throttled: 70   requests: 117   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:43 INFO     rpm: 10.0  processing: 5    completed: 117   failures: 70   throttled: 70   requests: 117   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:44 INFO     rpm: 10.0  processing: 5    completed: 117   failures: 70   throttled: 70   requests: 117   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:45 INFO     rpm: 10.0  processing: 5    completed: 117   failures: 70   throttled: 70   requests: 117   tpm: 15080.0 ttft_avg: 0.672  ttft_95th: 0.948  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.453 e2e_95th: 16.33  context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.6% util_95th: 113.1%
+2024-05-13 23:28:46 INFO     rpm: 12.0  processing: 3    completed: 119   failures: 70   throttled: 70   requests: 119   tpm: 18096.0 ttft_avg: 0.665  ttft_95th: 0.931  tbt_avg: 0.026  tbt_95th: 0.028  e2e_avg: 14.418 e2e_95th: 16.319 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.4% util_95th: 113.1%
+2024-05-13 23:28:47 INFO     rpm: 13.0  processing: 2    completed: 120   failures: 70   throttled: 70   requests: 120   tpm: 19604.0 ttft_avg: 0.679  ttft_95th: 0.924  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.431 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.2% util_95th: 113.1%
+2024-05-13 23:28:48 INFO     rpm: 11.0  processing: 2    completed: 120   failures: 70   throttled: 70   requests: 120   tpm: 16588.0 ttft_avg: 0.656  ttft_95th: 0.854  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.431 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.5% util_95th: 113.1%
+2024-05-13 23:28:49 INFO     rpm: 11.0  processing: 2    completed: 120   failures: 70   throttled: 70   requests: 120   tpm: 16588.0 ttft_avg: 0.656  ttft_95th: 0.854  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.431 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.5% util_95th: 113.1%
+2024-05-13 23:28:50 INFO     rpm: 11.0  processing: 2    completed: 120   failures: 70   throttled: 70   requests: 120   tpm: 16588.0 ttft_avg: 0.656  ttft_95th: 0.854  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.431 e2e_95th: 16.313 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.5% util_95th: 113.1%
+2024-05-13 23:28:51 INFO     All data samples: {"request_timestamps": [1715660871.7583, 1715660871.7573, 1715660871.7528, 1715660874.4075, 1715660879.8611, 1715660879.86, 1715660879.8402, 1715660907.1319, 1715660912.5767, 1715660912.7358, 1715660912.5797, 1715660918.0492, 1715660918.0275], "request_latency": [14.0158, 16.3647, 14.0801, 14.0307, 16.2501, 15.0842, 13.6018, 13.8661, 13.5499, 13.4066, 13.5368, 14.4443, 13.7272, 13.9057, 13.9368, 14.1732, 14.4595, 15.0108, 15.4053, 15.47, 15.6776, 18.5265, 14.0491, 14.0011, 13.3544, 13.4593, 13.8912, 14.3989, 14.4036, 14.5701, 14.5792, 13.5252, 14.9145, 17.9164, 13.3367, 14.8204, 15.3907, 13.6085, 13.8684, 14.3475, 14.4637, 14.5385, 13.7681, 13.4715, 13.731, 14.9251, 13.45, 13.5199, 13.661, 15.0646, 13.5898, 13.7905], "call_tries": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "response_latencies": [0.5995, 0.5103, 0.8324, 0.5988, 0.5277, 0.5732, 0.6084, 0.559, 0.6593, 0.5524, 0.6079, 0.6191, 0.8424], "first_token_latencies": [0.6302, 0.6362, 0.8523, 0.6307, 0.5541, 0.5909, 0.6339, 0.5758, 0.6772, 0.5759, 0.8561, 0.6497, 0.87], "token_latencies": [0.02727, 0.02749, 0.02721, 0.02612, 0.02568, 0.02612, 0.02841, 0.02559, 0.02553, 0.02601, 0.02825, 0.02573, 0.02569], "context_tokens": [1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005, 1005], "generated_tokens": [503, 503, 503, 503, 503, 503, 503, 503, 503, 503, 503, 503, 503], "utilizations": [102.6, 102.36, 101.91, 101.91, 101.87, 101.86, 101.86, 101.38, 101.37, 101.38, 101.87, 101.86, 101.61, 94.55, 96.99, 109.47, 109.47, 109.45, 109.45, 109.24, 101.68, 101.67, 101.67, 101.66, 101.44, 99.43, 96.24, 93.06, 98.2, 112.52, 112.53, 112.52, 112.52, 112.51, 112.51, 112.51, 112.5, 112.29, 98.69, 113.13, 113.07, 95.5, 92.35, 117.83, 117.83, 117.81, 108.78, 108.78, 108.78, 108.78, 108.77, 100.15, 100.15, 102.59, 102.59, 102.59, 102.56, 102.56, 102.2, 99.68, 101.07, 96.98, 99.92, 93.79, 94.24, 97.08]}
+2024-05-13 23:28:51 INFO     rpm: 13.0  processing: 0    completed: 122   failures: 70   throttled: 70   requests: 122   tpm: 19604.0 ttft_avg: 0.672  ttft_95th: 0.862  tbt_avg: 0.027  tbt_95th: 0.028  e2e_avg: 14.403 e2e_95th: 16.302 context_tpr_avg 1005 gen_tpr_10th 503  gen_tpr_avg 503  gen_tpr_90th 503  util_avg: 104.2% util_95th: 113.1%
+2024-05-13 23:28:51 INFO     finished load test
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Exception ignored in: <function _ProactorBasePipeTransport.__del__ at 0x0000021E2B4AB8B0>
+Traceback (most recent call last):
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 116, in __del__
+    self.close()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 751, in call_soon
+    self._check_closed()
+  File "c:\Users\pablosal\AppData\Local\anaconda3\envs\ptu-benchmarking\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed

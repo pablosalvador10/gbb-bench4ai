@@ -1,0 +1,23 @@
+argparse
+openai
+tiktoken
+numpy
+backoff
+wonderwords
+asyncio
+aiohttp
+pandas
+tabulate
+geocoder
+scipy
+termcolor
+pandas 
+matplotlib 
+seaborn 
+plotly
+# Clone the human-eval repository from GitHub. This repository contains the code needed to run evaluations.
+# git clone https://github.com/openai/human-eval
+# Navigate into the cloned repository
+# cd human-eval
+# Install the human-eval package. This package provides the functionality to evaluate the model.
+# pip install -e .

@@ -1,0 +1,170 @@
+{
+  "gpt-4-turbo-2024-04-09-ptu_100": {
+    "median_time": 3.3935216665267944,
+    "regions": [
+      "Sweden Central"
+    ],
+    "iqr_time": 0.23954802751541138,
+    "percentile_95_time": 3.9717335224151604,
+    "percentile_99_time": 4.143308551311493,
+    "cv_time": 0.0631427346892459,
+    "median_completion_tokens": 100.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 100.0,
+    "percentile_99_completion_tokens": 100.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1008.51,
+    "cv_prompt_tokens": 0.0014886256633976792,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 3.260653257369995,
+      "completion_tokens": 100,
+      "prompt_tokens": 1004,
+      "region": "Sweden Central",
+      "utilization": "0.00%",
+      "local_time": "2024-05-16 14:53:20 CEST"
+    },
+    "worst_run": {
+      "time": 4.180787563323975,
+      "completion_tokens": 100,
+      "prompt_tokens": 1008,
+      "region": "Sweden Central",
+      "utilization": "4.90%",
+      "local_time": "2024-05-16 14:49:56 CEST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_500": {
+    "median_time": 12.98039436340332,
+    "regions": [
+      "Sweden Central"
+    ],
+    "iqr_time": 0.6809210181236267,
+    "percentile_95_time": 14.13259369134903,
+    "percentile_99_time": 17.321429543495167,
+    "cv_time": 0.08049130731697446,
+    "median_completion_tokens": 500.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 500.0,
+    "percentile_99_completion_tokens": 500.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1006.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1008.51,
+    "cv_prompt_tokens": 0.001330553970301717,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 12.592584609985352,
+      "completion_tokens": 500,
+      "prompt_tokens": 1006,
+      "region": "Sweden Central",
+      "utilization": "1.36%",
+      "local_time": "2024-05-16 14:51:10 CEST"
+    },
+    "worst_run": {
+      "time": 20.08660054206848,
+      "completion_tokens": 500,
+      "prompt_tokens": 1007,
+      "region": "Sweden Central",
+      "utilization": "0.00%",
+      "local_time": "2024-05-16 14:56:10 CEST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_700": {
+    "median_time": 17.771932244300842,
+    "regions": [
+      "Sweden Central"
+    ],
+    "iqr_time": 0.5699025392532349,
+    "percentile_95_time": 19.586235642433167,
+    "percentile_99_time": 20.007729458808896,
+    "cv_time": 0.03594760155869039,
+    "median_completion_tokens": 700.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 700.0,
+    "percentile_99_completion_tokens": 700.0,
+    "cv_completion_tokens": 0.0010001428775539365,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 1.0,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1008.02,
+    "cv_prompt_tokens": 0.0013052060693026202,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 17.168012857437134,
+      "completion_tokens": 695,
+      "prompt_tokens": 1004,
+      "region": "Sweden Central",
+      "utilization": "0.18%",
+      "local_time": "2024-05-16 14:57:12 CEST"
+    },
+    "worst_run": {
+      "time": 20.303877592086792,
+      "completion_tokens": 700,
+      "prompt_tokens": 1005,
+      "region": "Sweden Central",
+      "utilization": "0.00%",
+      "local_time": "2024-05-16 14:50:26 CEST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_800": {
+    "median_time": 19.622353196144104,
+    "regions": [
+      "Sweden Central"
+    ],
+    "iqr_time": 1.5778643488883972,
+    "percentile_95_time": 21.012184631824493,
+    "percentile_99_time": 21.228095254898072,
+    "cv_time": 0.05779347123204179,
+    "median_completion_tokens": 768.5,
+    "iqr_completion_tokens": 62.5,
+    "percentile_95_completion_tokens": 800.0,
+    "percentile_99_completion_tokens": 800.0,
+    "cv_completion_tokens": 0.04927022128110517,
+    "median_prompt_tokens": 1006.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.0,
+    "percentile_99_prompt_tokens": 1008.0,
+    "cv_prompt_tokens": 0.0013819202217696016,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 16.404584884643555,
+      "completion_tokens": 645,
+      "prompt_tokens": 1005,
+      "region": "Sweden Central",
+      "utilization": "0.00%",
+      "local_time": "2024-05-16 15:06:02 CEST"
+    },
+    "worst_run": {
+      "time": 21.24691390991211,
+      "completion_tokens": 776,
+      "prompt_tokens": 1006,
+      "region": "Sweden Central",
+      "utilization": "0.25%",
+      "local_time": "2024-05-16 14:53:39 CEST"
+    }
+  }
+}

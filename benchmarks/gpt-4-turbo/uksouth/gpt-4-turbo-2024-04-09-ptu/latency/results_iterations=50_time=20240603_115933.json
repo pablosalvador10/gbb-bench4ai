@@ -1,0 +1,174 @@
+{
+  "gpt-4-turbo-2024-04-09-ptu_100": {
+    "median_time": 3.4981380701065063,
+    "regions": [
+      "UK South"
+    ],
+    "iqr_time": 0.20548200607299805,
+    "percentile_95_time": 4.315875351428986,
+    "percentile_99_time": 4.680048241615294,
+    "cv_time": 0.09625635765948641,
+    "median_completion_tokens": 100.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 100.0,
+    "percentile_99_completion_tokens": 100.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1007.55,
+    "percentile_99_prompt_tokens": 1008.51,
+    "cv_prompt_tokens": 0.0014937581582333925,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "throttle_rate": 0.0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 3.194366931915283,
+      "completion_tokens": 100,
+      "prompt_tokens": 1005,
+      "region": "UK South",
+      "utilization": 2.12,
+      "local_time": "2024-06-03 17:44:04 BST"
+    },
+    "worst_run": {
+      "time": 4.987462520599365,
+      "completion_tokens": 100,
+      "prompt_tokens": 1006,
+      "region": "UK South",
+      "utilization": 0.0,
+      "local_time": "2024-06-03 17:42:05 BST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_500": {
+    "median_time": 12.937729954719543,
+    "regions": [
+      "UK South"
+    ],
+    "iqr_time": 0.5416926145553589,
+    "percentile_95_time": 13.703799939155578,
+    "percentile_99_time": 15.28976356506347,
+    "cv_time": 0.04629065663430353,
+    "median_completion_tokens": 500.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 500.0,
+    "percentile_99_completion_tokens": 500.0,
+    "cv_completion_tokens": 0.0,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1006.0,
+    "percentile_99_prompt_tokens": 1007.0,
+    "cv_prompt_tokens": 0.0010434218972650861,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "throttle_rate": 0.0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 12.541794061660767,
+      "completion_tokens": 500,
+      "prompt_tokens": 1005,
+      "region": "UK South",
+      "utilization": 0.0,
+      "local_time": "2024-06-03 17:53:40 BST"
+    },
+    "worst_run": {
+      "time": 16.568969011306763,
+      "completion_tokens": 500,
+      "prompt_tokens": 1006,
+      "region": "UK South",
+      "utilization": 1.57,
+      "local_time": "2024-06-03 17:42:17 BST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_700": {
+    "median_time": 17.578985691070557,
+    "regions": [
+      "UK South"
+    ],
+    "iqr_time": 0.559840738773346,
+    "percentile_95_time": 18.468367862701417,
+    "percentile_99_time": 20.068071129322046,
+    "cv_time": 0.038452684877235244,
+    "median_completion_tokens": 700.0,
+    "iqr_completion_tokens": 0.0,
+    "percentile_95_completion_tokens": 700.0,
+    "percentile_99_completion_tokens": 700.0,
+    "cv_completion_tokens": 0.008550425455264602,
+    "median_prompt_tokens": 1005.0,
+    "iqr_prompt_tokens": 2.75,
+    "percentile_95_prompt_tokens": 1008.0,
+    "percentile_99_prompt_tokens": 1008.51,
+    "cv_prompt_tokens": 0.0015969945681287134,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "throttle_rate": 0.0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 16.473138570785522,
+      "completion_tokens": 668,
+      "prompt_tokens": 1006,
+      "region": "UK South",
+      "utilization": 1.1,
+      "local_time": "2024-06-03 17:54:12 BST"
+    },
+    "worst_run": {
+      "time": 21.426390886306763,
+      "completion_tokens": 700,
+      "prompt_tokens": 1007,
+      "region": "UK South",
+      "utilization": 4.88,
+      "local_time": "2024-06-03 17:42:22 BST"
+    }
+  },
+  "gpt-4-turbo-2024-04-09-ptu_800": {
+    "median_time": 19.681509733200073,
+    "regions": [
+      "UK South"
+    ],
+    "iqr_time": 1.511261224746704,
+    "percentile_95_time": 21.094271171092988,
+    "percentile_99_time": 21.618525636196136,
+    "cv_time": 0.05586349525160488,
+    "median_completion_tokens": 781.0,
+    "iqr_completion_tokens": 53.75,
+    "percentile_95_completion_tokens": 800.0,
+    "percentile_99_completion_tokens": 800.0,
+    "cv_completion_tokens": 0.04433854038666211,
+    "median_prompt_tokens": 1006.0,
+    "iqr_prompt_tokens": 2.0,
+    "percentile_95_prompt_tokens": 1008.0,
+    "percentile_99_prompt_tokens": 1009.0,
+    "cv_prompt_tokens": 0.0016269730235805237,
+    "error_rate": 0.0,
+    "number_of_iterations": 50,
+    "throttle_count": 0,
+    "throttle_rate": 0.0,
+    "errors_types": [],
+    "successful_runs": 50,
+    "unsuccessful_runs": 0,
+    "best_run": {
+      "time": 17.121045351028442,
+      "completion_tokens": 695,
+      "prompt_tokens": 1004,
+      "region": "UK South",
+      "utilization": 0.23,
+      "local_time": "2024-06-03 17:56:44 BST"
+    },
+    "worst_run": {
+      "time": 22.116096019744873,
+      "completion_tokens": 734,
+      "prompt_tokens": 1006,
+      "region": "UK South",
+      "utilization": 3.23,
+      "local_time": "2024-06-03 17:42:23 BST"
+    }
+  }
+}
