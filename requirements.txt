@@ -16,3 +16,4 @@ matplotlib
 seaborn 
 plotly
 datasets
+python-dotenv
