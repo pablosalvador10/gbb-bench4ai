@@ -1,5 +1,5 @@
 def get_cosmos_db_prompt(prompt):
-    return f'''
+    return f"""
     # Cosmos DB Query Translator
 
     Your goal is to understand the essence of each user query, identify the relevant database fields, and construct an accurate Cosmos DB query that retrieves the requested information.
@@ -56,10 +56,11 @@ def get_cosmos_db_prompt(prompt):
     SELECT c.RequestId, c.Status FROM c WHERE c.Status = 'In progress' AND c.AssignedTo = 'Jane Doe'
     
     return only the query, no verbosity.
-    '''
+    """
+
 
 def get_chat_cosmos_db_prompt(prompt, json_response):
-    return f'''
+    return f"""
     # Cosmos DB Response Processor
 
     ## Introduction
@@ -83,4 +84,79 @@ def get_chat_cosmos_db_prompt(prompt, json_response):
     ## Instructions
     - Parse JSON: Carefully read and interpret the JSON data to understand the details of the project requests it contains.
     - Answer the Question: Based on your understanding of the JSON data, provide an answer to the user's question. Ensure that your answer is directly supported by the data in the JSON response. If there's not enough information to answer the question, return a message saying "We are not able to assist you at this moment. Please try with another inquiry.
-    '''
+    """
+
+
+def generate_system_message(document_type, focus_areas):
+    if document_type == "Other":
+        document_type = focus_areas
+
+    system_messages = {
+        "How-to Guide": """
+            You are tasked with creating a detailed, user-friendly "How-To" guide based on multiple documents and complex topics. 
+            The guide should include clear headings, subheadings, and step-by-step instructions.
+        """,
+        "Reference Manual": """
+            You are tasked with creating a comprehensive Reference Manual. 
+            The manual should include detailed information and instructions, organized by topic and easy to navigate.
+        """,
+        "API Documentation": """
+            You are tasked with creating detailed API documentation. 
+            The documentation should include clear descriptions of endpoints, request and response formats, and example usages.
+        """,
+        "Other": f"""
+            You are tasked with creating a detailed document. 
+            The type of document is {document_type}. 
+            The document should include clear headings, subheadings, and detailed instructions.
+        """,
+    }
+    return system_messages.get(document_type, "")
+
+
+def generate_system_message(document_type, focus_areas):
+    if document_type == "Other":
+        document_type = focus_areas
+
+    system_messages = {
+        "How-to Guide": """
+            **Task**: You are tasked with creating a detailed a "How-To" Guide.
+            **Objective**: Compile a user-friendly guide that simplifies complex processes into actionable steps. 
+            **Requirements**:
+            - Utilize clear, concise language accessible to beginners.
+            - Organize content with intuitive headings, subheadings, and bullet points.
+            - Include step-by-step instructions with examples and visuals where applicable.
+            - Ensure the guide is comprehensive, covering all necessary aspects of the topic.
+            - Incorporate FAQs or troubleshooting tips related to the topic.
+        """,
+        "Reference Manual": """
+            **Task**: You are tasked with creating a detailed a Reference Manual.
+            **Objective**: Develop a thorough and detailed manual that serves as a comprehensive resource on a specific topic or product.
+            **Requirements**:
+            - Present information in a structured and logical order.
+            - Use detailed descriptions, technical specifications, and explicit instructions.
+            - Include an index and glossary for easy navigation and understanding of technical terms.
+            - Provide diagrams, charts, and tables to support textual descriptions.
+            - Ensure accuracy and clarity in all explanations and instructions.
+        """,
+        "API Documentation": """
+            **Task**: You are tasked with creating a detailed API Documentation.
+            **Objective**: Produce clear and detailed documentation for API endpoints, facilitating easy integration for developers.
+            **Requirements**:
+            - Describe each API endpoint, including its purpose and functionalities.
+            - Detail request methods, path parameters, query parameters, and body payloads.
+            - Provide example requests and responses for each endpoint.
+            - Include error codes and messages to aid in troubleshooting.
+            - Offer a getting started section for quick integration tips and best practices.
+        """,
+        "Other": f"""
+            **Task**: Create a Document on "{document_type}".
+            **Objective**: Generate a detailed and structured document tailored to the specified focus areas: {focus_areas}.
+            **Requirements**:
+            - Ensure the document is well-organized with clear headings, subheadings, and logical flow.
+            - Include comprehensive coverage of the specified topics, providing depth and insight.
+            - Utilize visuals, examples, and case studies to enhance understanding and engagement.
+            - Address the target audience's needs, expectations, and potential questions.
+            - Maintain a consistent tone and style throughout the document, suitable for the content and audience.
+        """,
+    }
+    return system_messages.get(document_type, "")

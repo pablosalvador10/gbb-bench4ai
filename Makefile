@@ -1,5 +1,5 @@
 PYTHON_INTERPRETER = python
-CONDA_ENV ?= my-template-environment
+CONDA_ENV ?= upgrade-llm
 export PYTHONPATH=$(PWD):$PYTHONPATH;
 
 # Target for setting up pre-commit and pre-push hooks
@@ -80,3 +80,6 @@ run_pylint:
 
 make run_speed_test:
 	$(PYTHON_INTERPRETER) ./benchmark/speedtest.py
+
+run_streamlit:
+	streamlit run src/app/Home.py

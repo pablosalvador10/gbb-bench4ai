@@ -1,4 +1,4 @@
-name: ptu-benchmarking
+name: upgrade-llm
 channels:
   - conda-forge
   - defaults
@@ -9,3 +9,4 @@ dependencies:
   - ipykernel
   - pip:
     - -r requirements.txt
+    - -r requirements-codequality.txt

@@ -1,4 +1,6 @@
 argparse
+streamlit>=1.28
+streamlit-chat
 openai
 tiktoken
 numpy
