@@ -2,18 +2,18 @@
 This script contains a utility function for interacting with the Azure OpenAI API.
 """
 
-from requests import Response
-import numpy as np
-from scipy import stats
-import geocoder
 from datetime import datetime
-import pytz
+from typing import Any, Dict, List, Optional, Tuple
+
+import geocoder
+import numpy as np
 import psutil
+import pytz
+from requests import Response
+from scipy import stats
 
-from typing import List, Tuple, Optional, Dict, Any
-from utils.ml_logging import get_logger
 from src.performance.aoaihelpers.constants import AZURE_REGION_TO_TIMEZONE
-
+from utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()
@@ -58,9 +58,9 @@ def extract_rate_limit_and_usage_info_async(headers, body_response) -> Dict[str,
     if not retry_after_ms:
         retry_after_ms = headers.get("retry-after")
 
-    if retry_after_ms is None: 
-       logger.debug("retry-after-ms or retry-after is None in headers")
-       retry_after_ms = "NA"
+    if retry_after_ms is None:
+        logger.debug("retry-after-ms or retry-after is None in headers")
+        retry_after_ms = "NA"
 
     remaining_requests = headers.get("x-ratelimit-remaining-requests")
     if remaining_requests is None:
@@ -94,7 +94,7 @@ def extract_rate_limit_and_usage_info_async(headers, body_response) -> Dict[str,
             logger.warning(
                 f"invalid utilization header value: {UTILIZATION_HEADER}={utilization}"
             )
-        else: 
+        else:
             try:
                 utilization = float(utilization[:-1])
             except ValueError as e:

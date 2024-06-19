@@ -1,14 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import unittest
 import time
+import unittest
+
 import httpretty
-from src.performanceoairequester import (
-    OAIRequester,
-    UTILIZATION_HEADER,
-    RETRY_AFTER_MS_HEADER,
-)
+from src.performanceoairequester import (RETRY_AFTER_MS_HEADER,
+                                         UTILIZATION_HEADER, OAIRequester)
 
 TEST_URL = "https://testresource.openai.azure.com/openai/deployments/depl/chat/completion?api-version=2023-05-15"
 

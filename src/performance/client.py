@@ -1,10 +1,12 @@
 import datetime
-import subprocess
 import os
-from typing import Optional, Literal, Tuple
-from utils.ml_logging import get_logger
+import subprocess
 import uuid
+from typing import Literal, Optional, Tuple
+
 from dotenv import load_dotenv
+
+from utils.ml_logging import get_logger
 
 # Load environment variables from .env file
 load_dotenv()
@@ -89,7 +91,7 @@ class LoadTestBenchmarking:
         top_p: Optional[float] = None,
         output_format: Literal["jsonl", "human"] = "human",
         log_file_path: Optional[str] = "logs/",
-        log_save_dir:Optional[str] = "logs/",
+        log_save_dir: Optional[str] = "logs/",
         retry: Literal["none", "exponential"] = "none",
         save_results: bool = False,
         results_save_path: Optional[float] = None,
@@ -143,7 +145,7 @@ class LoadTestBenchmarking:
                 )
 
             run_id, date_str, time_str = self.get_time_and_run_id()
-           
+
             command = [
                 "python",
                 "-m",

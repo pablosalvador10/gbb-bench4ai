@@ -1,16 +1,13 @@
 import base64
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
-from src.extractors.blob_data_extractor import AzureBlobDataExtractor
 from src.app.utilsapp import send_email
-from src.ocr.document_intelligence import AzureDocumentIntelligenceManager
+from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming)
 
 FROM_EMAIL = "Pablosalvadorlopez@outlook.com"
+
 
 # Function to convert image to base64
 def get_image_base64(image_path):
@@ -26,20 +23,13 @@ st.set_page_config(
 # Only set 'env_vars_loaded' to False if it hasn't been set to True
 if not st.session_state.get("env_vars_loaded", False):
     st.session_state["env_vars_loaded"] = False
-# Set 'env_vars_load_count_free' to 0 if it hasn't been set yet
-if st.session_state.get("env_vars_load_count_free") is None:
-    st.session_state["env_vars_load_count_free"] = 0
 
 # Initialize environment variables in session state
 env_vars = {
     "AZURE_OPENAI_KEY": "",
-    "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": "",
     "AZURE_OPENAI_API_ENDPOINT": "",
     "AZURE_OPENAI_API_VERSION": "",
-    "AZURE_BLOB_CONTAINER_NAME": "",
-    "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT": "",
-    "AZURE_DOCUMENT_INTELLIGENCE_KEY": "",
-    "AZURE_STORAGE_CONNECTION_STRING": "",
+    "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": "",
 }
 
 for var in env_vars:
@@ -59,7 +49,9 @@ with st.sidebar.expander("We value your feedback! 😊", expanded=False):
         )
         submitted = st.form_submit_button("Submit")
         if submitted:
-            if feedback_subject and feedback_text:  # Check if both subject and feedback are provided
+            if (
+                feedback_subject and feedback_text
+            ):  # Check if both subject and feedback are provided
                 to_emails = ["pablosal@microsoft.com"]
                 subject = feedback_subject
                 response = "Feedback: " + feedback_text
@@ -68,28 +60,27 @@ with st.sidebar.expander("We value your feedback! 😊", expanded=False):
                     send_email(
                         response=response,
                         from_email=FROM_EMAIL,
-                        to_emails=[to_emails],  # Adjusted to match expected List[str] type
-                        subject=subject
+                        to_emails=[
+                            to_emails
+                        ],  # Adjusted to match expected List[str] type
+                        subject=subject,
                     )
 
                 st.success("Thank you for your feedback!")
             else:
-                st.error("Please provide both a subject and feedback before submitting.")
+                st.error(
+                    "Please provide both a subject and feedback before submitting."
+                )
 
 with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=False):
     st.markdown(
         """
         Please provide the following Azure environment variables to configure the application. You can find these details in the respective Azure services.
 
-        - **Azure OpenAI Key**: Get your key from [Azure OpenAI](https://azure.microsoft.com/en-us/services/openai/)
-        - **Chat Model Deployment ID**: Your deployment ID for the chat model in Azure OpenAI.
-        - **Completion Model Deployment ID**: Your deployment ID for the completion model in Azure OpenAI.
-        - **Embedding Deployment ID**: Your deployment ID for the embedding model in Azure OpenAI.
-        - **API Endpoint**: The API endpoint for your Azure OpenAI service.
-        - **API Version**: The version of the Azure OpenAI API you are using.
-        - **Document Intelligence Endpoint**: The endpoint for your Azure Document Intelligence API.
-        - **Document Intelligence Key**: Your key for the Azure Document Intelligence API.
-        - **Storage Connection String**: Your Azure Storage connection string.
+        - **Azure OpenAI Key**: Obtain your key from the [Azure OpenAI Service](https://azure.microsoft.com/en-us/services/openai/). This key is essential for authenticating your requests.
+        - **Azure API Endpoint**: Find your specific API endpoint in the [Azure Portal](https://portal.azure.com/).
+        - **Azure API Version**: Use the appropriate version of the Azure OpenAI API for your application. Refer to the [Azure OpenAI documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/) for details on different versions and their features.
+        - **Azure OpenAI Chat Model Name Deployment ID**: This is the unique deployment ID for the chat model you intend to use, for accessing app capabilities and models. You will specify the models to test on subsequent pages. For more information on deployment IDs and setting up chat models, visit the [Azure OpenAI chat models documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/concept-chat).
         """
     )
 
@@ -98,82 +89,35 @@ with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=F
         value=st.session_state["AZURE_OPENAI_KEY"],
         help="Enter your Azure OpenAI key.",
         type="password",
-        placeholder="Enter your Azure OpenAI Key",
+        placeholder="e.g., sk-ab*****..",
         label_visibility="visible",
     )
-    st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"] = st.text_input(
-        "Chat Model Deployment ID",
-        value=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"],
-        help="Enter your chat model deployment ID for Azure OpenAI.",
-        placeholder="Enter your Chat Model Deployment ID",
-        label_visibility="visible",
-    )
-
     st.session_state["AZURE_OPENAI_API_ENDPOINT"] = st.text_input(
         "API Endpoint",
         value=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
         help="Enter the API endpoint for Azure OpenAI.",
-        placeholder="Enter your API Endpoint",
+        placeholder="e.g., https://api.openai.com/v1",
         label_visibility="visible",
     )
     st.session_state["AZURE_OPENAI_API_VERSION"] = st.text_input(
         "API Version",
         value=st.session_state["AZURE_OPENAI_API_VERSION"],
         help="Enter the API version for Azure OpenAI.",
-        placeholder="Enter your API Version",
+        placeholder="e.g., 2024-02-15-preview",
         label_visibility="visible",
     )
-    st.session_state["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"] = st.text_input(
-        "Document Intelligence Endpoint",
-        value=st.session_state["AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"],
-        help="Enter the endpoint for Azure Document Intelligence API.",
-        placeholder="Enter your Document Intelligence Endpoint",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_DOCUMENT_INTELLIGENCE_KEY"] = st.text_input(
-        "Document Intelligence Key",
-        value=st.session_state["AZURE_DOCUMENT_INTELLIGENCE_KEY"],
-        help="Enter your Azure Document Intelligence API key.",
-        type="password",
-        placeholder="Enter your Document Intelligence Key",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_BLOB_CONTAINER_NAME"] = st.text_input(
-        "Blob Container Name",
-        value=st.session_state.get("CONTAINER_NAME", ""),
-        help="Enter your Azure Blob Storage container name.",
-        placeholder="Enter your Blob Container Name",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_STORAGE_CONNECTION_STRING"] = st.text_input(
-        "Storage Connection String",
-        value=st.session_state.get("AZURE_STORAGE_CONNECTION_STRING", ""),
-        help="Enter your Azure Storage connection string.",
-        type="password",
-        placeholder="Enter your Storage Connection String",
+    st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"] = st.text_input(
+        "Chat Model Name Deployment ID",
+        value=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"],
+        help="Enter the chat model name deployment ID for Azure OpenAI.",
+        placeholder="e.g., chat-gpt-1234abcd",
         label_visibility="visible",
     )
 
     if st.button("Validate Environment Variables"):
         try:
             # Initialize managers if they don't exist in session state
-            for manager_name, manager in [
-                (
-                    "document_intelligence_manager",
-                    AzureDocumentIntelligenceManager(
-                        azure_endpoint=st.session_state[
-                            "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"
-                        ],
-                        azure_key=st.session_state["AZURE_DOCUMENT_INTELLIGENCE_KEY"],
-                    ),
-                ),
-                (
-                    "blob_data_extractor_manager",
-                    AzureBlobDataExtractor(
-                        connect_str=st.session_state["AZURE_STORAGE_CONNECTION_STRING"],
-                        container_name=st.session_state["AZURE_BLOB_CONTAINER_NAME"],
-                    ),
-                ),
+            managers_to_initialize = [
                 (
                     "azure_openai_manager",
                     AzureOpenAIManager(
@@ -185,39 +129,49 @@ with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=F
                         ],
                     ),
                 ),
-            ]:
+                # Create an instance of the benchmarking class
+                (
+                    "client_non_streaming",
+                    AzureOpenAIBenchmarkNonStreaming(
+                        api_key=st.session_state["AZURE_OPENAI_KEY"],
+                        azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
+                        api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
+                    ),
+                ),
+            ]
+
+            for manager_name, manager in managers_to_initialize:
                 if manager_name not in st.session_state:
                     st.session_state[manager_name] = manager
+
             st.session_state["env_vars_loaded"] = True
             st.sidebar.success(
-                "All environment variables and managers have been successfully validated and initialized."
+                "Environment variables and managers initialized successfully."
             )
         except Exception as e:
             st.sidebar.error(
-                f"An error occurred: {e}. Please check your environment variables."
+                f"Error initializing environment: {e}. Check your variables."
             )
 
-# Web user interface
 st.write(
     f"""
     <h1 style="text-align:center;">
-        Welcome to Azure AIFactory! 💡
+        Welcome to upgrade your LLM 🚀
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> Powered by <a href="https://pablosalvador10.github.io/GenAI-Engineering-Diary/" target="_blank">Microsoft AI Global Black Belt</a> </span> 
-        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="logo" style="width:30px;height:30px;">        
+        <span style="font-style:italic; font-size:0.4em;"> Simplifying the adoption of the latest Azure OpenAI models  </span> 
+        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="Azure OpenAI logo" style="width:25px;height:25px;">        
         <br>
+    </h1>
     """,
     unsafe_allow_html=True,
 )
 
 st.markdown(
     """
-    Your one-stop solution for cultivating new ideas and possibilities with Azure. This is a factory of ideas, demonstrating what's possible and inspiring you to create your own AI applications. The sky is the limit with Azure!
-
-    Our goal is to streamline the AI application creation process, reducing both the time and cost involved, while maintaining the highest quality standards. With Azure AIFactory, you can focus on what truly matters - delivering exceptional AI experiences.
+    Our app zeroes in on key performance areas like speed, response time, and accuracy 🤖. It's a one-stop shop for testing Azure OpenAI models, helping you make smarter, cost-effective choices for your AI projects and boosting your capabilities by embracing the latest AI tech with solid, real-world data.
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
-        <iframe src="https://www.loom.com/embed/bd2b310ac6334a0a8da33b59986b2283?sid=f09a505b-e63e-400b-9460-ba039035d8ed" 
+        <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
         frameborder="0" 
         webkitallowfullscreen 
         mozallowfullscreen 
@@ -225,18 +179,25 @@ st.markdown(
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
     </div>
 
+    The platform boasts a user-friendly interface, streamlining the process of benchmarking various models for both latency and throughput. 
+    Additionally, it facilitates a comprehensive quality evaluation, ensuring a thorough assessment of model performance.
+
     ### Curious to Learn More?
-    - Discover the power of [Azure OpenAI](https://azure.microsoft.com/en-us/services/openai/) and how it's changing the world of AI.
-    - Dive into our comprehensive [documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai-service/) to understand how our service works.
-    - Join the conversation in our [community forums](https://discuss.streamlit.io) where experts and enthusiasts discuss the latest trends and challenges in AI.
-
+    - Discover the power of [Azure OpenAI](https://azure.microsoft.com/en-us/services/openai/) and how it's changing the world of AI
+    - Join the conversation in our [community forums]() where experts and enthusiasts discuss the latest trends and challenges in AI.
+    - Explore the **MMLU** benchmark, a massive multitask test covering 57 tasks across various knowledge domains. [Learn more](https://huggingface.co/datasets/cais/mmlu).
+    - Investigate **Truthful QA**, a benchmark designed to assess the truthfulness of language models. [Discover](https://huggingface.co/datasets/truthfulqa/truthful_qa).
+    - Delve into **PubMedQA**, a unique challenge for models to answer research questions based on abstracts. [Explore](https://huggingface.co/datasets/qiaojin/PubMedQA).
+    
     #### Getting Started
-    To get the most out of Azure AIFactory, you'll need a few keys. Here's how you can obtain them:
-    - **Azure OpenAI Key**: Sign up for Azure OpenAI and [get your key here](https://azure.microsoft.com/en-us/services/openai/).
-    - **Azure Storage Connection String**: Follow the [Azure Storage documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage) to set up your storage and obtain your connection string.
-    - **Document Intelligence API**: Get your API key and endpoint by following the [Azure Document Intelligence documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/form-recognizer/).
+    Make sure you've got your keys ready. Check the sidebar under 'Add Required Environment Variables' for all the details.
 
-    Embark on your journey with Azure AIFactory and transform the way you create AI applications!
+    - **Easy Navigation:** 
+        - You're on the main page right now. 
+        - 👈 The navigation tool at the top right corner is your best friend here. It's super easy to use and lets you jump to different parts of the app in no time.
+        - 📊 **Performance Insights:** Dive deep into model performance, exploring throughput and latency.
+        - 🔍 **Quality Metrics:** Evaluate the precision and reliability of your AI models.
+    
     """,
     unsafe_allow_html=True,
 )
@@ -247,7 +208,7 @@ st.write(
         ...
     </div>
     <div style="text-align:center; margin-top:20px;">
-        <a href="https://github.com/pablosalvador10" target="_blank" style="text-decoration:none; margin: 0 10px;">
+        <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
             <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
         </a>
         <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">

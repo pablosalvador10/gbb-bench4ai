@@ -3,8 +3,8 @@
 
 import asyncio
 import collections
-import time
 import math
+import time
 
 # allow up to 5% burst of max calls
 RATE_ESTIMATOR_BURST_FACTOR = 1.0

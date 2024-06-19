@@ -3,10 +3,10 @@
 
 """
 import json
-import openai
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
+import openai
 import requests
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -148,7 +148,7 @@ class AzureOpenAIManager:
             logger.error("The server could not be reached")
             logger.error(e.__cause__)
             return None
-        except openai.RateLimitError as e:
+        except openai.RateLimitError:
             logger.error("A 429 status code was received; we should back off a bit.")
             return None
         except openai.APIStatusError as e:
@@ -216,7 +216,7 @@ class AzureOpenAIManager:
             logger.error("The server could not be reached")
             logger.error(e.__cause__)
             return None
-        except openai.RateLimitError as e:
+        except openai.RateLimitError:
             logger.error("A 429 status code was received; we should back off a bit.")
             return None
         except openai.APIStatusError as e:
@@ -255,7 +255,7 @@ class AzureOpenAIManager:
             logger.error("The server could not be reached")
             logger.error(e.__cause__)
             return None
-        except openai.RateLimitError as e:
+        except openai.RateLimitError:
             logger.error("A 429 status code was received; we should back off a bit.")
             return None
         except openai.APIStatusError as e:

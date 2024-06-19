@@ -6,6 +6,7 @@ tiktoken
 numpy
 backoff
 wonderwords
+python-dotenv
 asyncio
 aiohttp
 pandas
@@ -18,3 +19,5 @@ matplotlib
 seaborn 
 plotly
 datasets
+markdown
+python-docx
