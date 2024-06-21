@@ -1,3 +1,4 @@
+from utils.ml_logging import get_logger
 import logging
 import pandas as pd
 from datasets import load_dataset
@@ -25,7 +26,7 @@ class Eval:
         self._base = deployment_config["endpoint"]
         self._model = deployment_config["model"]
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger()
         if log_level == "INFO":
             logging.basicConfig(level=logging.INFO)
         elif log_level == "DEBUG":
