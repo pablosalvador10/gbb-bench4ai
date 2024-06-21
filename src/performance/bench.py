@@ -2,8 +2,8 @@
 # Licensed under the MIT License.
 
 import argparse
-import logging
 import getpass
+import logging
 import os
 from datetime import datetime
 

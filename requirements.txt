@@ -1,9 +1,12 @@
 argparse
+streamlit>=1.28
+streamlit-chat
 openai
 tiktoken
 numpy
 backoff
 wonderwords
+python-dotenv
 asyncio
 aiohttp
 pandas
@@ -16,3 +19,5 @@ matplotlib
 seaborn 
 plotly
 datasets
+markdown
+python-docx

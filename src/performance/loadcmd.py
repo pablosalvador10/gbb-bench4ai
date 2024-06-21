@@ -1,19 +1,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 import os
 import sys
-import json
 from typing import Iterable, Iterator
 
 import aiohttp
 
-from src.performance.messagegeneration import (
-    BaseMessagesGenerator,
-    RandomMessagesGenerator,
-    ReplayMessagesGenerator,
-)
+from src.performance.messagegeneration import (BaseMessagesGenerator,
+                                               RandomMessagesGenerator,
+                                               ReplayMessagesGenerator)
 
 from .asynchttpexecuter import AsyncHTTPExecuter
 from .oairequester import OAIRequester
