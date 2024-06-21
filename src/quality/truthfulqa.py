@@ -95,7 +95,7 @@ if __name__ == "__main__":
         "key": os.getenv("AOAI_KEY"),
     }
 
-    truthfulqa_eval = TruthfulQA(deploy_dict, sample_size=0.05, log_level="INFO")
+    truthfulqa_eval = TruthfulQA(deploy_dict, sample_size=0.01, log_level="WARNING")
     result_df = truthfulqa_eval.test()
 
     print(f"Results: \n{result_df}")
