@@ -1,17 +1,18 @@
-import requests
-import os
-import threading
-import datetime
-import time
 import csv
+import datetime
 import json
+import os
+import statistics
+import threading
+import time
 from queue import Queue
-from typing import Optional, Dict, List, Tuple
 from threading import Lock
+from typing import Dict, List, Optional
+
+import requests
 from dotenv import load_dotenv
 
 from utils.ml_logging import get_logger
-import statistics
 
 # Load environment variables from .env file
 load_dotenv()

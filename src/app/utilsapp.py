@@ -1,15 +1,17 @@
-import black
 import os
 import smtplib
-from typing import List
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional
-from utils.ml_logging import get_logger
+from typing import List, Optional
+
+import black
 import markdown
+
+from utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()
+
 
 # Function to save uploaded file and return path (synchronously for now)
 def save_uploaded_file(uploaded_file):
@@ -78,7 +80,9 @@ def send_email(
     server.login(msg["From"], password)
 
     # Send the email to the 'To' and 'Cc' addresses
-    server.sendmail(msg["From"], to_emails + (cc_emails if cc_emails else []), msg.as_string())
+    server.sendmail(
+        msg["From"], to_emails + (cc_emails if cc_emails else []), msg.as_string()
+    )
 
     server.quit()
 

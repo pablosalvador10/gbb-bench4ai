@@ -26,7 +26,8 @@ from typing import Iterable, Optional, Union
 
 from requests import post
 
-from ..oairequester import TELEMETRY_USER_AGENT_HEADER, USER_AGENT, UTILIZATION_HEADER
+from ..oairequester import (TELEMETRY_USER_AGENT_HEADER, USER_AGENT,
+                            UTILIZATION_HEADER)
 
 
 def str2bool(v):

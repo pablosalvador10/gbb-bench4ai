@@ -1,11 +1,13 @@
-import aiohttp
 import asyncio
-import time
-import signal
 import logging
 import os
+import signal
+import time
 from datetime import timedelta
 from typing import Callable
+
+import aiohttp
+
 from .ratelimiting import NoRateLimiter
 
 # Threshold in seconds to warn about requests lagging behind target rate.

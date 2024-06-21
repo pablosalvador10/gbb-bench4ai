@@ -2,22 +2,22 @@ import asyncio
 import json
 import os
 import time
+import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from termcolor import colored
-import traceback
 
 import aiohttp
+from dotenv import load_dotenv
 from openai import AsyncAzureOpenAI, AzureOpenAI
 from tabulate import tabulate
+from termcolor import colored
 
 from src.performance.aoaihelpers.utils import (
     calculate_statistics, extract_rate_limit_and_usage_info_async,
     get_local_time_in_azure_region, log_system_info)
-from src.performance.messagegeneration import (RandomMessagesGenerator)
+from src.performance.messagegeneration import RandomMessagesGenerator
 from utils.ml_logging import get_logger
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -103,8 +103,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         temperature: Optional[int] = 0,
         context_tokens: Optional[int] = None,
         multiregion: bool = False,
-        prevent_server_caching: Optional[bool]=True,
-
+        prevent_server_caching: Optional[bool] = True,
     ):
         """
         Run asynchronous tests across different deployments and token counts.
@@ -130,23 +129,23 @@ class AzureOpenAIBenchmarkLatency(ABC):
                         max_tokens,
                         temperature,
                         context_tokens,
-                        prevent_server_caching
+                        prevent_server_caching,
                     )
                     await asyncio.sleep(same_model_interval)
             await asyncio.sleep(different_model_interval)
 
     async def run_latency_benchmark_bulk(
-            self,
-            deployment_names: List[str],
-            max_tokens_list: List[int],
-            same_model_interval: int = 1,
-            different_model_interval: int = 5,
-            iterations: int = 1,
-            temperature: Optional[int] = 0,
-            context_tokens: Optional[int] = None,
-            multiregion: bool = False,
-            prevent_server_caching: Optional[bool]=True,
-        ) -> Optional[List[Any]]:
+        self,
+        deployment_names: List[str],
+        max_tokens_list: List[int],
+        same_model_interval: int = 1,
+        different_model_interval: int = 5,
+        iterations: int = 1,
+        temperature: Optional[int] = 0,
+        context_tokens: Optional[int] = None,
+        multiregion: bool = False,
+        prevent_server_caching: Optional[bool] = True,
+    ) -> Optional[List[Any]]:
         """
         Run latency benchmarks for multiple deployments and token counts concurrently.
 
@@ -172,7 +171,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 temperature,
                 context_tokens,
                 multiregion,
-                prevent_server_caching
+                prevent_server_caching,
             )
             for deployment_name in deployment_names
             for max_tokens in max_tokens_list
@@ -213,7 +212,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             "Throttle Count",
             "Throttle Rate",
             "Best Run",
-            "Worst Run"
+            "Worst Run",
         ]
         descriptions = [
             "The maximum number of tokens that the model can handle.",
@@ -239,7 +238,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             "The number of times the test was throttled or limited.",
             "The rate at which the test was throttled or limited.",
             "Details of the run with the best (lowest) time.",
-            "Details of the run with the worst (highest) time."
+            "Details of the run with the worst (highest) time.",
         ]
         table = []
         for key, data in stats.items():
@@ -256,8 +255,8 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 data.get("percentile_95_time", "N/A"),
                 data.get("percentile_99_time", "N/A"),
                 data.get("cv_time", "N/A"),
-                data.get("median_prompt_tokens","N/A"),
-                data.get("iqr_prompt_tokens","N/A"),
+                data.get("median_prompt_tokens", "N/A"),
+                data.get("iqr_prompt_tokens", "N/A"),
                 data.get("median_completion_tokens", "N/A"),
                 data.get("iqr_completion_tokens", "N/A"),
                 data.get("percentile_95_completion_tokens", "N/A"),
@@ -270,20 +269,22 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 data.get("throttle_count", "N/A"),
                 data.get("throttle_rate", "N/A"),
                 json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A",
+                json.dumps(data.get("worst_run", {}))
+                if data.get("worst_run")
+                else "N/A",
             ]
             table.append(row)
-    
+
         try:
             table.sort(key=lambda x: x[3])
         except Exception as e:
-            logger.warning(f"An error occurred while sorting the table: {e}")   
-             
+            logger.warning(f"An error occurred while sorting the table: {e}")
+
         if show_descriptions:
             for header, description in zip(headers, descriptions):
-                print(colored(header, 'blue'))
+                print(colored(header, "blue"))
                 print(description)
-    
+
         print(tabulate(table, headers, tablefmt="pretty"))
         return stats
 
@@ -309,13 +310,13 @@ class AzureOpenAIBenchmarkLatency(ABC):
         Includes handling cases where the response might be None due to failed API calls.
         """
         key = f"{deployment_name}_{max_tokens}"
-       
+
         if key not in self.results:
             self.results[key] = {
                 "times_succesful": [],
                 "times_unsucessfull": [],
                 "regions": [],
-                "number_of_iterations": 0, 
+                "number_of_iterations": 0,
                 "completion_tokens": [],
                 "prompt_tokens": [],
                 "errors": {"count": 0, "codes": []},
@@ -334,13 +335,9 @@ class AzureOpenAIBenchmarkLatency(ABC):
         if time_taken is not None:
             self.results[key]["number_of_iterations"] += 1
             self.results[key]["times_succesful"].append(time_taken)
-            self.results[key]["completion_tokens"].append(
-                headers["completion_tokens"]
-            )
+            self.results[key]["completion_tokens"].append(headers["completion_tokens"])
             self.results[key]["prompt_tokens"].append(headers["prompt_tokens"])
-            self.results[key]["regions"].append(
-                headers["region"]
-            )
+            self.results[key]["regions"].append(headers["region"])
 
             current_run = {
                 "time": time_taken,
@@ -360,11 +357,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
             self._handle_error(deployment_name, max_tokens, None, "-99")
 
     def _handle_error(
-        self, deployment_name: str, max_tokens: int, time_taken:int, response
+        self, deployment_name: str, max_tokens: int, time_taken: int, response
     ):
         """
         Handle exceptions during API calls and store error details.
-    
+
         :param deployment_name: Model deployment name.
         :param max_tokens: Maximum tokens parameter for the call.
         :param response: Response from the API call.
@@ -375,7 +372,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 "times_succesful": [],
                 "times_unsucessfull": [],
                 "regions": [],
-                "number_of_iterations": 0, 
+                "number_of_iterations": 0,
                 "completion_tokens": [],
                 "prompt_tokens": [],
                 "errors": {"count": 0, "codes": []},
@@ -395,7 +392,9 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self.results[key]["times_unsucessfull"].append(time_taken)
         if response is not None:
             if response == "-99":
-                logger.error("Error during API call: No captured time, test client error")
+                logger.error(
+                    "Error during API call: No captured time, test client error"
+                )
                 self.results[key]["errors"]["codes"].append("-99")
             self.results[key]["errors"]["codes"].append(response.status)
             logger.error(f"Error during API call: {response.text}")
@@ -403,73 +402,100 @@ class AzureOpenAIBenchmarkLatency(ABC):
             logger.error("Error during API call: Unknown error")
 
     def _calculate_statistics(self, data: Dict) -> Dict:
-            """
-            Calculate and return the statistical metrics for test results.
-        
-            :param data: Test data collected.
-            :return: Dictionary of calculated statistical metrics.
-            """
-            total_requests = data["number_of_iterations"]
-            times = list(filter(None, data.get("times_succesful", [])))
-            completion_tokens = list(filter(None, data.get("completion_tokens", [])))
-            prompt_tokens = list(filter(None, data.get("prompt_tokens", [])))
-            error_count = data["errors"]["count"]
-            error_codes = data["errors"]["codes"]
-            error_distribution = {str(code): error_codes.count(code) for code in set(error_codes)}
-            count_throw = error_distribution.get('429', 0)
-            successful_runs = len(data['times_succesful'])
-            unsuccessful_runs = len(data['times_unsucessfull'])
-        
-            stats = {
-                "median_time": None,
-                "regions": list(set(data.get("regions", []))),
-                "iqr_time": None,
-                "percentile_95_time": None,
-                "percentile_99_time": None,
-                "cv_time": None,
-                "median_completion_tokens": None,
-                "iqr_completion_tokens": None,
-                "percentile_95_completion_tokens": None,
-                "percentile_99_completion_tokens": None,
-                "cv_completion_tokens": None,
-                "median_prompt_tokens": None,
-                "iqr_prompt_tokens": None,
-                "percentile_95_prompt_tokens": None,
-                "percentile_99_prompt_tokens": None,
-                "cv_prompt_tokens": None,
-                "error_rate": error_count / total_requests if total_requests > 0 else 0,
-                "number_of_iterations": total_requests,
-                "throttle_count": count_throw,
-                "throttle_rate": count_throw / total_requests if total_requests > 0 else 0,
-                "errors_types": data.get("errors", {}).get("codes", []),
-                "average_time": sum(times) / len(times) if times else None,
-                "successful_runs": successful_runs,
-                "unsuccessful_runs": unsuccessful_runs
-            }
-        
-            if times:
-                stats.update(zip(
-                    ["median_time", "iqr_time", "percentile_95_time", "percentile_99_time", "cv_time"],
-                    calculate_statistics(times)
-                ))
-        
-            if completion_tokens:
-                stats.update(zip(
-                    ["median_completion_tokens", "iqr_completion_tokens", "percentile_95_completion_tokens", "percentile_99_completion_tokens", "cv_completion_tokens"],
-                    calculate_statistics(completion_tokens)
-                ))
-        
-            if prompt_tokens:
-                stats.update(zip(
-                    ["median_prompt_tokens", "iqr_prompt_tokens", "percentile_95_prompt_tokens", "percentile_99_prompt_tokens", "cv_prompt_tokens"],
-                    calculate_statistics(prompt_tokens)
-                ))
-        
-            # Optional: Add best_run and worst_run if they're defined and valid
-            stats["best_run"] = data.get("best_run", {})
-            stats["worst_run"] = data.get("worst_run", {})
-        
-            return stats
+        """
+        Calculate and return the statistical metrics for test results.
+
+        :param data: Test data collected.
+        :return: Dictionary of calculated statistical metrics.
+        """
+        total_requests = data["number_of_iterations"]
+        times = list(filter(None, data.get("times_succesful", [])))
+        completion_tokens = list(filter(None, data.get("completion_tokens", [])))
+        prompt_tokens = list(filter(None, data.get("prompt_tokens", [])))
+        error_count = data["errors"]["count"]
+        error_codes = data["errors"]["codes"]
+        error_distribution = {
+            str(code): error_codes.count(code) for code in set(error_codes)
+        }
+        count_throw = error_distribution.get("429", 0)
+        successful_runs = len(data["times_succesful"])
+        unsuccessful_runs = len(data["times_unsucessfull"])
+
+        stats = {
+            "median_time": None,
+            "regions": list(set(data.get("regions", []))),
+            "iqr_time": None,
+            "percentile_95_time": None,
+            "percentile_99_time": None,
+            "cv_time": None,
+            "median_completion_tokens": None,
+            "iqr_completion_tokens": None,
+            "percentile_95_completion_tokens": None,
+            "percentile_99_completion_tokens": None,
+            "cv_completion_tokens": None,
+            "median_prompt_tokens": None,
+            "iqr_prompt_tokens": None,
+            "percentile_95_prompt_tokens": None,
+            "percentile_99_prompt_tokens": None,
+            "cv_prompt_tokens": None,
+            "error_rate": error_count / total_requests if total_requests > 0 else 0,
+            "number_of_iterations": total_requests,
+            "throttle_count": count_throw,
+            "throttle_rate": count_throw / total_requests if total_requests > 0 else 0,
+            "errors_types": data.get("errors", {}).get("codes", []),
+            "average_time": sum(times) / len(times) if times else None,
+            "successful_runs": successful_runs,
+            "unsuccessful_runs": unsuccessful_runs,
+        }
+
+        if times:
+            stats.update(
+                zip(
+                    [
+                        "median_time",
+                        "iqr_time",
+                        "percentile_95_time",
+                        "percentile_99_time",
+                        "cv_time",
+                    ],
+                    calculate_statistics(times),
+                )
+            )
+
+        if completion_tokens:
+            stats.update(
+                zip(
+                    [
+                        "median_completion_tokens",
+                        "iqr_completion_tokens",
+                        "percentile_95_completion_tokens",
+                        "percentile_99_completion_tokens",
+                        "cv_completion_tokens",
+                    ],
+                    calculate_statistics(completion_tokens),
+                )
+            )
+
+        if prompt_tokens:
+            stats.update(
+                zip(
+                    [
+                        "median_prompt_tokens",
+                        "iqr_prompt_tokens",
+                        "percentile_95_prompt_tokens",
+                        "percentile_99_prompt_tokens",
+                        "cv_prompt_tokens",
+                    ],
+                    calculate_statistics(prompt_tokens),
+                )
+            )
+
+        # Optional: Add best_run and worst_run if they're defined and valid
+        stats["best_run"] = data.get("best_run", {})
+        stats["worst_run"] = data.get("worst_run", {})
+
+        return stats
+
 
 class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
     def __init__(self, api_key, azure_endpoint, api_version="2024-02-15-preview"):
@@ -485,7 +511,7 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
         max_tokens: int,
         temperature: Optional[int] = 0,
         context_tokens: Optional[int] = None,
-        prevent_server_caching: Optional[bool]=True,
+        prevent_server_caching: Optional[bool] = True,
     ):
         """
         Make an asynchronous chat completion call to the Azure OpenAI API and log the time taken for the call.
@@ -542,15 +568,15 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 self._handle_error(deployment_name, max_tokens, time_taken, response)
                 logger.info(f"Unsuccesful Run - Time taken: {time_taken:.2f} seconds.")
-            else: 
+            else:
                 response_headers = response.headers
                 response_body = await response.json()
                 headers = extract_rate_limit_and_usage_info_async(
-                response_headers, response_body)
-                self._store_results(
-                    deployment_name, max_tokens, headers, time_taken
+                    response_headers, response_body
                 )
+                self._store_results(deployment_name, max_tokens, headers, time_taken)
                 logger.info(f"Succesful Run - Time taken: {time_taken:.2f} seconds.")
+
 
 class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
     # TODO: calculate stats

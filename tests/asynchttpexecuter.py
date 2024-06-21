@@ -1,8 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import unittest
 import time
+import unittest
+
 from src.performanceasynchttpexecuter import AsyncHTTPExecuter
 from src.performanceratelimiting import RateLimiter
 

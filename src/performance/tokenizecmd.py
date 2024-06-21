@@ -1,11 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 import sys
-import json
 
-from .oaitokenizer import num_tokens_from_text, num_tokens_from_messages
+from .oaitokenizer import num_tokens_from_messages, num_tokens_from_text
 
 
 def tokenize(args):
