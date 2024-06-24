@@ -1,10 +1,12 @@
 import asyncio
 import json
 import os
+from typing import Any, Dict, List
+import plotly.graph_objects as go
 
 import dotenv
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.outputformatting import markdown_to_docx
@@ -55,8 +57,10 @@ st.set_page_config(
     page_icon="📊",
 )
 
-# Load default deployment if multi-environment is not selected
-def load_default_deployment():
+def load_default_deployment() -> None:
+    """
+    Load default deployment settings from environment variables.
+    """
     default_deployment = {
         "name": os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"),
         "key": os.getenv("AZURE_OPENAI_KEY"),
@@ -68,8 +72,10 @@ def load_default_deployment():
     else:
         st.error("Default deployment settings are missing in environment variables.")
 
-# Function to create a new deployment manager
-def create_azure_openai_manager(api_key, endpoint, api_version, deployment_id):
+def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, deployment_id: str) -> AzureOpenAIManager:
+    """
+    Create a new Azure OpenAI Manager instance.
+    """
     return AzureOpenAIManager(
         api_key=api_key,
         azure_endpoint=endpoint,
@@ -77,8 +83,10 @@ def create_azure_openai_manager(api_key, endpoint, api_version, deployment_id):
         chat_model_name=deployment_id,
     )
 
-# Function to create a new benchmark client
-def create_benchmark_client(api_key, endpoint, api_version):
+def create_benchmark_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+    """
+    Create a new benchmark client instance.
+    """
     return AzureOpenAIBenchmarkNonStreaming(
         api_key=api_key,
         azure_endpoint=endpoint,
@@ -87,7 +95,6 @@ def create_benchmark_client(api_key, endpoint, api_version):
 
 # Sidebar logic
 with st.sidebar:
-    # Benchmark Selection
     st.markdown("## 🎯 Benchmark Selection")
     operation = st.selectbox(
         "Choose Your Benchmark:",
@@ -96,25 +103,20 @@ with st.sidebar:
         placeholder="Select a Benchmark",
     )
 
-    # Benchmark Guide
     if operation == "Latency Benchmark":
         with st.expander("Latency Benchmark Guide 📊", expanded=False):
-            st.markdown(
-                """
-                Ready to test the performance and quality of your LLMs? Our benchmarking tool makes it easy!
-    
-                **Here's how it works:**
-                1. **Select your model settings**: Choose the models, maximum tokens, and the number of iterations for your benchmark tests.
-                2. **Run the benchmark**: Hit the 'Run Benchmark' button and watch the real-time logs for progress updates.
-                3. **Review the results**: Once the benchmark is complete, view detailed results and performance metrics.
-    
-                Let's get started and optimize your LLM experience!
-                """
-            )
+            st.markdown("""
+                **How to Run a Latency Benchmark:**
 
-        st.markdown("---")  # Visual separator
+                1. **Select model settings**: Choose models, max tokens, and iterations for your benchmark tests.
+                2. **Run the benchmark**: Click 'Run Benchmark' to start and monitor progress in real-time.
+                3. **Review results**: View detailed performance metrics after the benchmark completes.
 
-        # Configuration Section
+                Optimize your LLM experience with precise performance insights!
+            """)
+
+        st.markdown("---")
+
         st.markdown("## ⚙️ Configuration Settings")
         enable_multi_region = st.checkbox("Enable Multi Deployment")
         if not enable_multi_region:
@@ -144,22 +146,17 @@ with st.sidebar:
                     else:
                         st.error("Please fill in all fields.")
 
-        # Display the added deployments
         if 'deployments' in st.session_state:
-            st.markdown("##### Current Deployments")
+            st.markdown("##### Loaded Deployments")
             for deployment in st.session_state.deployments:
                 with st.expander(f"{deployment.get('name', 'Unnamed')}"):
-                    # Make a copy of the deployment to avoid modifying the session state directly
                     deployment_copy = deployment.copy()
-                    # Mask the 'key' field
                     if 'key' in deployment_copy:
                         deployment_copy['key'] = '*****'
-                    # Display the modified deployment as JSON
                     st.json(deployment_copy)
-        else: 
+        else:
             st.error("No deployments found. Please add a deployment in the sidebar.")
 
-        # Benchmark Configuration
         if operation == "Latency Benchmark":
             context_tokens = st.slider(
                 "Context Tokens (Input)",
@@ -210,21 +207,16 @@ with st.sidebar:
             help="Enable this option to prevent server caching during the benchmark tests.",
         )
 
-        st.markdown("---")  # Visual separator
+        st.markdown("---")
 
-    # Enhanced Run Benchmark Section
     st.markdown("## 🚀 Run Benchmark")
-    st.markdown(
-        """
-        Ready to start the benchmark? Click the "Run Benchmark" button below. 
-        You'll see real-time updates on the progress and be notified once the benchmark completes.
-        """
-    )
-    
-    run_benchmark = st.button("Run Benchmark")
+    st.markdown("Ensure all settings are correctly configured before proceeding.")
+    run_benchmark = st.button("Start Benchmark")
 
-# Function to display statistics in a formatted manner with updated key column name and row coloring
-def display_statistics(stats):
+def display_statistics(stats: List[Dict[str, Any]]) -> None:
+    """
+    Display benchmark statistics in a formatted manner with enhanced user interface.
+    """
     st.markdown("## Benchmark Results")
     table = []
     headers = [
@@ -237,22 +229,13 @@ def display_statistics(stats):
         "Throttle Rate", "Best Run", "Worst Run"
     ]
 
-    # def format_run_info(run_data):
-    #     if not run_data:
-    #         return "N/A"
-    #     # Example keys: 'time', 'tokens', 'error_rate'. Adjust based on actual data structure.
-    #     formatted_info = f"Time: {run_data.get('time', 'N/A')}, Completion Tokens: {run_data.get('completion_tokens', 'N/A')}, Prompt Tokens: {run_data.get('prompt_tokens', 'N/A')}"
-    #     return formatted_info
-
     for stat in stats: 
         for key, data in stat.items():
             regions = data.get("regions", [])
             regions = [r for r in regions if r is not None]  # Remove None values
             region_string = ", ".join(set(regions)) if regions else "N/A"
-            # best_run_info = format_run_info(data.get("best_run"))
-            # worst_run_info = format_run_info(data.get("worst_run"))
             row = [
-                key,  # Changed to "Deployment MaxTokens"
+                key,
                 data.get("number_of_iterations", "N/A"),
                 region_string,
                 data.get("average_time", "N/A"),
@@ -279,74 +262,85 @@ def display_statistics(stats):
             ]
             table.append(row)
 
-    # Sort the table by the "Average Time" column (index 3) in ascending order
     table.sort(key=lambda x: x[3])
 
-    # Convert the sorted table list into a DataFrame
     df = pd.DataFrame(table, columns=headers)
     
-    # Color the rows based on the lowest value in the 'Median Time' column
-    def color_lowest_median_time(s):
+    def color_lowest_median_time(s: pd.Series) -> List[str]:
         is_lowest = s == s.min()
         return ['background-color: green' if v else '' for v in is_lowest]
     
-    # Apply the coloring function to the DataFrame
     styled_df = df.style.apply(color_lowest_median_time, subset=['Median Time'])
-    
-    st.markdown("""
-        ### Comprehensive Data Overview
-
-        Below is the complete dataset showcasing all relevant metrics. This table includes detailed numerical data for each entry, providing insights into various performance indicators. Please review the table to understand the distribution and range of values across different metrics.
+    # Add an expander with explanations for all columns in the dataframe
+    with st.expander("Column Descriptions", expanded=False):
+        st.markdown("""
+        - **Deployment_MaxTokens**: The maximum number of tokens allowed in a single deployment.
+        - **Iterations**: The number of iterations or runs performed during the analysis.
+        - **Regions**: Geographic regions where the deployments were executed.
+        - **Average Time**: The average time taken for completions across all runs.
+        - **Median Time**: The median time taken for completions, reducing the impact of outliers.
+        - **IQR Time**: Interquartile Range for time, indicating the spread of the middle 50% of the data.
+        - **95th Percentile Time**: Time below which 95% of the completion times fall.
+        - **99th Percentile Time**: Time below which 99% of the completion times fall.
+        - **CV Time**: Coefficient of Variation for time, indicating the relative variability in completion times.
+        - **Median Prompt Tokens**: The median number of tokens in the prompts used.
+        - **IQR Prompt Tokens**: Interquartile Range for the number of prompt tokens.
+        - **Median Completion Tokens**: The median number of tokens in the completions generated.
+        - **IQR Completion Tokens**: Interquartile Range for the number of completion tokens.
+        - **95th Percentile Completion Tokens**: Number of tokens below which 95% of the completion token counts fall.
+        - **99th Percentile Completion Tokens**: Number of tokens below which 99% of the completion token counts fall.
+        - **CV Completion Tokens**: Coefficient of Variation for completion tokens, indicating the relative variability.
+        - **Error Rate**: The percentage of runs that resulted in errors.
+        - **Error Types**: The types of errors encountered during the runs.
+        - **Successful Runs**: The number of runs that completed successfully without errors.
+        - **Unsuccessful Runs**: The number of runs that did not complete successfully due to errors.
+        - **Throttle Count**: The number of times throttling occurred during the runs.
+        - **Throttle Rate**: The rate at which throttling occurred.
+        - **Best Run**: Details of the run with the best performance metrics.
+        - **Worst Run**: Details of the run with the worst performance metrics.
         """)
-    # Display the styled DataFrame in Streamlit
     st.dataframe(styled_df)
 
-    # Combine stats into a single dictionary for visualization
     combined_stats = {}
     for stat in stats:
         combined_stats.update(stat)
     
-    st.markdown("""
-        ### Visual Data Insights
+    st.markdown("### Visual Insights")
 
-        Following the table, you will find visualizations of the data. These visualizations are designed to provide a clear and intuitive understanding of the data, presented in a visually appealing format. We have arranged these visualizations in boxes, side by side, for a comparative and comprehensive view.
-        """)
-    # Assuming each plot method in ModelPerformanceVisualizer has been adjusted to return a plot object
-    # Initialize the visualizer with the combined statistics data
     visualizer = ModelPerformanceVisualizer(data=combined_stats)
-    visualizer.parse_data()  # Parse data before generating plots
+    visualizer.parse_data()
 
-    # Adjust the layout to create three columns for the visualizations using Streamlit's layout feature
-    col1, col2, col3 = st.columns(3)
+    # Adjusting layout for uniform plot sizes
+    col1, col2, col3 = st.columns([1, 1, 1], gap="small")
 
-    # First column for Time Analysis
     with col1:
-        st.markdown("##### Time Analysis")
+        st.markdown("#### 🕒 Time Analysis")
         try:
-            fig_time = visualizer.plot_times()  # Generate the Time Analysis plot
-            st.pyplot(fig_time)
+            fig_time, fig_time2  = visualizer.plot_times()
+            st.pyplot(fig_time2)
         except Exception as e:
             st.error(f"Error generating Time Analysis plot: {e}")
 
-    # Second column for Token Analysis
     with col2:
-        st.markdown("##### Token Analysis")
+        st.markdown("#### 🪙 Token Analysis")
         try:
-            fig_token = visualizer.plot_tokens()  # Generate the Token Analysis plot
+            fig_token = visualizer.plot_tokens()
             st.pyplot(fig_token)
         except Exception as e:
             st.error(f"Error generating Token Analysis plot: {e}")
 
-    # Third column for Best and Worst Runs
     with col3:
-        st.markdown("##### Best vs Worst")
+        st.markdown("#### 🏆 Best vs Worst")
         try:
-            fig_best_worst = visualizer.plot_best_worst_runs()  # Generate the Best and Worst Runs plot
+            fig_best_worst = visualizer.plot_best_worst_runs()
             st.pyplot(fig_best_worst)
         except Exception as e:
             st.error(f"Error generating Best and Worst Runs plot: {e}")
-# Define an asynchronous function to run benchmark tests
-async def run_benchmark_tests():
+
+async def run_benchmark_tests() -> None:
+    """
+    Run the benchmark tests asynchronously.
+    """
     try:
         deployment_clients = []
         for deployment in st.session_state.deployments:
@@ -355,32 +349,30 @@ async def run_benchmark_tests():
                 endpoint=deployment["endpoint"],
                 api_version=deployment["version"],
             )
-            deployment_clients.append(client)
+            deployment_clients.append((client, deployment["name"]))
 
         tasks = [
             client.run_latency_benchmark_bulk(
-                deployment_names=[deployment["name"]],
+                deployment_names=[deployment_name],
                 max_tokens_list=max_tokens_list,
                 iterations=num_iterations,
                 context_tokens=context_tokens,
                 temperature=temperature,
                 prevent_server_caching=prevent_server_caching,
             )
-            for client in deployment_clients
+            for client, deployment_name in deployment_clients
         ]
 
-        # Wait for all tasks to complete
         await asyncio.gather(*tasks)
 
         stats = [
-            client.calculate_and_show_statistics() for client in deployment_clients
+            client.calculate_and_show_statistics() for client, _ in deployment_clients
         ]
         st.session_state["benchmark_results"] = stats
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
-# Button to start the benchmark tests
 if run_benchmark:
     if not st.session_state.deployments:
         st.error("No deployments found. Please add a deployment in the sidebar.")
@@ -405,8 +397,10 @@ if run_benchmark:
     if st.session_state["benchmark_results"]:
         display_statistics(st.session_state["benchmark_results"])
 
-# Download functions
-def download_chat_history():
+def download_chat_history() -> None:
+    """
+    Provide a button to download the chat history as a JSON file.
+    """
     chat_history_json = json.dumps(st.session_state.messages, indent=2)
     st.download_button(
         label="📜 Download Chat",
@@ -416,7 +410,10 @@ def download_chat_history():
         key="download-chat-history",
     )
 
-def download_ai_response_as_docx_or_pdf():
+def download_ai_response_as_docx_or_pdf() -> None:
+    """
+    Provide options to download the AI response as a DOCX or PDF file.
+    """
     try:
         doc_io = markdown_to_docx(st.session_state.ai_response)
         file_format = st.selectbox("Select file format", ["DOCX", "PDF"])
@@ -450,24 +447,22 @@ if st.session_state.ai_response:
             download_ai_response_as_docx_or_pdf()
             download_chat_history()
 
-    # Enhanced Feedback and Contact Section
-    st.sidebar.write(
-        """
-    <div style="text-align:center; font-size:30px; margin-top:10px;">
-        ...
-    </div>
-    <div style="text-align:center; margin-top:20px;">
-        <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
-        </a>
-        <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/fluent/48/000000/linkedin.png" alt="LinkedIn" style="width:40px; height:40px;">
-        </a>
-        <!-- TODO: Update this link to the correct URL in the future -->
-        <a href="#" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/?size=100&id=23438&format=png&color=000000" alt="Blog" style="width:40px; height:40px;">
-        </a>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+st.sidebar.write(
+    """
+<div style="text-align:center; font-size:30px; margin-top:10px;">
+    ...
+</div>
+<div style="text-align:center; margin-top:20px;">
+    <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
+        <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
+    </a>
+    <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">
+        <img src="https://img.icons8.com/fluent/48/000000/linkedin.png" alt="LinkedIn" style="width:40px; height:40px;">
+    </a>
+    <a href="#" target="_blank" style="text-decoration:none; margin: 0 10px;">
+        <img src="https://img.icons8.com/?size=100&id=23438&format=png&color=000000" alt="Blog" style="width:40px; height:40px;">
+    </a>
+</div>
+""",
+    unsafe_allow_html=True,
+)

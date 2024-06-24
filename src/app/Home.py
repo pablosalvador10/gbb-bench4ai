@@ -156,16 +156,15 @@ with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=F
 st.write(
     f"""
     <h1 style="text-align:center;">
-        Welcome to upgrade your LLM 🚀
+        Upgrade Your RAG 🚀
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> Simplifying the adoption of the latest Azure OpenAI models  </span> 
-        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="Azure OpenAI logo" style="width:25px;height:25px;">        
+        <span style="font-style:italic; font-size:0.4em;"> Enhancing your foundational models' performance, reducing latency, and improving intelligence swiftly. Benchmark your relevance scores with ease. </span> 
+        <img src="data:image/png;base64,{get_image_base64('./utils/images/rag_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """,
     unsafe_allow_html=True,
 )
-
 st.markdown(
     """
     Our app zeroes in on key performance areas like speed, response time, and accuracy 🤖. It's a one-stop shop for testing Azure OpenAI models, helping you make smarter, cost-effective choices for your AI projects and boosting your capabilities by embracing the latest AI tech with solid, real-world data.
