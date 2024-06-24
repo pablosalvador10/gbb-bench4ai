@@ -158,8 +158,8 @@ st.write(
     <h1 style="text-align:center;">
         Upgrade Your RAG 🚀
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> Enhancing your foundational models' performance, reducing latency, and improving intelligence swiftly. Benchmark your relevance scores with ease. </span> 
-        <img src="data:image/png;base64,{get_image_base64('./utils/images/rag_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
+        <span style="font-style:italic; font-size:0.4em;"> with the Benchmark Factory app </span> 
+        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """,
