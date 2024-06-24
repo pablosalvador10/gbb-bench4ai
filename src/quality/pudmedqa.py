@@ -1,7 +1,8 @@
-from eval import Eval
+from src.quality.eval import Eval
 from openai import AzureOpenAI
 import pandas as pd
 import os
+import asyncio
 
 
 class PubMedQA(Eval):
@@ -55,7 +56,7 @@ class PubMedQA(Eval):
                     Your answer must be a single word, all lowercase, do not use quotations"
 
         response = client.chat.completions.create(
-            model=self._model,
+            model=self.model,
             messages=[
                 {"role": "system", "content": sys_message},
                 {"role": "user", "content": f"Question: {row['question']}.  Context: {row['context.contexts']}. Answer:"},
@@ -67,7 +68,7 @@ class PubMedQA(Eval):
         return output
 
 
-    def test(self) -> pd.DataFrame:
+    async def test(self) -> pd.DataFrame:
         test_data = self._load_data(dataset="qiaojin/PubMedQA", subset="pqa_labeled", split="train", flatten=True)
         test_data = self.__transform_data(test_data)
 
@@ -82,8 +83,10 @@ class PubMedQA(Eval):
                 self.logger.warning(f"Skipping...error in row {index}: {e}")
 
         self.logger.info("Evaluation complete.")
+        results = pd.DataFrame(output_list).reset_index()
+        results_dict = {'deployment': self.model, 'test': 'MedPub QA' ,'overall_score': results.loc[:, 'score'].mean()}
 
-        return pd.DataFrame(output_list).reset_index()
+        return pd.DataFrame([results_dict])
 
 
 if __name__ == "__main__":
@@ -97,7 +100,6 @@ if __name__ == "__main__":
     }
 
     pubmed_eval = PubMedQA(deploy_dict, sample_size=0.01, log_level="INFO")
-    result_df = pubmed_eval.test()
+    result = asyncio.run(pubmed_eval.test())
 
-    print(f"Results: \n{result_df}")
-    print(f"Score: {result_df.loc[:, 'score'].mean()}")
+    print(f"Results: \n{result}")

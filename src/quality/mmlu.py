@@ -1,7 +1,8 @@
-from eval import Eval
+from src.quality.eval import Eval
 from openai import AzureOpenAI
 import pandas as pd
 import os
+import asyncio
 
 
 class MMLU(Eval):
@@ -100,6 +101,7 @@ class MMLU(Eval):
         # Broad categories defined in subject2category dict (global) - STEM, Medical, Business, Social Sciences, Humanities, Other
         if self.categories:
             self.categories = [c.lower() for c in self.categories]
+            self.categories = [c.replace(" ", "_") for c in self.categories]
             df["category"] = df["subject"].map(subject2category)
             df = df[df["category"].isin(self.categories)]
             self.logger.info(f"Trimmed dataset to specified categories: {df.value_counts('category')}")
@@ -127,7 +129,7 @@ class MMLU(Eval):
                         Return ONLY the index of the correct answer in the choices list. Your answer must be a single ineteger."
 
         response = client.chat.completions.create(
-            model=self._model,
+            model=self.model,
             messages=[
                 {"role": "system", "content": sys_message},
                 {"role": "user", "content": f"Question: {row['question']}.  Choices: {row['choices']}. Answer:"},
@@ -139,7 +141,7 @@ class MMLU(Eval):
         return output
 
 
-    def test(self) -> pd.DataFrame:
+    async def test(self) -> pd.DataFrame:
         test_data = self._load_data(dataset="cais/mmlu", subset="all", split="test")
         test_data = self.__transform_data(test_data)
 
@@ -156,9 +158,10 @@ class MMLU(Eval):
         self.logger.info("Evaluation complete")
 
         self.logger.info("Aggregating Results")
-        result_df = pd.DataFrame(output_list).groupby("subject").agg({"score": "mean"}).reset_index()
+        results = pd.DataFrame(output_list).groupby("subject").agg({"score": "mean"}).reset_index()
+        results_dict = {'deployment': self.model,'test': 'MMLU','overall_score': results.loc[:, 'score'].mean()}
 
-        return result_df
+        return pd.DataFrame([results_dict])
 
 
 if __name__ == "__main__":
@@ -171,8 +174,7 @@ if __name__ == "__main__":
         "key": os.getenv("AOAI_KEY"),
     }
 
-    mmlu_eval = MMLU(deploy_dict, sample_size=0.01, categories = ['STEM'], log_level="INFO")
-    result_df = mmlu_eval.test()
+    mmlu_eval = MMLU(deploy_dict, sample_size=0.01, categories = ['Business'], log_level="INFO")
+    result = asyncio.run(mmlu_eval.test())
 
-    print(f"Results: \n{result_df}")
-    print(f"\nOverall Score: {result_df.loc[:, 'score'].mean()}")
+    print(f"Results: \n{result}")

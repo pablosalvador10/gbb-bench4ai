@@ -1,16 +1,19 @@
 import asyncio
 import json
 import os
+import pandas as pd
+import plotly.express as px
 
 import dotenv
 import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.outputformatting import markdown_to_docx
-from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming)
+from src.quality.mmlu import MMLU
+from src.quality.truthfulqa import TruthfulQA
+from src.quality.pudmedqa import PubMedQA
 from utils.ml_logging import get_logger
 
-FROM_EMAIL = "Pablosalvadorlopez@outlook.com"
 
 # Load environment variables
 dotenv.load_dotenv(".env")
@@ -18,31 +21,6 @@ dotenv.load_dotenv(".env")
 # Set up logger
 logger = get_logger()
 
-# Initialize session state variables if they don't exist
-session_vars = [
-    "conversation_history",
-    "ai_response",
-    "chat_history",
-    "messages",
-    "log_messages",
-    "benchmark_results",
-]
-initial_values = {
-    "conversation_history": [],
-    "ai_response": "",
-    "chat_history": [],
-    "messages": [
-        {
-            "role": "assistant",
-            "content": "Hey, this is your AI assistant. Please look at the AI request submit and let's work together to make your content shine!",
-        }
-    ],
-    "log_messages": [],
-    "benchmark_results": [],
-}
-for var in session_vars:
-    if var not in st.session_state:
-        st.session_state[var] = initial_values.get(var, None)
 
 st.set_page_config(
     page_title="Quality Metrics AI Assistant",
@@ -79,207 +57,194 @@ if not st.session_state.get("env_vars_loaded", False):
         chat_model_name=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"],
     )
 
-    # Activate the AzureOpenAIBenchmarkNonStreaming manager
-    st.session_state["client_non_streaming"] = AzureOpenAIBenchmarkNonStreaming(
-        api_key=st.session_state["AZURE_OPENAI_KEY"],
-        azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-        api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
+# Main layout for initial submission
+
+top_bar = st.empty()
+top_bar.markdown("""
+                 **Get Started with Quality Metrics AI Assistant**: 
+
+                 Configure variables in the sidebar and run the benchmark tests to evaluate the quality of your LLMs.🎯
+
+                 """)
+
+with st.expander("Learn More About Quality Benchmarks", expanded=False):
+    st.markdown(
+        """
+            **MMLU**  
+            
+            This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57 tasks including elementary mathematics, US history, computer science, law, and more. To attain high accuracy on this test, models must possess extensive world knowledge and problem solving ability.  
+            
+            We have grouped some of the taks into borader categories for easier targeted execution. These categories are: STEM, Medical, Business, Social Sciences, Humanities, and Other.
+            
+            [Paper](https://arxiv.org/pdf/2009.03300) | [HuggingFace Dataset](https://huggingface.co/datasets/cais/mmlu)
+            
+            **Truthful QA**
+            
+            TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.  
+            
+            [Paper](https://arxiv.org/pdf/2109.07958) | [HuggingFace Dataset](https://huggingface.co/datasets/truthfulqa/truthful_qa) | [GitHub](https://github.com/sylinrl/TruthfulQA)
+                
+            **PubMedQA**
+            
+            The task of PubMedQA is to answer research questions with yes/no/maybe _(e.g.: Do preoperative statins reduce atrial fibrillation after coronary artery bypass grafting?)_ using the corresponding abstracts. PubMedQA has 1k expert labeled instances. 
+            
+            [Paper](https://arxiv.org/pdf/1909.06146`) | [HuggingFace Dataset](https://huggingface.co/datasets/qiaojin/PubMedQA) | [Website](https://pubmedqa.github.io/) | [GitHub](https://github.com/pubmedqa/pubmedqa)
+
+        """
     )
 
-# Main layout for initial submission #TODO
-with st.expander("What Can I Do? 🤔", expanded=False):
+with st.expander("What Else Can I do in this App? 🤔", expanded=False):
     st.markdown(
         """
         Dive into the capabilities of our application:
 
         - **Multi-Region Latency Benchmark**: Test the response time of various models across different regions. This feature helps you identify the fastest model for your needs, ensuring efficient performance no matter where you are.
         - **Throughput Test by Model**: Evaluate how many requests a model can handle over a set period. This is crucial for understanding a model's capacity and ensuring it can handle your workload without slowing down.
+        - **Quality Benchmarks**: Run quality tests on your models to assess their performance in a way that YOU control.
 
         Our tool is designed to give you a comprehensive understanding of model performance, helping you make informed decisions. To begin, simply select an option from the sidebar. Let's optimize your AI model selection together! 👍
         """
     )
 
-# Sidebar layout for initial submission # TODO
+# Sidebar layout for initial submission
 with st.sidebar:
-    st.markdown("### 🚀 Let's Get Started!")
-    operation = st.selectbox(
-        "🎯 Choose Your Benchmark:",
-        (
-            "Latency Benchmark",
-            "Throughput Benchmark by Model",
-        ),
-        help="Select the benchmark you want to perform to evaluate AI model performance.",
-        placeholder="Select a Benchmark",
+    st.markdown("### Configure Benchmark Variables:")
+    deployment_names = st.text_area(
+        "Enter Deployment Names",
+        help="Enter the deployment names you want to benchmark, one per line.",
     )
 
-    if operation == "Latency Benchmark":
-        with st.expander("Benchmark Guide 📊", expanded=False):
-            st.markdown(
-                """
-                Ready to test the performance and quality of your LLMs? Our benchmarking tool makes it easy! 📊✨
+    st.write("Select the benchmark(s) you'd like to run:")
+    mmlu_select = st.checkbox("MMLU")
+    medpub_select = st.checkbox("MedPub QA")
+    truthful_select = st.checkbox("Truthful QA")
+    
+    if mmlu_select:
+        st.write("**MMLU Benchmark Settings**")
 
-                Here's how it works:
-                1. **Select your model settings**: Choose the models, maximum tokens, and the number of iterations for your benchmark tests.
-                2. **Run the benchmark**: Hit the 'Run Benchmark' button and watch the real-time logs for progress updates.
-                3. **Review the results**: Once the benchmark is complete, view detailed results and performance metrics.
+        # Sample to categories
+        mmlu_categories = st.multiselect("Select MMLU subcategories to run",
+                                        ['STEM', 'Medical', 'Business', 'Social Sciences', 'Humanities', 'Other'],
+                                        help="Select subcategories of the MMLU benchmark you'd like to run.")
 
-                Let's get started and optimize your LLM experience! 🚀
-                """
+        # Subsample
+        mmlu_subsample = st.slider('Select MMLU benchmark subsample for each selected category %. (14,402 total samples)', min_value=0, max_value=100)
+
+    if medpub_select:
+        st.write("**MedPub QA Benchmark Settings**")
+        medpub_subsample = st.slider('Select MedPub QA benchmark subsample %. (1,000 total samples)', min_value=0, max_value=100)
+
+    if truthful_select:
+        st.write("**Truthful QA Benchmark Settings**")
+        truthful_subsample = st.slider('Select Truthful QA benchmark subsample %. (814 total samples)', min_value=0, max_value=100)
+
+    run_benchmark = st.button("Run Benchmark 🚀")
+    with st.expander("Benchmark Guide 📊", expanded=False):
+        st.markdown(
+            """
+            Ready to test the  quality of your LLMs? Our benchmarking tool makes it easy! 📊✨
+
+            Here's how it works:
+            1. **Select your model settings**: Choose the tests to run, the models to evaluate, and other input parameters.
+            2. **Run the benchmark**: Hit the 'Run Benchmark' to run your selected evaluations.
+            3. **Review the results**: Once the benchmark is complete, view detailed results and performance metrics.
+
+            Let's get started and optimize your LLM experience!
+            """
+        )
+
+
+# Function to get the task list for the selected benchmark
+def get_task_list(deployment_list:list, mmlu:bool = False, medpub:bool = False, truthful:bool = False):
+    objects = []
+
+    for deployment in deployment_list:
+        deployment_config = {
+            "key": st.session_state["AZURE_OPENAI_KEY"],
+            "endpoint": st.session_state["AZURE_OPENAI_API_ENDPOINT"],
+            "model": deployment
+        }
+        if mmlu:
+            obj = MMLU(
+                deployment_config=deployment_config,
+                sample_size=mmlu_subsample/100,
+                log_level="ERROR",
+                categories=mmlu_categories
             )
+        if medpub:
+            obj = PubMedQA(
+                deployment_config=deployment_config,
+                sample_size=medpub_subsample/100,
+                log_level="ERROR"
+            )
+        if truthful:
+            obj = TruthfulQA(
+                deployment_config=deployment_config,
+                sample_size=truthful_subsample/100,
+                log_level="ERROR"
+            )
+        
+        objects.append(obj)
+    
+    tasks = [obj.test() for obj in objects]
+    return tasks
+    
 
-        deployment_names = st.text_area(
-            "Enter Deployment Names",
-            help="Enter the deployment names you want to benchmark, one per line.",
-        )
-
-        max_tokens_list = st.multiselect(
-            "Select Max Tokens",
-            options=[100, 500, 700, 800],
-            default=[100, 500, 700, 800],
-            help="Select the maximum tokens for each run.",
-        )
-
-        num_iterations = st.slider(
-            "Number of Iterations",
-            min_value=1,
-            max_value=100,
-            value=50,
-            help="Select the number of iterations for each benchmark test.",
-        )
-
-        context_tokens = st.slider(
-            "Context Tokens",
-            min_value=100,
-            max_value=2000,
-            value=1000,
-            help="Select the number of context tokens for each run.",
-        )
-
-        temperature = st.slider(
-            "Temperature",
-            min_value=0,
-            max_value=1,
-            value=0,
-            help="Select the temperature setting for the benchmark tests.",
-        )
-
-        multiregion = st.checkbox(
-            "Enable Multi-region",
-            value=False,
-            help="Enable this option to run the benchmark tests across multiple regions.",
-        )
-
-        prevent_server_caching = st.checkbox(
-            "Prevent Server Caching",
-            value=True,
-            help="Enable this option to prevent server caching during the benchmark tests.",
-        )
-
-        run_benchmark = st.button("Run Benchmark 🚀")
-
-
-# Function to display statistics in a formatted manner # TODO
-def display_statistics(stats):
-    st.markdown("## Benchmark Results")
-    st.table(stats)
-
-
-# Define an asynchronous function to run benchmark tests and log progress # TODO
+# Define an asynchronous function to run benchmark tests and log progress
 async def run_benchmark_tests():
     try:
-        client_non_streaming = st.session_state["client_non_streaming"]
-
         deployment_names_list = [name.strip() for name in deployment_names.split(",")]
+        results = []
+        c=st.container()
 
-        await client_non_streaming.run_latency_benchmark_bulk(
-            deployment_names=deployment_names_list,
-            max_tokens_list=max_tokens_list,
-            iterations=num_iterations,
-            context_tokens=context_tokens,
-            multiregion=multiregion,
-            prevent_server_caching=prevent_server_caching,
-        )
+        if mmlu_select:
+            
+            mmlu_tasks = get_task_list(deployment_names_list, mmlu=True)
+            mmlu_stats = await asyncio.gather(*mmlu_tasks)
+            mmlu_results = pd.concat(mmlu_stats)
 
-        stats = client_non_streaming.calculate_and_show_statistics()
-        st.session_state["benchmark_results"] = stats
+            st.markdown("### MMLU Results")
+            st.write("Subsample: ", f"{mmlu_subsample}% of each category")
+            st.write("Categories: ", str(mmlu_categories))
+            st.dataframe(mmlu_results.drop('test', axis = 1), hide_index=True)
+            results.append(mmlu_results)
+        
+        if medpub_select:
+            logger.info("Running MedPub QA benchmark")
+            medpub_tasks = get_task_list(deployment_names_list, medpub=True)
+            medpub_stats = await asyncio.gather(*medpub_tasks)
+            medpub_results = pd.concat(medpub_stats)
+
+            st.markdown("### MedPub QA Results")
+            st.write("Sample Size: ", f"{int((medpub_subsample/100)*1000)} ({medpub_subsample}% of 1,000 samples)")
+            st.dataframe(medpub_results.drop('test', axis = 1), hide_index=True)
+            results.append(medpub_results)
+        
+        if truthful_select:
+            logger.info("Running Truthful QA benchmark")
+            truthful_tasks = get_task_list(deployment_names_list, truthful=True)
+            truthful_stats = await asyncio.gather(*truthful_tasks)
+            truthful_results = pd.concat(truthful_stats)
+
+            st.markdown("### Truthful QA Results")
+            st.write("Sample Size: ", f"{int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)")
+            st.dataframe(truthful_results.drop('test', axis = 1), hide_index=True)
+            results.append(truthful_results)
+
+        results_df = pd.concat(results)
+
+        c.markdown("## Benchmark Results")
+        fig = px.bar(results_df, x='overall_score', y='test', color='deployment', barmode='group', orientation='h')
+        c.plotly_chart(fig)
+        top_bar.success("Benchmark tests completed successfully! 🎉")
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
 
-# Button to start the benchmark tests # TODO
+# Button to start the benchmark tests
 if run_benchmark:
-    with st.spinner("Running benchmark tests..."):
+    with st.spinner("Running benchmark tests. Outputs will appeats as benchmarks complete. This may take a while..."):
+        top_bar.warning("Warning: Editing sidebar while benchmark is running will kill the job.")
         asyncio.run(run_benchmark_tests())
-
-    if st.session_state["benchmark_results"]:
-        display_statistics(st.session_state["benchmark_results"])
-
-
-def download_chat_history():
-    chat_history_json = json.dumps(st.session_state.messages, indent=2)
-    st.download_button(
-        label="📜 Download Chat",
-        data=chat_history_json,
-        file_name="chat_history.json",
-        mime="application/json",
-        key="download-chat-history",
-    )
-
-
-def download_ai_response_as_docx_or_pdf():
-    try:
-        doc_io = markdown_to_docx(st.session_state.ai_response)
-        file_format = st.selectbox("Select file format", ["DOCX", "PDF"])
-
-        if file_format == "DOCX":
-            st.download_button(
-                label="📁 Download .docx",
-                data=doc_io,
-                file_name="AI_Generated_Guide.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download-docx",
-            )
-        elif file_format == "PDF":
-            st.download_button(
-                label="📁 Download .pdf",
-                data=doc_io,
-                file_name="AI_Generated_Guide.pdf",
-                mime="application/pdf",
-                key="download-pdf",
-            )
-    except Exception as e:
-        logger.error(f"Error generating {file_format} file: {e}")
-        st.error(
-            f"❌ Error generating {file_format} file. Please check the logs for more details."
-        )
-
-
-if st.session_state.ai_response:
-    with st.sidebar:
-        st.markdown("<hr/>", unsafe_allow_html=True)
-        with st.expander("📥 Download Center", expanded=False):
-            download_ai_response_as_docx_or_pdf()
-            download_chat_history()
-
-    # Enhanced Feedback and Contact Section
-    st.sidebar.write(
-        """
-    <div style="text-align:center; font-size:30px; margin-top:10px;">
-        ...
-    </div>
-    <div style="text-align:center; margin-top:20px;">
-        <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
-        </a>
-        <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/fluent/48/000000/linkedin.png" alt="LinkedIn" style="width:40px; height:40px;">
-        </a>
-        <!-- TODO: Update this link to the correct URL in the future -->
-        <a href="#" target="_blank" style="text-decoration:none; margin: 0 10px;">
-            <img src="https://img.icons8.com/?size=100&id=23438&format=png&color=000000" alt="Blog" style="width:40px; height:40px;">
-        </a>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+    

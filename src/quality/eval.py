@@ -24,7 +24,7 @@ class Eval:
         self.sample_size = sample_size
         self._key = deployment_config["key"]
         self._base = deployment_config["endpoint"]
-        self._model = deployment_config["model"]
+        self.model = deployment_config["model"]
 
         self.logger = get_logger()
         if log_level == "INFO":
