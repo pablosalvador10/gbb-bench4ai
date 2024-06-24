@@ -156,9 +156,9 @@ with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=F
 st.write(
     f"""
     <h1 style="text-align:center;">
-        Upgrade Your RAG 🚀
+        Welcome to upgrade your RAG 🚀
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> with the Benchmark Factory app </span> 
+        <span style="font-style:italic; font-size:0.4em;"> with the RAG Benchmark Factory app </span> 
         <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
