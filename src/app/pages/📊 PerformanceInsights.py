@@ -31,6 +31,7 @@ session_vars = [
     "messages",
     "log_messages",
     "benchmark_results",
+    "deployments"
 ]
 initial_values = {
     "conversation_history": [],
@@ -44,6 +45,7 @@ initial_values = {
     ],
     "log_messages": [],
     "benchmark_results": [],
+    "deployments": {}
 }
 for var in session_vars:
     if var not in st.session_state:
@@ -177,7 +179,6 @@ with st.sidebar:
                 help="Enable this option to prevent server caching during the benchmark tests.",
             )
 
-            
     st.markdown("---")
     st.markdown("## 🚀 Run Benchmark")
     st.markdown("Ensure all settings are correctly configured before proceeding.")
@@ -313,13 +314,13 @@ async def run_benchmark_tests() -> None:
     """
     try:
         deployment_clients = []
-        for deployment in st.session_state.deployments:
+        for deployment_name, deployment in st.session_state.deployments.items():
             client = create_benchmark_client(
                 api_key=deployment["key"],
                 endpoint=deployment["endpoint"],
                 api_version=deployment["version"],
             )
-            deployment_clients.append((client, deployment["name"]))
+            deployment_clients.append((client, deployment_name))
 
         tasks = [
             client.run_latency_benchmark_bulk(
@@ -347,7 +348,7 @@ if run_benchmark:
     if not st.session_state.deployments:
         st.error("No deployments found. Please add a deployment in the sidebar.")
     else: 
-        deployment_names = [deployment["name"] for deployment in st.session_state.deployments]
+        deployment_names = list(st.session_state.deployments.keys())
         st.info(
             f"""
             ### Benchmark Configuration Summary
