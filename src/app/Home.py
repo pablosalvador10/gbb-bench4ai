@@ -1,160 +1,43 @@
 import base64
-
 import streamlit as st
-
-from src.aoai.azure_openai import AzureOpenAIManager
-from src.app.utilsapp import send_email
-from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming)
+import os
+from typing import Dict, Any, Optional
 
 FROM_EMAIL = "Pablosalvadorlopez@outlook.com"
 
+def get_image_base64(image_path: str) -> str:
+    """
+    Convert an image file to a base64 string.
 
-# Function to convert image to base64
-def get_image_base64(image_path):
+    Args:
+        image_path (str): Path to the image file.
+
+    Returns:
+        str: Base64 encoded string of the image.
+    """
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
+def initialize_session_state(defaults: Dict[str, Any]) -> None:
+    """
+    Initialize Streamlit session state with default values if not already set.
 
-st.set_page_config(
-    page_title="Home",
-    page_icon="👋",
-)
+    Args:
+        defaults (Dict[str, Any]): Dictionary of default values.
+    """
+    for var, value in defaults.items():
+        if var not in st.session_state:
+            st.session_state[var] = value
 
-# Only set 'env_vars_loaded' to False if it hasn't been set to True
-if not st.session_state.get("env_vars_loaded", False):
-    st.session_state["env_vars_loaded"] = False
+@st.cache_data
+def get_main_content() -> str:
+    """
+    Get the main content HTML for the app.
 
-# Initialize environment variables in session state
-env_vars = {
-    "AZURE_OPENAI_KEY": "",
-    "AZURE_OPENAI_API_ENDPOINT": "",
-    "AZURE_OPENAI_API_VERSION": "",
-    "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": "",
-}
-
-for var in env_vars:
-    if var not in st.session_state:
-        st.session_state[var] = env_vars[var]
-
-# Add Feedback button
-with st.sidebar.expander("We value your feedback! 😊", expanded=False):
-    with st.form("feedback_form"):
-        feedback_subject = st.text_input(
-            "Subject:", value="", help="Enter the subject of your feedback."
-        )
-        feedback_text = st.text_area(
-            "Please enter your feedback:",
-            value="",
-            help="Your feedback helps us improve our services.",
-        )
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            if (
-                feedback_subject and feedback_text
-            ):  # Check if both subject and feedback are provided
-                to_emails = ["pablosal@microsoft.com"]
-                subject = feedback_subject
-                response = "Feedback: " + feedback_text
-
-                with st.spinner("Sending feedback to the team..."):
-                    send_email(
-                        response=response,
-                        from_email=FROM_EMAIL,
-                        to_emails=[
-                            to_emails
-                        ],  # Adjusted to match expected List[str] type
-                        subject=subject,
-                    )
-
-                st.success("Thank you for your feedback!")
-            else:
-                st.error(
-                    "Please provide both a subject and feedback before submitting."
-                )
-
-with st.sidebar.expander("Add Required Environment Variables ⚙️", expanded=False):
-    st.markdown(
-        """
-        Please provide the following Azure environment variables to configure the application. You can find these details in the respective Azure services.
-
-        - **Azure OpenAI Key**: Obtain your key from the [Azure OpenAI Service](https://azure.microsoft.com/en-us/services/openai/). This key is essential for authenticating your requests.
-        - **Azure API Endpoint**: Find your specific API endpoint in the [Azure Portal](https://portal.azure.com/).
-        - **Azure API Version**: Use the appropriate version of the Azure OpenAI API for your application. Refer to the [Azure OpenAI documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/) for details on different versions and their features.
-        - **Azure OpenAI Chat Model Name Deployment ID**: This is the unique deployment ID for the chat model you intend to use, for accessing app capabilities and models. You will specify the models to test on subsequent pages. For more information on deployment IDs and setting up chat models, visit the [Azure OpenAI chat models documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/concept-chat).
-        """
-    )
-
-    st.session_state["AZURE_OPENAI_KEY"] = st.text_input(
-        "Azure OpenAI Key",
-        value=st.session_state["AZURE_OPENAI_KEY"],
-        help="Enter your Azure OpenAI key.",
-        type="password",
-        placeholder="e.g., sk-ab*****..",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_OPENAI_API_ENDPOINT"] = st.text_input(
-        "API Endpoint",
-        value=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-        help="Enter the API endpoint for Azure OpenAI.",
-        placeholder="e.g., https://api.openai.com/v1",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_OPENAI_API_VERSION"] = st.text_input(
-        "API Version",
-        value=st.session_state["AZURE_OPENAI_API_VERSION"],
-        help="Enter the API version for Azure OpenAI.",
-        placeholder="e.g., 2024-02-15-preview",
-        label_visibility="visible",
-    )
-    st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"] = st.text_input(
-        "Chat Model Name Deployment ID",
-        value=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"],
-        help="Enter the chat model name deployment ID for Azure OpenAI.",
-        placeholder="e.g., chat-gpt-1234abcd",
-        label_visibility="visible",
-    )
-
-    if st.button("Validate Environment Variables"):
-        try:
-            # Initialize managers if they don't exist in session state
-            managers_to_initialize = [
-                (
-                    "azure_openai_manager",
-                    AzureOpenAIManager(
-                        api_key=st.session_state["AZURE_OPENAI_KEY"],
-                        azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-                        api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
-                        chat_model_name=st.session_state[
-                            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"
-                        ],
-                    ),
-                ),
-                # Create an instance of the benchmarking class
-                (
-                    "client_non_streaming",
-                    AzureOpenAIBenchmarkNonStreaming(
-                        api_key=st.session_state["AZURE_OPENAI_KEY"],
-                        azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-                        api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
-                    ),
-                ),
-            ]
-
-            for manager_name, manager in managers_to_initialize:
-                if manager_name not in st.session_state:
-                    st.session_state[manager_name] = manager
-
-            st.session_state["env_vars_loaded"] = True
-            st.sidebar.success(
-                "Environment variables and managers initialized successfully."
-            )
-        except Exception as e:
-            st.sidebar.error(
-                f"Error initializing environment: {e}. Check your variables."
-            )
-
-st.write(
-    f"""
+    Returns:
+        str: The main content HTML.
+    """
+    return f"""
     <h1 style="text-align:center;">
         Welcome to upgrade your RAG 🚀
         <br>
@@ -162,11 +45,17 @@ st.write(
         <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
-    """,
-    unsafe_allow_html=True,
-)
-st.markdown(
     """
+
+@st.cache_data
+def get_markdown_content() -> str:
+    """
+    Get the markdown content for the app.
+
+    Returns:
+        str: The markdown content.
+    """
+    return """
     Our app zeroes in on key performance areas like speed, response time, and accuracy 🤖. It's a one-stop shop for testing Azure OpenAI models, helping you make smarter, cost-effective choices for your AI projects and boosting your capabilities by embracing the latest AI tech with solid, real-world data.
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
@@ -196,13 +85,17 @@ st.markdown(
         - 👈 The navigation tool at the top right corner is your best friend here. It's super easy to use and lets you jump to different parts of the app in no time.
         - 📊 **Performance Insights:** Dive deep into model performance, exploring throughput and latency.
         - 🔍 **Quality Metrics:** Evaluate the precision and reliability of your AI models.
-    
-    """,
-    unsafe_allow_html=True,
-)
-
-st.write(
     """
+
+@st.cache_data
+def get_footer_content() -> str:
+    """
+    Get the footer content HTML for the app.
+
+    Returns:
+        str: The footer content HTML.
+    """
+    return """
     <div style="text-align:center; font-size:30px; margin-top:10px;">
         ...
     </div>
@@ -218,6 +111,231 @@ st.write(
             <img src="https://img.icons8.com/?size=100&id=23438&format=png&color=000000" alt="Blog" style="width:40px; height:40px;">
         </a>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    """
+
+def load_default_deployment(name: Optional[str] = None, 
+                            key: Optional[str] = None, 
+                            endpoint: Optional[str] = None, 
+                            version: Optional[str] = None) -> None:
+    """
+    Load default deployment settings, optionally from provided parameters.
+    Ensures that a deployment with the same name does not already exist.
+    """
+    # Ensure deployments is a dictionary
+    if 'deployments' not in st.session_state or not isinstance(st.session_state.deployments, dict):
+        st.session_state.deployments = {}
+
+    # Check if the deployment name already exists
+    deployment_name = name if name else os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")
+    if deployment_name in st.session_state.deployments:
+        st.warning(f"Deployment with name '{deployment_name}' already exists.")
+        return  # Exit the function if deployment already exists
+
+    default_deployment = {
+        "name": deployment_name,
+        "key": key if key else os.getenv("AZURE_OPENAI_KEY"),
+        "endpoint": endpoint if endpoint else os.getenv("AZURE_OPENAI_API_ENDPOINT"),
+        "version": version if version else os.getenv("AZURE_OPENAI_API_VERSION"),
+        "stream": False
+    }
+
+    if all(value is not None for value in default_deployment.values() if value != False):
+        st.session_state.deployments[default_deployment["name"]] = default_deployment
+    else:
+        st.error("Default deployment settings are missing.")
+
+def add_deployment_form() -> None:
+    """
+    Render the form to add a new Azure OpenAI deployment.
+    """
+    with st.form("add_deployment_form"):
+        deployment_name = st.text_input(
+            "Deployment id",
+            help="Enter the deployment ID for Azure OpenAI.",
+            placeholder="e.g., chat-gpt-1234abcd"
+        )
+        deployment_key = st.text_input(
+            "Azure OpenAI Key",
+            help="Enter your Azure OpenAI key.",
+            type="password",
+            placeholder="e.g., sk-ab*****.."
+        )
+        deployment_endpoint = st.text_input(
+            "API Endpoint",
+            help="Enter the API endpoint for Azure OpenAI.",
+            placeholder="e.g., https://api.openai.com/v1"
+        )
+        deployment_version = st.text_input(
+            "API Version",
+            help="Enter the API version for Azure OpenAI.",
+            placeholder="e.g., 2024-02-15-preview"
+        )
+        is_streaming = st.radio(
+            "Streaming",
+            (True, False),
+            index=1,
+            format_func=lambda x: "Yes" if x else "No",
+            help="Select 'Yes' if the model will be tested with output in streaming mode."
+        )
+        submitted = st.form_submit_button("Add Deployment")
+        
+        if submitted:
+            if deployment_name and deployment_key and deployment_endpoint and deployment_version:
+                if deployment_name not in st.session_state.deployments:
+                    st.session_state.deployments[deployment_name] = {
+                        "key": deployment_key,
+                        "endpoint": deployment_endpoint,
+                        "version": deployment_version,
+                        "stream": is_streaming
+                    }
+                    st.success(f"Deployment '{deployment_name}' added successfully.")
+                else:
+                    st.error(f"A deployment with the name '{deployment_name}' already exists.")
+            else:
+                st.error("Please fill in all fields.")
+
+def display_deployments() -> None:
+    """
+    Display and manage existing Azure OpenAI deployments.
+    """
+    if 'deployments' in st.session_state:
+        st.markdown("#### Loaded AOAI Deployments")
+        for deployment_name, deployment in st.session_state.deployments.items():
+            with st.expander(deployment_name):
+                updated_name = st.text_input(f"Name", value=deployment_name, key=f"name_{deployment_name}")
+                updated_key = st.text_input(f"Key", value=deployment.get('key', ''), type="password", key=f"key_{deployment_name}")
+                updated_endpoint = st.text_input(f"Endpoint", value=deployment.get('endpoint', ''), key=f"endpoint_{deployment_name}")
+                updated_version = st.text_input(f"Version", value=deployment.get('version', ''), key=f"version_{deployment_name}")
+                updated_stream = st.radio(
+                    "Streaming",
+                    (True, False),
+                    format_func=lambda x: "Yes" if x else "No",
+                    index=0 if deployment.get('stream', False) else 1,
+                    key=f"stream_{deployment_name}",
+                    help="Select 'Yes' if the model will be tested with output in streaming mode."
+                )
+
+                if st.button(f"Update Deployment", key=f"update_{deployment_name}"):
+                    st.session_state.deployments[deployment_name] = {
+                        "key": updated_key,
+                        "endpoint": updated_endpoint,
+                        "version": updated_version,
+                        "stream": updated_stream
+                    }
+                    st.experimental_rerun()
+
+                if st.button(f"Remove Deployment", key=f"remove_{deployment_name}"):
+                    del st.session_state.deployments[deployment_name]
+                    st.experimental_rerun()
+    else:
+        st.error("No deployments found. Please add a deployment in the sidebar.")
+
+def main() -> None:
+    """
+    Main function to run the Streamlit app.
+    """
+    st.set_page_config(
+        page_title="Home",
+        page_icon="👋",
+    )
+
+    env_vars = {
+        "AZURE_OPENAI_KEY": "",
+        "AZURE_OPENAI_API_ENDPOINT": "",
+        "AZURE_OPENAI_API_VERSION": "",
+        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": "",
+        "deployments": {},
+    }
+    initialize_session_state(env_vars)
+
+    with st.sidebar:
+        st.markdown("## ⚙️ Configuration Settings")
+        
+        with st.expander("📘 How to Add New Deployments", expanded=False):
+            st.markdown(
+                """
+                Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
+
+                ### Step 1: Enable Multi-Deployment
+                - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
+
+                ### Step 2: Add Deployment Details
+                - Fill in the form with the following details:
+                    - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
+                    - **API Endpoint**: The endpoint URL for Azure OpenAI.
+                    - **API Version**: The version of the Azure OpenAI API you're using.
+                    - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
+                    - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
+                - Click **Add Deployment** to save your deployment to the session state.
+
+                ### Step 3: View and Manage Deployments
+                - Once added, your deployments are listed under **Loaded AOAI Deployments**.
+                - Click on a deployment to expand and view its details.
+                - You can update any of the deployment details here and click **Update Deployment** to save changes.
+
+                ### How Deployments are Managed
+                - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
+                - You can add multiple deployments and manage them individually from the sidebar.
+                - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
+
+                ### Updating Deployments Across Pages
+                - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
+                - This means you can seamlessly switch between different deployments or update their configurations without losing context.
+
+                Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
+                """,
+                unsafe_allow_html=True
+            )
+        
+        enable_multi_deployment = st.checkbox("Load New Deployment", help="Check this box to compare performance across multiple deployments in different regions.")
+        
+        if enable_multi_deployment:
+            operation = st.selectbox(
+                "Choose Your MaaS Deployment:",
+                ("AOAI Deployment", "Other"),
+                index=0,
+                help="Select the benchmark you want to perform to evaluate AI model performance.",
+                placeholder="Select a Benchmark",
+            )
+            if operation == "AOAI Deployment":
+                add_deployment_form()
+            else: 
+                st.info("Other deployment options will be available soon.")
+        else:
+            load_default_deployment()
+
+        display_deployments()
+
+        st.write(
+        """
+        <div style="text-align:center; font-size:30px; margin-top:10px;">
+            ...
+        </div>
+        """,
+        unsafe_allow_html=True)
+
+        with st.expander("We Value Your Feedback! 🌟", expanded=False):
+            st.markdown(
+                """
+                🐞 **Encountered a bug?** Or 🚀 have a **feature request**? We're all ears!
+
+                Your feedback is crucial in helping us make our service better. If you've stumbled upon an issue or have an idea to enhance our platform, don't hesitate to let us know.
+
+                📝 **Here's how you can help:**
+                - Click on the link below to open a new issue on our GitHub repository.
+                - Provide a detailed description of the bug or the feature you envision. The more details, the better!
+                - Submit your issue. We'll review it as part of our ongoing effort to improve.
+
+                [🔗 Open an Issue on GitHub](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues)
+
+                🙏 **Thank you for contributing!** Your insights are invaluable to us. Together, let's make our service the best it can be!
+                """,
+                unsafe_allow_html=True
+            )
+    
+    st.write(get_main_content(), unsafe_allow_html=True)
+    st.markdown(get_markdown_content(), unsafe_allow_html=True)
+    st.write(get_footer_content(), unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()

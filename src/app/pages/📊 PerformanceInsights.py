@@ -13,6 +13,7 @@ from src.app.outputformatting import markdown_to_docx
 from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
 from utils.ml_logging import get_logger
+from src.app.Home import add_deployment_form, display_deployments, load_default_deployment
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
@@ -30,8 +31,6 @@ session_vars = [
     "messages",
     "log_messages",
     "benchmark_results",
-    "deployments",
-    "env_vars_loaded"
 ]
 initial_values = {
     "conversation_history": [],
@@ -45,8 +44,6 @@ initial_values = {
     ],
     "log_messages": [],
     "benchmark_results": [],
-    "deployments": [],
-    "env_vars_loaded": False
 }
 for var in session_vars:
     if var not in st.session_state:
@@ -56,26 +53,6 @@ st.set_page_config(
     page_title="Performance Insights AI Assistant",
     page_icon="📊",
 )
-
-def load_default_deployment() -> None:
-    """
-    Load default deployment settings from environment variables.
-    """
-    default_deployment = {
-        "stream": False
-    }
-    essential_vars = {
-        "name": os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"),
-        "key": os.getenv("AZURE_OPENAI_KEY"),
-        "endpoint": os.getenv("AZURE_OPENAI_API_ENDPOINT"),
-        "version": os.getenv("AZURE_OPENAI_API_VERSION")
-    }
-
-    if all(essential_vars.values()):
-        essential_vars.update(default_deployment)
-        st.session_state.deployments = [essential_vars]
-    else:
-        st.error("Default deployment settings are missing in environment variables.")
 
 def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, deployment_id: str) -> AzureOpenAIManager:
     """
@@ -124,59 +101,22 @@ with st.sidebar:
 
         st.markdown("## ⚙️ Configuration Settings")
         enable_multi_region = st.checkbox("Multi-Deployment Benchmarking", help="Check this box to compare performance across multiple deployments in different regions.")
-        if not st.session_state.deployments:
-            load_default_deployment()
         if enable_multi_region:
-            st.markdown("### Add New Deployment")
-            with st.form("add_deployment_form"):
-                deployment_name = st.text_input("Deployment Name")
-                deployment_key = st.text_input("API Key", type="password")
-                deployment_endpoint = st.text_input("API Endpoint")
-                deployment_version = st.text_input("API Version")
-                is_streaming = st.radio("Streaming", (True, False), format_func=lambda x: "Yes" if x else "No", help="Select 'Yes' if the model will be tested with output in streaming mode.")
-                submitted = st.form_submit_button("Add Deployment")
-
-                if submitted:
-                    if deployment_name and deployment_key and deployment_endpoint and deployment_version:
-                        new_deployment = {
-                            "name": deployment_name,
-                            "key": deployment_key,
-                            "endpoint": deployment_endpoint,
-                            "version": deployment_version,
-                            "stream": is_streaming
-                        }
-                        if 'deployments' not in st.session_state:
-                            st.session_state.deployments = []
-                        st.session_state.deployments.append(new_deployment)
-                        st.success(f"Deployment '{deployment_name}' added successfully.")
-                    else:
-                        st.error("Please fill in all fields.")
-
-        if 'deployments' in st.session_state:
-            st.markdown("##### Loaded AOAI Deployments")
-            for deployment in st.session_state.deployments:
-                with st.expander(f"{deployment.get('name', 'Unnamed')}"):
-                    unique_key = deployment.get('name', 'Unnamed')
-                    updated_name = st.text_input(f"Name", value=deployment.get('name', ''), key=f"name_{unique_key}")
-                    updated_key = st.text_input(f"Key", value=deployment.get('key', '').replace('*', ''), type="password", key=f"key_{unique_key}")
-                    updated_endpoint = st.text_input(f"Endpoint", value=deployment.get('endpoint', ''), key=f"endpoint_{unique_key}")
-                    updated_version = st.text_input(f"Version", value=deployment.get('version', ''), key=f"version_{unique_key}")
-                    updated_stream = st.radio("Streaming", (True, False), format_func=lambda x: "Yes" if x else "No", index=0 if deployment.get('stream', False) else 1, key=f"stream_{unique_key}", help="Select 'Yes' if the model will be tested with output in streaming mode.")
-        
-                    if st.button(f"Update Deployment", key=f"update_{unique_key}"):
-                        for i, d in enumerate(st.session_state.deployments):
-                            if d.get('name') == unique_key:
-                                st.session_state.deployments[i] = {
-                                    "name": updated_name,
-                                    "key": updated_key,
-                                    "endpoint": updated_endpoint,
-                                    "version": updated_version,
-                                    "stream": updated_stream
-                                }
-                                break
-                        st.experimental_rerun()
+            operation = st.selectbox(
+                "Choose Your MaaS Deployment:",
+                ("AOAI Deployment", "Other"),
+                index=0,
+                help="Select the benchmark you want to perform to evaluate AI model performance.",
+                placeholder="Select a Benchmark",
+            )
+            if operation == "AOAI Deployment":
+                add_deployment_form()
+            else: 
+                st.info("Other deployment options will be available soon.")
         else:
-            st.error("No deployments found. Please add a deployment in the sidebar.")
+            load_default_deployment()
+
+        display_deployments()
 
         if operation == "Latency Benchmark":
             byop_option = st.radio(
@@ -186,11 +126,9 @@ with st.sidebar:
             )
 
             if byop_option == "Yes":
-                with st.expander("Upload Your Prompts CSV File"):
-                    st.write("Please upload a CSV file with your own prompts for the benchmark tests.")
-                    uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
-                    if uploaded_file is not None:
-                        st.write("File uploaded successfully!")
+                uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
+                if uploaded_file is not None:
+                    st.write("File uploaded successfully!")
             elif byop_option == "No":
                 context_tokens = st.slider(
                     "Context Tokens (Input)",
@@ -239,8 +177,8 @@ with st.sidebar:
                 help="Enable this option to prevent server caching during the benchmark tests.",
             )
 
-            st.markdown("---")
-
+            
+    st.markdown("---")
     st.markdown("## 🚀 Run Benchmark")
     st.markdown("Ensure all settings are correctly configured before proceeding.")
     run_benchmark = st.button("Start Benchmark")
