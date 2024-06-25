@@ -62,13 +62,18 @@ def load_default_deployment() -> None:
     Load default deployment settings from environment variables.
     """
     default_deployment = {
+        "stream": False
+    }
+    essential_vars = {
         "name": os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"),
         "key": os.getenv("AZURE_OPENAI_KEY"),
         "endpoint": os.getenv("AZURE_OPENAI_API_ENDPOINT"),
-        "version": os.getenv("AZURE_OPENAI_API_VERSION"),
+        "version": os.getenv("AZURE_OPENAI_API_VERSION")
     }
-    if all(default_deployment.values()):
-        st.session_state.deployments = [default_deployment]
+
+    if all(essential_vars.values()):
+        essential_vars.update(default_deployment)
+        st.session_state.deployments = [essential_vars]
     else:
         st.error("Default deployment settings are missing in environment variables.")
 
@@ -118,10 +123,9 @@ with st.sidebar:
         st.markdown("---")
 
         st.markdown("## ⚙️ Configuration Settings")
-        enable_multi_region = st.checkbox("Enable Multi Deployment")
-        if not enable_multi_region:
-            if not st.session_state.deployments:
-                load_default_deployment()
+        enable_multi_region = st.checkbox("Multi-Deployment Benchmarking", help="Check this box to compare performance across multiple deployments in different regions.")
+        if not st.session_state.deployments:
+            load_default_deployment()
         if enable_multi_region:
             st.markdown("### Add New Deployment")
             with st.form("add_deployment_form"):
@@ -129,6 +133,7 @@ with st.sidebar:
                 deployment_key = st.text_input("API Key", type="password")
                 deployment_endpoint = st.text_input("API Endpoint")
                 deployment_version = st.text_input("API Version")
+                is_streaming = st.radio("Streaming", (True, False), format_func=lambda x: "Yes" if x else "No", help="Select 'Yes' if the model will be tested with output in streaming mode.")
                 submitted = st.form_submit_button("Add Deployment")
 
                 if submitted:
@@ -138,6 +143,7 @@ with st.sidebar:
                             "key": deployment_key,
                             "endpoint": deployment_endpoint,
                             "version": deployment_version,
+                            "stream": is_streaming
                         }
                         if 'deployments' not in st.session_state:
                             st.session_state.deployments = []
@@ -147,17 +153,33 @@ with st.sidebar:
                         st.error("Please fill in all fields.")
 
         if 'deployments' in st.session_state:
-            st.markdown("##### Loaded Deployments")
+            st.markdown("##### Loaded AOAI Deployments")
             for deployment in st.session_state.deployments:
                 with st.expander(f"{deployment.get('name', 'Unnamed')}"):
-                    deployment_copy = deployment.copy()
-                    if 'key' in deployment_copy:
-                        deployment_copy['key'] = '*****'
-                    st.json(deployment_copy)
+                    unique_key = deployment.get('name', 'Unnamed')
+                    updated_name = st.text_input(f"Name", value=deployment.get('name', ''), key=f"name_{unique_key}")
+                    updated_key = st.text_input(f"Key", value=deployment.get('key', '').replace('*', ''), type="password", key=f"key_{unique_key}")
+                    updated_endpoint = st.text_input(f"Endpoint", value=deployment.get('endpoint', ''), key=f"endpoint_{unique_key}")
+                    updated_version = st.text_input(f"Version", value=deployment.get('version', ''), key=f"version_{unique_key}")
+                    updated_stream = st.radio("Streaming", (True, False), format_func=lambda x: "Yes" if x else "No", index=0 if deployment.get('stream', False) else 1, key=f"stream_{unique_key}", help="Select 'Yes' if the model will be tested with output in streaming mode.")
+        
+                    if st.button(f"Update Deployment", key=f"update_{unique_key}"):
+                        for i, d in enumerate(st.session_state.deployments):
+                            if d.get('name') == unique_key:
+                                st.session_state.deployments[i] = {
+                                    "name": updated_name,
+                                    "key": updated_key,
+                                    "endpoint": updated_endpoint,
+                                    "version": updated_version,
+                                    "stream": updated_stream
+                                }
+                                break
+                        st.experimental_rerun()
         else:
             st.error("No deployments found. Please add a deployment in the sidebar.")
 
         if operation == "Latency Benchmark":
+            custom_tokens = st.checkbox("BYOP", help="Check this box to BYOP ")
             context_tokens = st.slider(
                 "Context Tokens (Input)",
                 min_value=100,
@@ -166,48 +188,48 @@ with st.sidebar:
                 help="Select the number of context tokens for each run.",
             )
 
-        options = [100, 500, 800, 1000, 1500, 2000]
-        max_tokens_list = st.multiselect(
-            "Select Max Output Tokens (Generation)",
-            options=options,
-            default=[500],
-            help="Select the maximum tokens for each run.",
-        )
+            options = [100, 500, 800, 1000, 1500, 2000]
+            max_tokens_list = st.multiselect(
+                "Select Max Output Tokens (Generation)",
+                options=options,
+                default=[500],
+                help="Select the maximum tokens for each run.",
+            )
 
-        custom_tokens = st.checkbox("Custom Output Tokens")
-        if custom_tokens:
-            custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):")
-            if custom_tokens_input:
-                try:
-                    custom_token_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
-                    max_tokens_list = list(set(max_tokens_list + custom_token_list))
-                except ValueError:
-                    st.error("Please enter valid integers separated by commas for max tokens.")
+            custom_tokens = st.checkbox("Custom Output Tokens")
+            if custom_tokens:
+                custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):")
+                if custom_tokens_input:
+                    try:
+                        custom_token_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
+                        max_tokens_list = list(set(max_tokens_list + custom_token_list))
+                    except ValueError:
+                        st.error("Please enter valid integers separated by commas for max tokens.")
 
-        num_iterations = st.slider(
-            "Number of Iterations",
-            min_value=1,
-            max_value=100,
-            value=50,
-            help="Select the number of iterations for each benchmark test.",
-        )
+            num_iterations = st.slider(
+                "Number of Iterations",
+                min_value=1,
+                max_value=100,
+                value=50,
+                help="Select the number of iterations for each benchmark test.",
+            )
 
-        temperature = st.slider(
-            "Temperature",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.7,
-            step=0.1,
-            help="Select the temperature setting for the benchmark tests.",
-        )
+            temperature = st.slider(
+                "Temperature",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.7,
+                step=0.1,
+                help="Select the temperature setting for the benchmark tests.",
+            )
 
-        prevent_server_caching = st.checkbox(
-            "Prevent Server Caching",
-            value=True,
-            help="Enable this option to prevent server caching during the benchmark tests.",
-        )
+            prevent_server_caching = st.checkbox(
+                "Prevent Server Caching",
+                value=True,
+                help="Enable this option to prevent server caching during the benchmark tests.",
+            )
 
-        st.markdown("---")
+            st.markdown("---")
 
     st.markdown("## 🚀 Run Benchmark")
     st.markdown("Ensure all settings are correctly configured before proceeding.")
@@ -396,6 +418,8 @@ if run_benchmark:
 
     if st.session_state["benchmark_results"]:
         display_statistics(st.session_state["benchmark_results"])
+else: 
+    st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
 
 def download_chat_history() -> None:
     """
