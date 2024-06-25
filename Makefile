@@ -81,14 +81,8 @@ run_pylint:
 make run_speed_test:
 	$(PYTHON_INTERPRETER) ./benchmark/speedtest.py
 
-make run_mmlu:
-	$(PYTHON_INTERPRETER) src/quality/mmlu.py
-
-make run_truthful_qa:
-	$(PYTHON_INTERPRETER) src/quality/truthfulqa.py
-
-make run_pud_med_qa:
-	$(PYTHON_INTERPRETER) src/quality/pubmedqa.py
+make evals_test:
+	$(PYTHON_INTERPRETER) src/quality/evals.py
 
 run_streamlit:
 	streamlit run src/app/Home.py
