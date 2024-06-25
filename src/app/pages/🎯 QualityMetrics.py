@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import pandas as pd
 import plotly.express as px
@@ -8,10 +7,7 @@ import dotenv
 import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
-from src.app.outputformatting import markdown_to_docx
-from src.quality.mmlu import MMLU
-from src.quality.truthfulqa import TruthfulQA
-from src.quality.pudmedqa import PubMedQA
+from src.quality.evals import MMLU, TruthfulQA, PubMedQA, CustomEval
 from utils.ml_logging import get_logger
 
 
@@ -67,7 +63,7 @@ top_bar.markdown("""
 
                  """)
 
-with st.expander("Learn More About Quality Benchmarks", expanded=False):
+with st.expander("Learn More About Quality Benchmarks 📖", expanded=False):
     st.markdown(
         """
             **MMLU**  
@@ -111,13 +107,14 @@ with st.sidebar:
     st.markdown("### Configure Benchmark Variables:")
     deployment_names = st.text_area(
         "Enter Deployment Names",
-        help="Enter the deployment names you want to benchmark, one per line.",
+        help="Enter the deployment names you want to benchmark as a comma seperated list.",
     )
 
     st.write("Select the benchmark(s) you'd like to run:")
     mmlu_select = st.checkbox("MMLU")
     medpub_select = st.checkbox("MedPub QA")
     truthful_select = st.checkbox("Truthful QA")
+    custom_select = st.checkbox("Custom Evaluation")
     
     if mmlu_select:
         st.write("**MMLU Benchmark Settings**")
@@ -138,6 +135,26 @@ with st.sidebar:
         st.write("**Truthful QA Benchmark Settings**")
         truthful_subsample = st.slider('Select Truthful QA benchmark subsample %. (814 total samples)', min_value=0, max_value=100)
 
+    if custom_select:
+        st.write("**Custom Benchmark Settings**")
+        uploaded_file = st.file_uploader("Upload CSV data", type=['csv'], help="Upload a CSV file with custom data for evaluation. CSV columns should be 'prompt', 'ground_truth', and 'context'. Context is optional")
+        if uploaded_file is not None:
+            # To read file as df:
+            custom_df = pd.read_csv(uploaded_file)
+            df_validation_c = st.empty()
+            if 'prompt' in custom_df.columns and 'ground_truth' in custom_df.columns:
+                df_validation_c.success(f"Custom data uploaded successfully!")
+            else:
+                df_validation_c.error("Error. Could not find 'prompt' and 'ground_truth' columns in the uploaded file.")
+            
+            if 'context' not in custom_df.columns:
+                metrics_list = ['Accuracy']
+            else:
+                metrics_list = ['Accuracy', 'Faithfulness']
+            
+            custom_subsample = st.slider(f'Select Custom benchmark subsample %. {custom_df.shape[0]} rows found', min_value=0, max_value=100)
+            custom_metrics = st.multiselect(label="Select metrics:",options = metrics_list, help = "Select metrics for your custom evaluation.")
+
     run_benchmark = st.button("Run Benchmark 🚀")
     with st.expander("Benchmark Guide 📊", expanded=False):
         st.markdown(
@@ -155,38 +172,48 @@ with st.sidebar:
 
 
 # Function to get the task list for the selected benchmark
-def get_task_list(deployment_list:list, mmlu:bool = False, medpub:bool = False, truthful:bool = False):
+def get_task_list(deployment_list:list):
     objects = []
 
     for deployment in deployment_list:
         deployment_config = {
             "key": st.session_state["AZURE_OPENAI_KEY"],
             "endpoint": st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-            "model": deployment
+            "model": deployment,
+            "version": st.session_state["AZURE_OPENAI_API_VERSION"],
         }
-        if mmlu:
+        if mmlu_select:
             obj = MMLU(
                 deployment_config=deployment_config,
                 sample_size=mmlu_subsample/100,
                 log_level="ERROR",
                 categories=mmlu_categories
             )
-        if medpub:
+        if medpub_select:
             obj = PubMedQA(
                 deployment_config=deployment_config,
                 sample_size=medpub_subsample/100,
                 log_level="ERROR"
             )
-        if truthful:
+        if truthful_select:
             obj = TruthfulQA(
                 deployment_config=deployment_config,
                 sample_size=truthful_subsample/100,
                 log_level="ERROR"
             )
-        
+
+        if custom_select:
+            obj = CustomEval(
+                deployment_config=deployment_config,
+                custom_data=custom_df,
+                metrics_list=custom_metrics,
+                sample_size=custom_subsample/100,
+                log_level="ERROR"
+            )
+
         objects.append(obj)
     
-    tasks = [obj.test() for obj in objects]
+    tasks = [asyncio.create_task(obj.test()) for obj in objects]
     return tasks
     
 
@@ -199,7 +226,7 @@ async def run_benchmark_tests():
 
         if mmlu_select:
             
-            mmlu_tasks = get_task_list(deployment_names_list, mmlu=True)
+            mmlu_tasks = get_task_list(deployment_names_list)
             mmlu_stats = await asyncio.gather(*mmlu_tasks)
             mmlu_results = pd.concat(mmlu_stats)
 
@@ -211,7 +238,7 @@ async def run_benchmark_tests():
         
         if medpub_select:
             logger.info("Running MedPub QA benchmark")
-            medpub_tasks = get_task_list(deployment_names_list, medpub=True)
+            medpub_tasks = get_task_list(deployment_names_list)
             medpub_stats = await asyncio.gather(*medpub_tasks)
             medpub_results = pd.concat(medpub_stats)
 
@@ -222,7 +249,7 @@ async def run_benchmark_tests():
         
         if truthful_select:
             logger.info("Running Truthful QA benchmark")
-            truthful_tasks = get_task_list(deployment_names_list, truthful=True)
+            truthful_tasks = get_task_list(deployment_names_list)
             truthful_stats = await asyncio.gather(*truthful_tasks)
             truthful_results = pd.concat(truthful_stats)
 
@@ -230,6 +257,17 @@ async def run_benchmark_tests():
             st.write("Sample Size: ", f"{int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)")
             st.dataframe(truthful_results.drop('test', axis = 1), hide_index=True)
             results.append(truthful_results)
+
+        if custom_select:
+            logger.info("Running Custom Evaluation")
+            custom_tasks = get_task_list(deployment_names_list)
+            custom_stats = await asyncio.gather(*custom_tasks)
+            custom_results = pd.concat(custom_stats)
+
+            st.markdown("### Custom Evaluation Results")
+            st.write("Sample Size: ", f"{int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)")
+            st.dataframe(custom_results.drop('test', axis = 1), hide_index=True)
+            results.append(custom_results)
 
         results_df = pd.concat(results)
 
