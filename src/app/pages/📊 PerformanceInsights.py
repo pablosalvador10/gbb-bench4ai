@@ -179,33 +179,43 @@ with st.sidebar:
             st.error("No deployments found. Please add a deployment in the sidebar.")
 
         if operation == "Latency Benchmark":
-            custom_tokens = st.checkbox("BYOP", help="Check this box to BYOP ")
-            context_tokens = st.slider(
-                "Context Tokens (Input)",
-                min_value=100,
-                max_value=5000,
-                value=1000,
-                help="Select the number of context tokens for each run.",
+            byop_option = st.radio(
+                "BYOP (Bring Your Own Prompt)",
+                options=["No", "Yes"],
+                help="Select 'Yes' to bring your own prompt or 'No' to use default settings."
             )
 
-            options = [100, 500, 800, 1000, 1500, 2000]
-            max_tokens_list = st.multiselect(
-                "Select Max Output Tokens (Generation)",
-                options=options,
-                default=[500],
-                help="Select the maximum tokens for each run.",
-            )
-
-            custom_tokens = st.checkbox("Custom Output Tokens")
-            if custom_tokens:
-                custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):")
+            if byop_option == "Yes":
+                with st.expander("Upload Your Prompts CSV File"):
+                    st.write("Please upload a CSV file with your own prompts for the benchmark tests.")
+                    uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
+                    if uploaded_file is not None:
+                        st.write("File uploaded successfully!")
+            elif byop_option == "No":
+                context_tokens = st.slider(
+                    "Context Tokens (Input)",
+                    min_value=100,
+                    max_value=5000,
+                    value=1000,
+                    help="Select the number of context tokens for each run.",
+                )
+            # Custom output tokens checkbox
+            custom_output_tokens = st.checkbox("Custom Output Tokens")
+            if custom_output_tokens:
+                custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):", help="Enter custom max tokens for each run.")
                 if custom_tokens_input:
                     try:
-                        custom_token_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
-                        max_tokens_list = list(set(max_tokens_list + custom_token_list))
+                        max_tokens_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
                     except ValueError:
                         st.error("Please enter valid integers separated by commas for max tokens.")
-
+            else:
+                options = [100, 500, 800, 1000, 1500, 2000]
+                max_tokens_list = st.multiselect(
+                    "Select Max Output Tokens (Generation)",
+                    options=options,
+                    default=[500],
+                    help="Select the maximum tokens for each run."
+                )
             num_iterations = st.slider(
                 "Number of Iterations",
                 min_value=1,
