@@ -2,6 +2,7 @@ from utils.ml_logging import get_logger
 from datasets import load_dataset
 from openai import AzureOpenAI
 from src.quality.metrics import accuracy
+from typing import Dict, List
 
 import logging
 import pandas as pd
@@ -423,7 +424,7 @@ class CustomEval(Eval):
         test: Run the custom evaluation and output a dataframe
 
     '''
-    def __init__(self, deployment_config: dict, custom_data: pd.DataFrame, metrics_list: list, sample_size: float = 1.0, log_level: str = "INFO"):
+    def __init__(self, deployment_config: Dict, custom_data: pd.DataFrame, metrics_list: List, sample_size: float = 1.0, log_level: str = "INFO"):
         super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
         self.custom_df = custom_data
         self.metrics_list = [x.lower() for x in metrics_list]
@@ -435,7 +436,7 @@ class CustomEval(Eval):
         df=df.sample(frac=self.sample_size,replace=False).reset_index()
         return df
      
-    def __call_aoai(self, row: dict) -> dict:
+    def __call_aoai(self, row: Dict) -> Dict:
 
         client = AzureOpenAI(
                         azure_endpoint = self._base, 
@@ -454,6 +455,7 @@ class CustomEval(Eval):
         
         return row
 
+    # Add other custom metrics here
     def __custom_score(self, row: dict) -> dict:
         if 'accuracy' in self.metrics_list:
             row['accuracy'] = accuracy(row['ground_truth'], row['answer'])
@@ -482,7 +484,7 @@ class CustomEval(Eval):
         self.logger.info("Aggregating Results")
         results_dict = []   
         for metric in self.metrics_list:
-            results_dict.append({'deployment': self.model, 'test': f"custom_{metric}", 'overall_score': results.loc[:, metric].mean()})
+            results_dict.append({'deployment': self.model, 'test': f"custom {metric}", 'overall_score': results.loc[:, metric].mean()})
         
         return pd.DataFrame(results_dict)
 
