@@ -1,5 +1,4 @@
 from typing import Any, Dict, Tuple
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -18,7 +17,6 @@ class ModelPerformanceVisualizer:
         :param data: A dictionary containing the performance data for each model.
         """
         self.data = data
-        self.models = list(data.keys())
         self.df = pd.DataFrame()
 
     def transpose_data(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -46,11 +44,9 @@ class ModelPerformanceVisualizer:
         df = pd.DataFrame.from_records(records)
         df.rename(columns={"model": "ModelName_MaxTokens"}, inplace=True)
         df.set_index("ModelName_MaxTokens", inplace=True)
-        df = df.transpose()
         df_best_and_worst = pd.DataFrame.from_records(best_worst_records)
         df_best_and_worst.rename(columns={"model": "ModelName_MaxTokens"}, inplace=True)
         df_best_and_worst.set_index("ModelName_MaxTokens", inplace=True)
-        df_best_and_worst = df_best_and_worst.transpose()
         return df, df_best_and_worst
 
     def parse_data(self) -> None:
@@ -73,97 +69,129 @@ class ModelPerformanceVisualizer:
             records.append(record)
         self.df = pd.DataFrame.from_records(records)
 
-    def plot_times(self) -> None:
+    def plot_times(self):
         """
-        Plot response times for comparison.
+        Plot response times for comparison and return the figure objects.
         """
-        plt.figure(figsize=(12, 6))
-        sns.boxplot(x="model", y="median_time", data=self.df)
-        plt.title("Median Response Time by Model")
-        plt.xticks(rotation=45)
-        plt.ylabel("Time (s)")
-        plt.show()
+        # First figure for boxplot
+        fig1, ax1 = plt.subplots(figsize=(12, 6))
+        sns.boxplot(x="model", y="median_time", data=self.df, ax=ax1)
+        ax1.set_title("Median Response Time by Model")
+        ax1.tick_params(axis='x', rotation=45)
+        ax1.set_ylabel("Time (s)")
 
-        # Detailed time plots
-        sns.pairplot(
+        # Second figure for pairplot
+        fig2 = sns.pairplot(
             self.df,
             vars=[
                 "median_time",
-                "iqr_time",
                 "percentile_95_time",
                 "percentile_99_time",
             ],
             hue="model",
         )
-        plt.show()
 
-    def plot_tokens(self) -> None:
+        return fig1, fig2
+
+    def plot_tokens(self) -> plt.Figure:
         """
-        Plot token statistics.
+        Plot token statistics and return the figure object.
         """
+        fig, ax = plt.subplots(figsize=(14, 7))
+
         token_features = ["median_prompt_tokens", "median_completion_tokens"]
-        self.df.melt(id_vars=["model"], value_vars=token_features)
-        sns.catplot(
-            x="model",
-            y="value",
-            hue="variable",
-            data=self.df.melt(id_vars="model", value_vars=token_features),
-            kind="bar",
-        )
-        plt.title("Token Metrics by Model")
-        plt.xticks(rotation=45)
-        plt.show()
+        melted_df = self.df.melt(id_vars=["model"], value_vars=token_features)
+        sns.barplot(x="model", y="value", hue="variable", data=melted_df, ax=ax)
+        ax.set_title("Token Metrics by Model")
+        ax.set_ylabel("Tokens")
+        ax.set_xlabel("Model")
+        ax.tick_params(axis='x', rotation=45)
 
-    def plot_errors(self) -> None:
-        """
-        Plot error rates.
-        """
-        sns.barplot(x="model", y="error_rate", data=self.df)
-        plt.title("Error Rate by Model")
-        plt.xticks(rotation=45)
-        plt.ylabel("Error Rate (%)")
-        plt.show()
+        plt.tight_layout()
+        return fig
 
-    def plot_best_worst_runs(self) -> None:
+    def plot_errors(self) -> plt.Figure:
         """
-        Compare the best and worst run times.
+        Plot error rates and return the figure object.
         """
-        self.df[["model", "best_run_time", "worst_run_time"]].set_index("model").plot(
-            kind="bar", figsize=(12, 6)
-        )
-        plt.title("Best vs Worst Run Times")
-        plt.ylabel("Time (s)")
-        plt.show()
+        fig, ax = plt.subplots(figsize=(14, 7))
 
-    def plot_heatmaps(self) -> None:
+        sns.barplot(x="model", y="error_rate", data=self.df, ax=ax)
+        ax.set_title("Error Rate by Model")
+        ax.set_ylabel("Error Rate (%)")
+        ax.set_xlabel("Model")
+        ax.tick_params(axis='x', rotation=45)
+
+        plt.tight_layout()
+        return fig
+
+    def plot_best_worst_runs(self) -> plt.Figure:
         """
-        Plot a heatmap of performance metrics by region and model, if regions data exists.
+        Compare the best and worst run times and return the figure object.
         """
-        try:
-            if "regions" in self.df.columns:
-                plt.figure(figsize=(10, 8))
-                sns.heatmap(
-                    self.df.pivot_table(
-                        index="model", columns="regions", values="median_time"
-                    ),
-                    annot=True,
-                    fmt=".1f",
-                    cmap="coolwarm",
-                )
-                plt.title("Performance Heatmap by Region and Model")
-                plt.show()
-            else:
-                logger.info("No regional data available for heatmap.")
-        except Exception as e:
-            logger.error(f"An error occurred while plotting the heatmap: {e}")
+        fig, ax = plt.subplots(figsize=(14, 7))
+
+        melted_df = self.df.melt(id_vars=["model"], value_vars=["best_run_time", "worst_run_time"])
+        sns.barplot(x="model", y="value", hue="variable", data=melted_df, ax=ax)
+        ax.set_title("Best vs Worst Run Times by Model")
+        ax.set_ylabel("Time (s)")
+        ax.set_xlabel("Model")
+        ax.tick_params(axis='x', rotation=45)
+
+        plt.tight_layout()
+        return fig
+
+    def plot_heatmaps(self) -> plt.Figure:
+        """
+        Plot a heatmap of performance metrics by region and model, if regions data exists, and return the figure object.
+        """
+        fig, ax = plt.subplots(figsize=(14, 7))
+
+        if "regions" in self.df.columns:
+            sns.heatmap(
+                self.df.pivot_table(
+                    index="model", columns="regions", values="median_time"
+                ),
+                annot=True,
+                fmt=".1f",
+                cmap="coolwarm",
+                ax=ax
+            )
+            ax.set_title("Performance Heatmap by Region and Model")
+        else:
+            logger.info("No regional data available for heatmap.")
+        return fig
+
+    def plot_time_vs_tokens(self) -> plt.Figure:
+        """
+        Plot the relationship between time and tokens and return the figure object.
+        """
+        fig, ax = plt.subplots(figsize=(14, 7))
+
+        sns.scatterplot(x="median_prompt_tokens", y="median_time", hue="model", data=self.df, ax=ax)
+        ax.set_title("Response Time vs. Prompt Tokens by Model")
+        ax.set_xlabel("Median Prompt Tokens")
+        ax.set_ylabel("Median Time (s)")
+
+        plt.tight_layout()
+        return fig
 
     def visualize_all(self) -> None:
         """
-        Visualize all the data.
+        Visualize all the data by generating all plots.
         """
         self.parse_data()
-        self.plot_times()
-        self.plot_tokens()
-        self.plot_errors()
-        self.plot_best_worst_runs()
-        self.plot_heatmaps()
+
+        fig_time = self.plot_times()
+        fig_tokens = self.plot_tokens()
+        fig_errors = self.plot_errors()
+        fig_best_worst = self.plot_best_worst_runs()
+        fig_heatmap = self.plot_heatmaps()
+        fig_time_vs_tokens = self.plot_time_vs_tokens()
+
+        fig_time.plot()
+        fig_tokens.plot()
+        fig_errors.plot()
+        fig_best_worst.plot()
+        fig_heatmap.plot()
+        fig_time_vs_tokens.plot()
