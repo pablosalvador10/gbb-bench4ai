@@ -240,7 +240,7 @@ async def run_benchmark_tests():
 
             batch_c.markdown("#### Custom Evaluation Results")
             batch_c.write(f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)")
-            batch_c.dataframe(custom_results.drop('test', axis = 1), hide_index=True)
+            batch_c.dataframe(custom_results, hide_index=True)
             results.append(custom_results)
 
         results_df = pd.concat(results)
@@ -277,6 +277,10 @@ if not st.session_state.get("env_vars_loaded", False):
         "AZURE_OPENAI_API_VERSION": os.getenv("AZURE_OPENAI_API_VERSION"),
     }
     initialize_session_state(env_vars)
+
+# initialize metrics list
+metrics_list = ['Accuracy', 'Answer Similarity']
+context_metrics_list = ['Context Similarity']
 
 # Main layout for initial submission
 
@@ -385,11 +389,9 @@ with st.sidebar:
             
             custom_df.rename(columns={prompt_col: 'prompt', ground_truth_col: 'ground_truth'}, inplace=True)
 
-            if context_col == "None":
-                metrics_list = ['Accuracy'] # TODO: move this list variable to the top
-            else:
+            if context_col != "None":
                 custom_df.rename(columns={context_col: 'context'}, inplace=True)
-                metrics_list = ['Accuracy', 'Faithfulness']
+                metrics_list = metrics_list + context_metrics_list
             
             custom_subsample = st.slider(f'Select Custom benchmark subsample %. {custom_df.shape[0]} rows found', min_value=0, max_value=100)
             custom_metrics = st.multiselect(label="Select metrics:",options = metrics_list, help = "Select metrics for your custom evaluation.")
@@ -458,6 +460,13 @@ with st.expander("Learn More About Public Benchmarks 📖", expanded=False):
             
             [Paper](https://arxiv.org/pdf/1909.06146`) | [HuggingFace Dataset](https://huggingface.co/datasets/qiaojin/PubMedQA) | [Website](https://pubmedqa.github.io/) | [GitHub](https://github.com/pubmedqa/pubmedqa)
 
+        """
+    )
+
+with st.expander("Learn More About Metrics for Custom Eval ", expanded=False):
+    st.markdown(
+        """
+        **Accuracy**:   
         """
     )
 
