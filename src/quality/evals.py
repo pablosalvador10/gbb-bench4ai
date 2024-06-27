@@ -1,7 +1,7 @@
 from utils.ml_logging import get_logger
 from datasets import load_dataset
 from openai import AzureOpenAI
-from src.quality.metrics import accuracy
+from src.quality.metrics import accuracy, sentence_transformer_similarity
 from typing import Dict, List
 
 import logging
@@ -419,6 +419,7 @@ class CustomEval(Eval):
     Private Methods:
         __call_aoai: Call the Azure OpenAI API to generate an answer
         __custom_score: Custom scoring function
+            - Note: This function leverages the metrics modules
 
     Public Method:
         test: Run the custom evaluation and output a dataframe
@@ -427,7 +428,7 @@ class CustomEval(Eval):
     def __init__(self, deployment_config: Dict, custom_data: pd.DataFrame, metrics_list: List, sample_size: float = 1.0, log_level: str = "INFO"):
         super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
         self.custom_df = custom_data
-        self.metrics_list = [x.lower() for x in metrics_list]
+        self.metrics_list = [x.lower().replace(' ','_') for x in metrics_list]
 
     def __transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         
@@ -443,13 +444,22 @@ class CustomEval(Eval):
                         api_key=self._key,  
                         api_version=self.version
                         )
+        
+        if "context" in row.keys():
+            messages = [
+                {"role": "user","content": f"{row['context']}"},
+                {"role": "system","content": f"{row['prompt']}"}
+            ]
+        else:
+            messages = [
+                {"role": "user","content": f"{row['prompt']}"}
+            ]
 
         response = client.chat.completions.create(
             model=self.model,
-            messages=[
-                {"role": "user", "content": f"{row['prompt']}"},
-            ]
+            messages=messages
         )
+
         row['answer'] = response.choices[0].message.content
         logging.debug(f"aoai call row: {row.keys()}")
         
@@ -459,6 +469,10 @@ class CustomEval(Eval):
     def __custom_score(self, row: dict) -> dict:
         if 'accuracy' in self.metrics_list:
             row['accuracy'] = accuracy(row['ground_truth'], row['answer'])
+        if 'answer_similarity' in self.metrics_list:
+            row['answer_similarity'] = sentence_transformer_similarity(row['ground_truth'], row['answer'])
+        if 'context_similarity' in self.metrics_list:
+            row['context_similarity'] = sentence_transformer_similarity(row['context'], row['answer'])
 
         logging.debug(f"custom score row: {row.keys()}")
         return row
