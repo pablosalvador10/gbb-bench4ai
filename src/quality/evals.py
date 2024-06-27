@@ -474,6 +474,8 @@ class CustomEval(Eval):
         if 'context_similarity' in self.metrics_list:
             row['context_similarity'] = sentence_transformer_similarity(row['context'], row['answer'])
 
+        # TODO: run all scoring functions asynchronously
+
         logging.debug(f"custom score row: {row.keys()}")
         return row
         
