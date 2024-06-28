@@ -463,7 +463,7 @@ with st.expander("Learn More About Public Benchmarks 📖", expanded=False):
         """
     )
 
-with st.expander("Learn More About Metrics for Custom Eval ", expanded=False):
+with st.expander("Learn More About Metrics for Custom Eval 🧮", expanded=False):
     st.markdown(
         """
         **Accuracy**: Number of correct predictions divided by the total number of predictions. Model outputs must be exact matches to ground truth.
