@@ -21,3 +21,4 @@ plotly
 datasets
 markdown
 python-docx
+fuzzywuzzy[speedup]
