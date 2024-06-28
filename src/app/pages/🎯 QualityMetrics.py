@@ -466,7 +466,9 @@ with st.expander("Learn More About Public Benchmarks 📖", expanded=False):
 with st.expander("Learn More About Metrics for Custom Eval ", expanded=False):
     st.markdown(
         """
-        **Accuracy**:   
+        **Accuracy**: Number of correct predictions divided by the total number of predictions. Model outputs must be exact matches to ground truth.
+        **Answer Similarity**: The similarity between the generated answer and the ground truth answer. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
+        **Context Similarity**: The similarity between the generated answer and the context. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
         """
     )
 
