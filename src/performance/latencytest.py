@@ -57,6 +57,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self.azure_endpoint = azure_endpoint or os.getenv("AZURE_OPENAI_API_ENDPOINT")
         self._validate_api_configurations()
         self.results = {}
+        self.is_streaming = "N/A"
 
     def _validate_api_configurations(self):
         """
@@ -158,6 +159,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
         headers = [
             "Model_MaxTokens",
+            "is_Streaming",
             "Iterations",
             "Regions",
             "Average TTLT",
@@ -195,6 +197,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
         descriptions = [
             "The maximum number of tokens that the model can handle.",
+            "Whether the test was conducted in streaming mode.",
             "The number of times the test was run.",
             "The geographical regions where the tests were conducted.",
             "The average value of time taken for all successful runs.",
@@ -237,6 +240,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             region_string = ", ".join(set(regions)) if regions else "N/A"
             row = [
                 key,
+                self.is_streaming,
                 data.get("number_of_iterations", "N/A"),
                 region_string,
                 data.get("average_ttlt", "N/A"),
@@ -285,6 +289,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
         print(tabulate(table, headers, tablefmt="pretty"))
         return stats
+    
     @staticmethod
     def save_statistics_to_file(stats: Dict, location: str):
         """
@@ -416,7 +421,10 @@ class AzureOpenAIBenchmarkLatency(ABC):
         completion_tokens = list(filter(None, data.get("completion_tokens", [])))
         prompt_tokens = list(filter(None, data.get("prompt_tokens", [])))
         tbt = data.get("tbt")
-        if tbt is not None:
+        if isinstance(tbt, list):
+            if all(isinstance(sublist, list) for sublist in tbt):
+                tbt = [item for sublist in tbt for item in sublist]
+        else: 
             tbt = list(filter(None, tbt))
         ttft = data.get("ttft")
         if ttft is not None:
@@ -555,6 +563,7 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
         """
         super().__init__(api_key, azure_endpoint, api_version)
         self.results = {}
+        self.is_streaming = False
     
     @backoff.on_exception(
         backoff.expo,
@@ -650,9 +659,10 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
                     response_headers, response_body
                 )
                 headers['tbt'] = time_taken/headers.get("completion_tokens")
-                headers['ttft'] = None
+                headers['ttft'] = time_taken
                 self._store_results(deployment_name, max_tokens, headers, time_taken)
                 logger.info(f"Succesful Run - Time taken: {time_taken:.2f} seconds.")
+                return response_body['choices'][0]['message']['content']
 
                 
 class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
@@ -661,6 +671,7 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         Initialize the AzureOpenAILatencyBenchmark with the API key, API version, and endpoint.
         """
         super().__init__(api_key, azure_endpoint, api_version)
+        self.is_streaming = True
    
     @backoff.on_exception(
         backoff.expo,
@@ -718,14 +729,13 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
 
         encoding = get_encoding_from_model_name(deployment_name)
         final_text_response = ""
-        results = []
 
         logger.info(f"Starting call to model {deployment_name} with max tokens {max_tokens} at (Local time): {datetime.now()}, (GMT): {datetime.now(timezone.utc)}")
         async with aiohttp.ClientSession() as session:
             start_time = time.perf_counter()
             try:
                 async with session.post(url, headers=headers, json=body, timeout=timeout) as response:
-                    prev_end_time = start_time  # Initialize prev_end_time to store the previous end_time
+                    prev_end_time = start_time
                     token_generation_count = 0
                     first_token_time = None
                     token_times = []
@@ -740,18 +750,13 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
                                         if 'choices' in data and data['choices']:
                                             event_text = data['choices'][0].get('delta', {}).get('content', '')
                                             if event_text:
-                                                end_time = time.time()
-                                                time_taken = (end_time - prev_end_time) * 1000  # Subtract prev_end_time from start_time  
-                                                time_taken = max(time_taken, 1)  # Set a minimum value of 0.01 ms for time_taken  
-                                                time_taken = round(time_taken, 2)  
-                                                token_times.append(time_taken) 
-                                                token_generation_count = token_generation_count + count_tokens(encoding, event_text)
-                                                final_text_response += event_text
-                                                print(event_text, end="", flush=True)
-                                                time.sleep(0.001)  # Maintain minimal sleep to reduce latency
-                                                prev_end_time = end_time
+                                                end_time = time.perf_counter()
+                                                time_taken = end_time - prev_end_time
+                                                prev_end_time = end_time  
                                                 if first_token_time is None:
-                                                    first_token_time = time_taken
+                                                    first_token_time = time_taken 
+                                                token_times.append(time_taken) 
+                                                final_text_response += event_text
                                     except json.JSONDecodeError as e:
                                         logger.error(f"Error decoding JSON: {e}")
             except aiohttp.ClientError as e:
@@ -762,25 +767,25 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
 
         end_time = time.perf_counter()
         total_time_taken = end_time - start_time
+        token_times = [max(round(time_taken * 1000, 2), 1) for time_taken in token_times]
+        token_generation_count = token_generation_count + count_tokens(encoding, final_text_response)
         logger.info(f"Finished call to model {deployment_name}. Time taken for chat: {round(total_time_taken, 2)} seconds or {round(total_time_taken * 1000, 2)} milliseconds.")
 
         if token_times:
-            print("\n")
             TBT = token_times[1:]
-            TTFT = first_token_time/context_num_tokens
-            print(f"TBT: {token_times} seconds or TTFT {first_token_time} milliseconds.")
-
+            TTFT = first_token_time
 
             headers_dict = {
                 "completion_tokens": token_generation_count,
                 "prompt_tokens": context_num_tokens,
                 "region": response.headers.get("region", "N/A"),
                 "utilization": response.headers.get("azure-openai-deployment-utilization", "N/A"),
-                "TBT": TBT,
-                "TTFT": TTFT,
+                "tbt": TBT,
+                "ttft": TTFT,
             }
             self._store_results(deployment_name, max_tokens, headers_dict, total_time_taken)
-        return final_text_response
 
-        # self._handle_error(deployment_name, max_tokens, None, "-99")
-        # return None
+            return final_text_response
+        else:
+            self._handle_error(deployment_name, max_tokens, None, "-99")
+  

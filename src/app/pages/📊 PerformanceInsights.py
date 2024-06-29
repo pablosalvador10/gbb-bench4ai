@@ -10,7 +10,7 @@ import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.outputformatting import markdown_to_docx
-from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming
+from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
 from utils.ml_logging import get_logger
 from src.app.Home import add_deployment_form, display_deployments, load_default_deployment
@@ -67,11 +67,21 @@ def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, d
         chat_model_name=deployment_id,
     )
 
-def create_benchmark_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+def create_benchmark_non_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
     """
     Create a new benchmark client instance.
     """
     return AzureOpenAIBenchmarkNonStreaming(
+        api_key=api_key,
+        azure_endpoint=endpoint,
+        api_version=api_version,
+    )
+
+def create_benchmark_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+    """
+    Create a new benchmark client instance.
+    """
+    return AzureOpenAIBenchmarkStreaming(
         api_key=api_key,
         azure_endpoint=endpoint,
         api_version=api_version,
@@ -191,30 +201,31 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
     st.markdown("## Benchmark Results")
     table = []
     headers = [
-        "Deployment_MaxTokens", "Iterations", "Regions", "Average Time", "Median Time",
-        "IQR Time", "95th Percentile Time", "99th Percentile Time", "CV Time",
-        "Median Prompt Tokens", "IQR Prompt Tokens", "Median Completion Tokens",
-        "IQR Completion Tokens", "95th Percentile Completion Tokens",
-        "99th Percentile Completion Tokens", "CV Completion Tokens", "Error Rate",
-        "Error Types", "Successful Runs", "Unsuccessful Runs", "Throttle Count",
-        "Throttle Rate", "Best Run", "Worst Run"
+        "Model_MaxTokens", "is_Streaming", "Iterations", "Regions",
+        "Average TTLT", "Median TTLT", "IQR TTLT", "95th Percentile TTLT", "99th Percentile TTLT", "CV TTLT",
+        "Median Prompt Tokens", "IQR Prompt Tokens", "Median Completion Tokens", "IQR Completion Tokens",
+        "95th Percentile Completion Tokens", "99th Percentile Completion Tokens", "CV Completion Tokens",
+        "Average TBT", "Median TBT", "IQR TBT", "95th Percentile TBT", "99th Percentile TBT",
+        "Average TTFT", "Median TTFT", "IQR TTFT", "95th Percentile TTFT", "99th Percentile TTFT",
+        "Error Rate", "Error Types", "Successful Runs", "Unsuccessful Runs",
+        "Throttle Count", "Throttle Rate", "Best Run", "Worst Run",
     ]
-
     for stat in stats: 
-        for key, data in stat.items():
+        for key, data in stats.items():
             regions = data.get("regions", [])
-            regions = [r for r in regions if r is not None]  # Remove None values
+            regions = [r for r in regions if r is not None]
             region_string = ", ".join(set(regions)) if regions else "N/A"
             row = [
                 key,
+                data.get("is_streaming", "N/A"),
                 data.get("number_of_iterations", "N/A"),
                 region_string,
-                data.get("average_time", "N/A"),
-                data.get("median_time", "N/A"),
-                data.get("iqr_time", "N/A"),
-                data.get("percentile_95_time", "N/A"),
-                data.get("percentile_99_time", "N/A"),
-                data.get("cv_time", "N/A"),
+                data.get("average_ttlt", "N/A"),
+                data.get("median_ttlt", "N/A"),
+                data.get("iqr_ttlt", "N/A"),
+                data.get("percentile_95_ttlt", "N/A"),
+                data.get("percentile_99_ttlt", "N/A"),
+                data.get("cv_ttlt", "N/A"),
                 data.get("median_prompt_tokens", "N/A"),
                 data.get("iqr_prompt_tokens", "N/A"),
                 data.get("median_completion_tokens", "N/A"),
@@ -222,6 +233,16 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
                 data.get("percentile_95_completion_tokens", "N/A"),
                 data.get("percentile_99_completion_tokens", "N/A"),
                 data.get("cv_completion_tokens", "N/A"),
+                data.get("average_tbt", "N/A"),
+                data.get("median_tbt", "N/A"),
+                data.get("iqr_tbt", "N/A"),
+                data.get("percentile_95_tbt", "N/A"),
+                data.get("percentile_99_tbt", "N/A"),
+                data.get("average_ttft", "N/A"),
+                data.get("median_ttft", "N/A"),
+                data.get("iqr_ttft", "N/A"),
+                data.get("percentile_95_ttft", "N/A"),
+                data.get("percentile_99_ttft", "N/A"),
                 data.get("error_rate", "N/A"),
                 data.get("errors_types", "N/A"),
                 data.get("successful_runs", "N/A"),
@@ -229,7 +250,7 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
                 data.get("throttle_count", "N/A"),
                 data.get("throttle_rate", "N/A"),
                 json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-                json.dumps(data.get("worst_run", {}))
+                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A",
             ]
             table.append(row)
 
@@ -315,11 +336,18 @@ async def run_benchmark_tests() -> None:
     try:
         deployment_clients = []
         for deployment_name, deployment in st.session_state.deployments.items():
-            client = create_benchmark_client(
-                api_key=deployment["key"],
-                endpoint=deployment["endpoint"],
-                api_version=deployment["version"],
-            )
+            if deployment["stream"] == True:
+                client = create_benchmark_streaming_client(
+                    api_key=deployment["key"],
+                    endpoint=deployment["endpoint"],
+                    api_version=deployment["version"],
+                )
+            else:
+                client = create_benchmark_non_streaming_client(
+                    api_key=deployment["key"],
+                    endpoint=deployment["endpoint"],
+                    api_version=deployment["version"],
+                )
             deployment_clients.append((client, deployment_name))
 
         tasks = [
