@@ -140,12 +140,20 @@ with st.sidebar:
         )
 
         if byop_option == "Yes":
+            num_iterations = 0
+            context_tokens = "BYOP"
             uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
             if uploaded_file is not None:
                 st.write("File uploaded successfully!")
-                df = pd.read_csv(uploaded_file)
-                num_rows = len(df)
-                st.write(f"Number of iterations because number of prompts {num_rows} provided")
+                try:
+                    df = pd.read_csv(uploaded_file)
+                    if "prompts" in df.columns:
+                        prompts = df["prompts"].tolist()
+                        num_iterations = len(prompts)
+                    else:
+                        st.error("The uploaded CSV file must contain a 'prompts' column.")
+                except Exception as e:
+                    st.error(f"An error occurred while processing the uploaded file: {e}")
         elif byop_option == "No":
             context_tokens = st.slider(
                 "Context Tokens (Input)",
@@ -155,11 +163,11 @@ with st.sidebar:
                 help="Select the number of context tokens for each run.",
             )
             num_iterations = st.slider(
-            "Number of Iterations",
-            min_value=1,
-            max_value=100,
-            value=50,
-            help="Select the number of iterations for each benchmark test.")
+                "Number of Iterations",
+                min_value=1,
+                max_value=100,
+                value=50,
+                help="Select the number of iterations for each benchmark test.")
     
         # Custom output tokens checkbox
         custom_output_tokens = st.checkbox("Custom Output Tokens")
@@ -442,6 +450,7 @@ async def run_benchmark_tests() -> None:
                 iterations=num_iterations,
                 context_tokens=context_tokens,
                 temperature=temperature,
+                byop=prompts,
                 prevent_server_caching=prevent_server_caching,
                 timeout=timeout,
                 top_p=top_p,

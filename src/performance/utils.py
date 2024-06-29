@@ -1,7 +1,8 @@
 import tiktoken
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Union
 from utils.ml_logging import get_logger
 from fuzzywuzzy import process
+import pandas as pd
 
 logger = get_logger()
 
@@ -18,7 +19,6 @@ MODEL_PREFIX_TO_ENCODING = {
 MODEL_TO_ENCODING = {
     "gpt-4": "cl100k_base",
     "gpt-3.5-turbo": "cl100k_base",
-    "gpt-35-turbo": "cl100k_base",
     "davinci-002": "cl100k_base",
     "babbage-002": "cl100k_base",
     "text-embedding-ada-002": "cl100k_base",
@@ -69,21 +69,13 @@ def detect_model_encoding(model_name: str) -> Tuple[str, str]:
     if model_name in MODEL_TO_ENCODING:
         return model_name, MODEL_TO_ENCODING[model_name]
 
-    # If no exact match, check for prefix matches
-    for prefix, encoding in MODEL_PREFIX_TO_ENCODING.items():
-        if model_name.startswith(prefix):
-            return prefix, encoding
-
     # Use fuzzy matching for close matches
-    all_model_names = list(MODEL_TO_ENCODING.keys()) + list(MODEL_PREFIX_TO_ENCODING.keys())
+    all_model_names = list(MODEL_TO_ENCODING.keys())
     best_match, score = process.extractOne(model_name, all_model_names)
     if score >= 60:  # Threshold for a good match
         logger.info(f"Fuzzy match found: '{model_name}' matched to '{best_match}' with a score of {score}.")
         if best_match in MODEL_TO_ENCODING:
             return best_match, MODEL_TO_ENCODING[best_match]
-        for prefix, encoding in MODEL_PREFIX_TO_ENCODING.items():
-            if best_match.startswith(prefix):
-                return best_match, encoding
 
     # Default encoding if no match is found
     logger.warning(f"No good match found for model name '{model_name}'. Defaulting to 'gpt-4'.")
@@ -139,3 +131,55 @@ def terminal_http_code(e):
     - bool: True if the status code is in the range 400-499, indicating a client error. False otherwise.
     """
     return 400 <= e.status < 500
+
+
+def split_list_into_variable_parts(lst: List) -> Union[Tuple[List], Tuple[List, List], Tuple[List, List, List], Tuple[List, List, List, List]]:
+    """
+    Splits a given list into a variable number of parts, up to four, based on the list's length.
+    The parts are as evenly distributed as possible. If the list's length is less than four,
+    the number of returned lists will match the length of the list, ensuring no empty lists are returned.
+
+    Args:
+        lst (List): The list to be split.
+
+    Returns:
+        Union[Tuple[List], Tuple[List, List], Tuple[List, List, List], Tuple[List, List, List, List]]:
+        A tuple containing between one and four lists, which are parts of the original list.
+        Each part is approximately of equal size, with no empty lists returned.
+    """
+    num_parts = min(len(lst), 4)
+    
+    if num_parts == 0:
+        return tuple([[]])
+
+    parts = []
+    part_size = len(lst) // num_parts
+    extra_elements = len(lst) % num_parts
+
+    start = 0
+    for i in range(num_parts):
+        end = start + part_size + (1 if i < extra_elements else 0)
+        parts.append(lst[start:end])
+        start = end
+    
+    logger.info(f"Split list into {num_parts} parts.")
+    for i, part in enumerate(parts):
+        logger.debug(f"Part {i + 1}: {part}")
+
+    return tuple(parts)
+
+def read_prompts_from_csv_with_pandas(csv_file_path):
+    """
+    Reads a CSV file using pandas and returns a list of values from the column with the header 'prompts'.
+    If the 'prompts' column does not exist, raises a ValueError.
+
+    :param csv_file_path: Path to the CSV file to read.
+    :return: List of values from the 'prompts' column.
+    """
+    try:
+        df = pd.read_csv(csv_file_path)
+        if 'prompts' not in df.columns:
+            raise ValueError("The 'prompts' column does not exist in the CSV file.")
+        return df['prompts'].tolist()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"The file {csv_file_path} does not exist.")
