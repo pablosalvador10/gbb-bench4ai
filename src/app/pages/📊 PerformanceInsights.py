@@ -215,16 +215,6 @@ with st.sidebar:
             step=0.01,
             help="Adjust Top P to control the nucleus sampling, filtering out the least likely candidates."
         )
-        
-        # N (Number of Responses)
-        n = st.number_input(
-            "Number of Responses",
-            min_value=1,
-            max_value=10,
-            value=1,
-            help="Set the number of responses to generate for each prompt."
-        )
-        
         # Presence Penalty
         presence_penalty = st.slider(
             "Presence Penalty",
@@ -268,7 +258,6 @@ with st.sidebar:
                 - **Prevent Server Caching:** {'Yes' if prevent_server_caching else 'No'} (Option to prevent server caching for fresh request processing.)
                 - **Timeout:** {timeout} seconds
                 - **Top P:** {top_p}
-                - **Number of Responses:** {n}
                 - **Presence Penalty:** {presence_penalty}
                 - **Frequency Penalty:** {frequency_penalty}
             """
@@ -456,7 +445,7 @@ async def run_benchmark_tests() -> None:
                 prevent_server_caching=prevent_server_caching,
                 timeout=timeout,
                 top_p=top_p,
-                n=n,
+                n=1,
                 presence_penalty=presence_penalty,
                 frequency_penalty=frequency_penalty,
             )
@@ -482,14 +471,19 @@ if run_benchmark:
         deployment_names = list(st.session_state.deployments.keys())
         st.info(
             f"""
-            ### Benchmark Configuration Summary
+            #### Benchmark Configuration Summary
             - **Benchmark Type:** {operation}
-            - **Max Tokens:** {max_tokens_list}
+            - **Max Tokens:** {', '.join(map(str, max_tokens_list))}
             - **Number of Iterations:** {num_iterations}
             - **Context Tokens:** {context_tokens}
-            - **Temperature:** {temperature}
-            - **Prevent Server Caching:** {prevent_server_caching}
             - **Deployments:** {', '.join(deployment_names)}
+            - **AOAI Model Settings:**
+                - **Temperature:** {temperature}
+                - **Prevent Server Caching:** {'Yes' if prevent_server_caching else 'No'} (Option to prevent server caching for fresh request processing.)
+                - **Timeout:** {timeout} seconds
+                - **Top P:** {top_p}
+                - **Presence Penalty:** {presence_penalty}
+                - **Frequency Penalty:** {frequency_penalty}
             """
         )
     
