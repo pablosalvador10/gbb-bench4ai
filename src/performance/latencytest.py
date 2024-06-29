@@ -76,7 +76,17 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
     @abstractmethod
     async def make_call(
-        self, deployment_name: str, max_tokens: int, temperature: Optional[int] = 0
+        self, 
+        deployment_name: str, 
+        max_tokens: int, 
+        temperature: Optional[int] = 0, 
+        timeout: int = 60,
+        context_tokens: Optional[int] = None,
+        prevent_server_caching: Optional[bool] = True,
+        top_p: int = 1,
+        n: int = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
     ):
         """
         Make an asynchronous chat completion call and log the time taken for the call.
@@ -94,6 +104,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
         context_tokens: Optional[int] = None,
         multiregion: bool = False,
         prevent_server_caching: Optional[bool] = True,
+        timeout: int = 60,
+        top_p: int = 1,
+        n: int = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
     ):
         """
         Run asynchronous tests across different deployments and token counts.
@@ -109,6 +124,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
                         temperature,
                         context_tokens,
                         prevent_server_caching,
+                        timeout=timeout,
+                        top_p=top_p,
+                        n=n,
+                        presence_penalty=presence_penalty,
+                        frequency_penalty=frequency_penalty,
                     )
                     await asyncio.sleep(same_model_interval)
             await asyncio.sleep(different_model_interval)
@@ -124,6 +144,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
         context_tokens: Optional[int] = None,
         multiregion: bool = False,
         prevent_server_caching: Optional[bool] = True,
+        timeout: int = 60,
+        top_p: int = 1,
+        n: int = 1,
+        presence_penalty: float = 0,
+        frequency_penalty: float = 0,
     ) -> Optional[List[Any]]:
         """
         Run latency benchmarks for multiple deployments and token counts concurrently.
@@ -139,6 +164,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 context_tokens,
                 multiregion,
                 prevent_server_caching,
+                timeout,
+                top_p,
+                n,
+                presence_penalty,
+                frequency_penalty,
             )
             for deployment_name in deployment_names
             for max_tokens in max_tokens_list
@@ -346,7 +376,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             self.results[key]["ttft"].append(headers.get("ttft"))
 
             current_run = {
-                "ttlt": time_taken,
+                "ttlt": round(time_taken, 2),
                 "completion_tokens": headers.get("completion_tokens"),
                 "prompt_tokens": headers.get("prompt_tokens"),
                 "region": headers["region"],
@@ -456,7 +486,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             "percentile_95_prompt_tokens": None,
             "percentile_99_prompt_tokens": None,
             "cv_prompt_tokens": None,
-            "average_ttlt": sum(ttlts) / len(ttlts) if ttlts else None,
+            "average_ttlt": round(sum(ttlts) / len(ttlts), 2) if ttlts else None,
             "error_rate": error_count / total_requests if total_requests > 0 else 0,
             "number_of_iterations": total_requests,
             "throttle_count": count_throttle,
@@ -469,13 +499,13 @@ class AzureOpenAIBenchmarkLatency(ABC):
             "percentile_95_tbt": None,
             "percentile_99_tbt": None,
             "cv_tbt": None,
-            "average_tbt": sum(tbt) / len(tbt) if tbt else None,
+            "average_tbt": round(sum(tbt) / len(tbt), 2) if tbt else None,
             "median_ttft": None,
             "iqr_ttft": None,
             "percentile_95_ttft": None,
             "percentile_99_ttft": None,
             "cv_ttft": None,
-            "average_ttft": sum(ttft) / len(ttft) if ttft else None,
+            "average_ttft": round(sum(ttft) / len(ttft), 2) if ttft else None,
         }
 
         if ttlts:
@@ -651,7 +681,7 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
                 logger.error(f"Error during API call: {response.text}")
                 logger.error(f"Exception type: {response.status}")
                 logger.error(f"Traceback: {traceback.format_exc()}")
-                self._handle_error(deployment_name, max_tokens, time_taken, response)
+                self._handle_error(deployment_name, max_tokens, round(time_taken, 2), response)
                 logger.info(f"Unsuccesful Run - Time taken: {time_taken:.2f} seconds.")
             else: 
                 response_headers = response.headers
@@ -659,8 +689,8 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
                 headers = extract_rate_limit_and_usage_info_async(
                     response_headers, response_body
                 )
-                headers['tbt'] = time_taken/headers.get("completion_tokens")
-                headers['ttft'] = time_taken
+                headers['tbt'] = round(time_taken / headers.get("completion_tokens", 1), 2)
+                headers['ttft'] = round(time_taken, 2)
                 self._store_results(deployment_name, max_tokens, headers, time_taken)
                 logger.info(f"Succesful Run - Time taken: {time_taken:.2f} seconds.")
                 return response_body['choices'][0]['message']['content']
@@ -782,9 +812,9 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
                 "region": response.headers.get("region", "N/A"),
                 "utilization": response.headers.get("azure-openai-deployment-utilization", "N/A"),
                 "tbt": TBT,
-                "ttft": TTFT,
+                "ttft": round(TTFT, 2),
             }
-            self._store_results(deployment_name, max_tokens, headers_dict, total_time_taken)
+            self._store_results(deployment_name, max_tokens, headers_dict, round(total_time_taken, 2))
 
             return final_text_response
         else:

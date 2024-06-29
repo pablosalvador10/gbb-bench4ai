@@ -204,7 +204,7 @@ def display_deployments() -> None:
     Display and manage existing Azure OpenAI deployments.
     """
     if 'deployments' in st.session_state:
-        st.markdown("#### Loaded AOAI Deployments")
+        st.markdown("##### Loaded Deployments")
         for deployment_name, deployment in st.session_state.deployments.items():
             with st.expander(deployment_name):
                 updated_name = st.text_input(f"Name", value=deployment_name, key=f"name_{deployment_name}")
@@ -274,7 +274,7 @@ def main() -> None:
                 - Click **Add Deployment** to save your deployment to the session state.
 
                 ### Step 3: View and Manage Deployments
-                - Once added, your deployments are listed under **Loaded AOAI Deployments**.
+                - Once added, your deployments are listed under **Loaded Deployments**.
                 - Click on a deployment to expand and view its details.
                 - You can update any of the deployment details here and click **Update Deployment** to save changes.
 
