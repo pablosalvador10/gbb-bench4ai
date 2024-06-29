@@ -211,7 +211,7 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
         "Throttle Count", "Throttle Rate", "Best Run", "Worst Run",
     ]
     for stat in stats: 
-        for key, data in stats.items():
+        for key, data in stat.items():
             regions = data.get("regions", [])
             regions = [r for r in regions if r is not None]
             region_string = ", ".join(set(regions)) if regions else "N/A"
@@ -262,19 +262,20 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
         is_lowest = s == s.min()
         return ['background-color: green' if v else '' for v in is_lowest]
     
-    styled_df = df.style.apply(color_lowest_median_time, subset=['Median Time'])
+    styled_df = df.style.apply(color_lowest_median_time, subset=['Median TTLT'])
     # Add an expander with explanations for all columns in the dataframe
     with st.expander("Column Descriptions", expanded=False):
         st.markdown("""
-        - **Deployment_MaxTokens**: The maximum number of tokens allowed in a single deployment.
+        - **Model_MaxTokens**: The maximum number of tokens the model can process in a single request.
+        - **is_Streaming**: Indicates whether the model uses streaming for processing requests.
         - **Iterations**: The number of iterations or runs performed during the analysis.
         - **Regions**: Geographic regions where the deployments were executed.
-        - **Average Time**: The average time taken for completions across all runs.
-        - **Median Time**: The median time taken for completions, reducing the impact of outliers.
-        - **IQR Time**: Interquartile Range for time, indicating the spread of the middle 50% of the data.
-        - **95th Percentile Time**: Time below which 95% of the completion times fall.
-        - **99th Percentile Time**: Time below which 99% of the completion times fall.
-        - **CV Time**: Coefficient of Variation for time, indicating the relative variability in completion times.
+        - **Average TTLT**: The average Total Time to Last Token across all runs.
+        - **Median TTLT**: The median Total Time to Last Token, reducing the impact of outliers.
+        - **IQR TTLT**: Interquartile Range for Total Time to Last Token, indicating the spread of the middle 50% of the data.
+        - **95th Percentile TTLT**: Time below which 95% of the Total Time to Last Token measurements fall.
+        - **99th Percentile TTLT**: Time below which 99% of the Total Time to Last Token measurements fall.
+        - **CV TTLT**: Coefficient of Variation for Total Time to Last Token, indicating the relative variability.
         - **Median Prompt Tokens**: The median number of tokens in the prompts used.
         - **IQR Prompt Tokens**: Interquartile Range for the number of prompt tokens.
         - **Median Completion Tokens**: The median number of tokens in the completions generated.
@@ -282,6 +283,16 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
         - **95th Percentile Completion Tokens**: Number of tokens below which 95% of the completion token counts fall.
         - **99th Percentile Completion Tokens**: Number of tokens below which 99% of the completion token counts fall.
         - **CV Completion Tokens**: Coefficient of Variation for completion tokens, indicating the relative variability.
+        - **Average TBT**: The average Time Before Throttling across all runs.
+        - **Median TBT**: The median Time Before Throttling, reducing the impact of outliers.
+        - **IQR TBT**: Interquartile Range for Time Before Throttling, indicating the spread of the middle 50% of the data.
+        - **95th Percentile TBT**: Time below which 95% of the Time Before Throttling measurements fall.
+        - **99th Percentile TBT**: Time below which 99% of the Time Before Throttling measurements fall.
+        - **Average TTFT**: The average Time to First Token across all runs.
+        - **Median TTFT**: The median Time to First Token, reducing the impact of outliers.
+        - **IQR TTFT**: Interquartile Range for Time to First Token, indicating the spread of the middle 50% of the data.
+        - **95th Percentile TTFT**: Time below which 95% of the Time to First Token measurements fall.
+        - **99th Percentile TTFT**: Time below which 99% of the Time to First Token measurements fall.
         - **Error Rate**: The percentage of runs that resulted in errors.
         - **Error Types**: The types of errors encountered during the runs.
         - **Successful Runs**: The number of runs that completed successfully without errors.

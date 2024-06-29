@@ -185,23 +185,23 @@ def calculate_statistics(
         logger.info(f"Data converted to numpy array: {data_array}")
 
         # Calculate the median
-        median = np.median(data_array)
+        median = round(np.median(data_array), 2)
         logger.info(f"Calculated median: {median}")
 
         # Calculate the IQR
-        iqr = stats.iqr(data_array)
+        iqr = round(stats.iqr(data_array), 2)
         logger.info(f"Calculated interquartile range (IQR): {iqr}")
 
         # Calculate the 95th percentile
-        percentile_95 = np.percentile(data_array, 95)
+        percentile_95 = round(np.percentile(data_array, 95), 2)
         logger.info(f"Calculated 95th percentile: {percentile_95}")
 
         # Calculate the 99th percentile
-        percentile_99 = np.percentile(data_array, 99)
+        percentile_99 = round(np.percentile(data_array, 99), 2)
         logger.info(f"Calculated 99th percentile: {percentile_99}")
 
         # Calculate the coefficient of variation
-        cv = stats.variation(data_array)
+        cv = round(stats.variation(data_array), 2)
         logger.info(f"Calculated coefficient of variation (CV): {cv}")
 
         result = (median, iqr, percentile_95, percentile_99, cv)
