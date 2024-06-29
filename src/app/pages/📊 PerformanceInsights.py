@@ -56,6 +56,8 @@ st.set_page_config(
     page_icon="📊",
 )
 
+load_default_deployment()
+
 def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, deployment_id: str) -> AzureOpenAIManager:
     """
     Create a new Azure OpenAI Manager instance.
@@ -111,88 +113,169 @@ with st.sidebar:
 
         st.markdown("---")
 
-        st.markdown("## ⚙️ Configuration Settings")
-        enable_multi_region = st.checkbox("Multi-Deployment Benchmarking", help="Check this box to compare performance across multiple deployments in different regions.")
-        if enable_multi_region:
+        st.markdown("## 🤖 Deployment Center ")
+        with st.expander("Add Your MaaS Deployment", expanded=False):
             operation = st.selectbox(
-                "Choose Your MaaS Deployment:",
-                ("AOAI Deployment", "Other"),
+                "Choose Model Family:",
+                ("AOAI", "Other"),
                 index=0,
                 help="Select the benchmark you want to perform to evaluate AI model performance.",
                 placeholder="Select a Benchmark",
             )
-            if operation == "AOAI Deployment":
+            if operation == "AOAI":
                 add_deployment_form()
             else: 
                 st.info("Other deployment options will be available soon.")
-        else:
-            load_default_deployment()
 
         display_deployments()
 
-        if operation == "Latency Benchmark":
-            byop_option = st.radio(
-                "BYOP (Bring Your Own Prompt)",
-                options=["No", "Yes"],
-                help="Select 'Yes' to bring your own prompt or 'No' to use default settings."
-            )
+        st.markdown("---")
 
-            if byop_option == "Yes":
-                uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
-                if uploaded_file is not None:
-                    st.write("File uploaded successfully!")
-            elif byop_option == "No":
-                context_tokens = st.slider(
-                    "Context Tokens (Input)",
-                    min_value=100,
-                    max_value=5000,
-                    value=1000,
-                    help="Select the number of context tokens for each run.",
-                )
-            # Custom output tokens checkbox
-            custom_output_tokens = st.checkbox("Custom Output Tokens")
-            if custom_output_tokens:
-                custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):", help="Enter custom max tokens for each run.")
-                if custom_tokens_input:
-                    try:
-                        max_tokens_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
-                    except ValueError:
-                        st.error("Please enter valid integers separated by commas for max tokens.")
-            else:
-                options = [100, 500, 800, 1000, 1500, 2000]
-                max_tokens_list = st.multiselect(
-                    "Select Max Output Tokens (Generation)",
-                    options=options,
-                    default=[500],
-                    help="Select the maximum tokens for each run."
-                )
+        st.markdown("## ⚙️ Configuration Benchmark Settings")
+        
+        byop_option = st.radio(
+            "BYOP (Bring Your Own Prompt)",
+            options=["No", "Yes"],
+            help="Select 'Yes' to bring your own prompt or 'No' to use default settings."
+        )
+
+        if byop_option == "Yes":
+            uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
+            if uploaded_file is not None:
+                st.write("File uploaded successfully!")
+                df = pd.read_csv(uploaded_file)
+                num_rows = len(df)
+                st.write(f"Number of iterations because number of prompts {num_rows} provided")
+        elif byop_option == "No":
+            context_tokens = st.slider(
+                "Context Tokens (Input)",
+                min_value=100,
+                max_value=5000,
+                value=1000,
+                help="Select the number of context tokens for each run.",
+            )
             num_iterations = st.slider(
-                "Number of Iterations",
-                min_value=1,
-                max_value=100,
-                value=50,
-                help="Select the number of iterations for each benchmark test.",
+            "Number of Iterations",
+            min_value=1,
+            max_value=100,
+            value=50,
+            help="Select the number of iterations for each benchmark test.")
+    
+        # Custom output tokens checkbox
+        custom_output_tokens = st.checkbox("Custom Output Tokens")
+        if custom_output_tokens:
+            custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):", help="Enter custom max tokens for each run.")
+            if custom_tokens_input:
+                try:
+                    max_tokens_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
+                except ValueError:
+                    st.error("Please enter valid integers separated by commas for max tokens.")
+        else:
+            options = [100, 500, 800, 1000, 1500, 2000]
+            max_tokens_list = st.multiselect(
+                "Select Max Output Tokens (Generation)",
+                options=options,
+                default=[500],
+                help="Select the maximum tokens for each run."
             )
-
-            temperature = st.slider(
-                "Temperature",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.7,
-                step=0.1,
-                help="Select the temperature setting for the benchmark tests.",
-            )
-
-            prevent_server_caching = st.checkbox(
-                "Prevent Server Caching",
-                value=True,
-                help="Enable this option to prevent server caching during the benchmark tests.",
-            )
-
+    with st.expander("AOAI Model Settings", expanded=False):
+        # Temperature
+        temperature = st.slider(
+            "Temperature",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.7,
+            step=0.1,
+            help="Adjust the temperature to control the randomness of the output. A higher temperature results in more random completions."
+        )
+        
+        # Prevent Server Caching
+        prevent_server_caching = st.radio(
+            "Prevent Server Caching",
+            ('Yes', 'No'),
+            index=0,
+            help="Choose 'Yes' to prevent server caching, ensuring that each request is processed freshly."
+        )
+        
+        # Timeout
+        timeout = st.number_input(
+            "Timeout (seconds)",
+            min_value=1,
+            max_value=300,
+            value=60,
+            help="Set the maximum time in seconds before the request times out."
+        )
+        
+        # Top P
+        top_p = st.slider(
+            "Top P",
+            min_value=0.0,
+            max_value=1.0,
+            value=1.0,
+            step=0.01,
+            help="Adjust Top P to control the nucleus sampling, filtering out the least likely candidates."
+        )
+        
+        # N (Number of Responses)
+        n = st.number_input(
+            "Number of Responses",
+            min_value=1,
+            max_value=10,
+            value=1,
+            help="Set the number of responses to generate for each prompt."
+        )
+        
+        # Presence Penalty
+        presence_penalty = st.slider(
+            "Presence Penalty",
+            min_value=-2.0,
+            max_value=2.0,
+            value=0.0,
+            step=0.1,
+            help="Adjust the presence penalty to discourage or encourage repeated content in completions."
+        )
+        
+        # Frequency Penalty
+        frequency_penalty = st.slider(
+            "Frequency Penalty",
+            min_value=-2.0,
+            max_value=2.0,
+            value=0.0,
+            step=0.1,
+            help="Adjust the frequency penalty to discourage or encourage frequent content in completions."
+        )
+        
     st.markdown("---")
     st.markdown("## 🚀 Run Benchmark")
-    st.markdown("Ensure all settings are correctly configured before proceeding.")
-    run_benchmark = st.button("Start Benchmark")
+
+    if not st.session_state.deployments:
+        st.error("No deployments found. Please visit the Deployment Center to add deployments.")
+    else: 
+        deployment_names = list(st.session_state.deployments.keys())
+        summary_placeholder = st.empty()
+
+        # Fill the placeholder with the benchmark configuration summary
+        summary_placeholder.info(
+            f"""
+            #### Benchmark Configuration Summary
+            - **Benchmark Type:** {operation}
+            - **Max Tokens:** {', '.join(map(str, max_tokens_list))}
+            - **Number of Iterations:** {num_iterations}
+            - **Context Tokens:** {context_tokens}
+            - **Deployments:** {', '.join(deployment_names)}
+            - **AOAI Model Settings:**
+                - **Temperature:** {temperature}
+                - **Prevent Server Caching:** {'Yes' if prevent_server_caching else 'No'} (Option to prevent server caching for fresh request processing.)
+                - **Timeout:** {timeout} seconds
+                - **Top P:** {top_p}
+                - **Number of Responses:** {n}
+                - **Presence Penalty:** {presence_penalty}
+                - **Frequency Penalty:** {frequency_penalty}
+            """
+        )
+        st.markdown("")
+        test_status_placeholder = st.empty()
+        run_benchmark = st.button("Start Benchmark")
 
 def display_statistics(stats: List[Dict[str, Any]]) -> None:
     """
@@ -202,11 +285,11 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
     table = []
     headers = [
         "Model_MaxTokens", "is_Streaming", "Iterations", "Regions",
-        "Average TTLT", "Median TTLT", "IQR TTLT", "95th Percentile TTLT", "99th Percentile TTLT", "CV TTLT",
+        "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT", "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT",
         "Median Prompt Tokens", "IQR Prompt Tokens", "Median Completion Tokens", "IQR Completion Tokens",
         "95th Percentile Completion Tokens", "99th Percentile Completion Tokens", "CV Completion Tokens",
-        "Average TBT", "Median TBT", "IQR TBT", "95th Percentile TBT", "99th Percentile TBT",
-        "Average TTFT", "Median TTFT", "IQR TTFT", "95th Percentile TTFT", "99th Percentile TTFT",
+        "Average TBT (ms)", "Median TBT (ms)", "IQR TBT", "95th Percentile TBT (ms)", "99th Percentile TBT (ms)",
+        "Average TTFT (ms/s)", "Median TTFT (ms/s)", "IQR TTFT", "95th Percentile TTFT (ms/s)", "99th Percentile TTFT (ms/s)",
         "Error Rate", "Error Types", "Successful Runs", "Unsuccessful Runs",
         "Throttle Count", "Throttle Rate", "Best Run", "Worst Run",
     ]
@@ -217,7 +300,7 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
             region_string = ", ".join(set(regions)) if regions else "N/A"
             row = [
                 key,
-                data.get("is_streaming", "N/A"),
+                data.get("is_Streaming", "N/A"),
                 data.get("number_of_iterations", "N/A"),
                 region_string,
                 data.get("average_ttlt", "N/A"),
@@ -302,6 +385,8 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
         - **Best Run**: Details of the run with the best performance metrics.
         - **Worst Run**: Details of the run with the worst performance metrics.
         """)
+   
+    styled_df = df.style
     st.dataframe(styled_df)
 
     combined_stats = {}
@@ -369,6 +454,11 @@ async def run_benchmark_tests() -> None:
                 context_tokens=context_tokens,
                 temperature=temperature,
                 prevent_server_caching=prevent_server_caching,
+                timeout=timeout,
+                top_p=top_p,
+                n=n,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
             )
             for client, deployment_name in deployment_clients
         ]
@@ -384,6 +474,8 @@ async def run_benchmark_tests() -> None:
         st.error(f"An error occurred: {str(e)}")
 
 if run_benchmark:
+    summary_placeholder.empty()
+    test_status_placeholder.text("Benchmark Fired...")
     if not st.session_state.deployments:
         st.error("No deployments found. Please add a deployment in the sidebar.")
     else: 
@@ -406,6 +498,7 @@ if run_benchmark:
 
     if st.session_state["benchmark_results"]:
         display_statistics(st.session_state["benchmark_results"])
+        test_status_placeholder = st.empty()
 else: 
     st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
 
