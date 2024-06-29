@@ -119,11 +119,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
                 for _ in range(iterations):
                     log_system_info()
                     await self.make_call(
-                        deployment_name,
-                        max_tokens,
-                        temperature,
-                        context_tokens,
-                        prevent_server_caching,
+                        deployment_name=deployment_name,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        context_tokens=context_tokens,
+                        prevent_server_caching=prevent_server_caching,
                         timeout=timeout,
                         top_p=top_p,
                         n=n,
