@@ -240,7 +240,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             region_string = ", ".join(set(regions)) if regions else "N/A"
             row = [
                 key,
-                self.is_streaming,
+                data.get("is_Streaming", "N/A"),
                 data.get("number_of_iterations", "N/A"),
                 region_string,
                 data.get("average_ttlt", "N/A"),
@@ -440,6 +440,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
         stats = {
             "median_ttlt": None,
+            "is_Streaming": self.is_streaming,
             "regions": list(set(data.get("regions", []))),
             "iqr_ttlt": None,
             "percentile_95_ttlt": None,
