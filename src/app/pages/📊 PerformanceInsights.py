@@ -10,6 +10,7 @@ import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.outputformatting import markdown_to_docx
+from src.performance.latencyanalyzer import BenchmarkVisualizer
 from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
 from utils.ml_logging import get_logger
@@ -134,7 +135,7 @@ with st.sidebar:
         st.markdown("## ⚙️ Configuration Benchmark Settings")
         
         byop_option = st.radio(
-            "BYOP (Bring Your Own Prompt)",
+            "BYOP (Bring Your Own Prompts)",
             options=["No", "Yes"],
             help="Select 'Yes' to bring your own prompt or 'No' to use default settings."
         )
@@ -168,10 +169,12 @@ with st.sidebar:
                 max_value=100,
                 value=50,
                 help="Select the number of iterations for each benchmark test.")
+            prompts = None
     
         # Custom output tokens checkbox
         custom_output_tokens = st.checkbox("Custom Output Tokens")
         if custom_output_tokens:
+            max_tokens_list = "N/A"
             custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):", help="Enter custom max tokens for each run.")
             if custom_tokens_input:
                 try:
@@ -274,7 +277,7 @@ with st.sidebar:
         test_status_placeholder = st.empty()
         run_benchmark = st.button("Start Benchmark")
 
-def display_statistics(stats: List[Dict[str, Any]]) -> None:
+def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, Any]]) -> None:
     """
     Display benchmark statistics in a formatted manner with enhanced user interface.
     """
@@ -387,13 +390,20 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
     st.dataframe(styled_df)
 
     combined_stats = {}
+    combined_stats_raw = {}
+
     for stat in stats:
         combined_stats.update(stat)
+    
+    for stat in stats_raw:
+        combined_stats_raw.update(stat)
     
     st.markdown("### Visual Insights")
 
     visualizer = ModelPerformanceVisualizer(data=combined_stats)
     visualizer.parse_data()
+
+    visualizer_2 = BenchmarkVisualizer(combined_stats_raw)
 
     # Adjusting layout for uniform plot sizes
     col1, col2, col3 = st.columns([1, 1, 1], gap="small")
@@ -405,15 +415,12 @@ def display_statistics(stats: List[Dict[str, Any]]) -> None:
             st.pyplot(fig_time2)
         except Exception as e:
             st.error(f"Error generating Time Analysis plot: {e}")
-
+    
     with col2:
         st.markdown("#### 🪙 Token Analysis")
-        try:
-            fig_token = visualizer.plot_tokens()
-            st.pyplot(fig_token)
-        except Exception as e:
-            st.error(f"Error generating Token Analysis plot: {e}")
 
+        fig_token = visualizer_2.plot_completion_tokens(visualizer_2.unique_model_names[0])
+        st.pyplot(fig_token)
     with col3:
         st.markdown("#### 🏆 Best vs Worst")
         try:
@@ -466,7 +473,11 @@ async def run_benchmark_tests() -> None:
         stats = [
             client.calculate_and_show_statistics() for client, _ in deployment_clients
         ]
+        stats_raw = [
+            client.results for client, _ in deployment_clients
+        ]
         st.session_state["benchmark_results"] = stats
+        st.session_state["benchmark_results_raw"] = stats_raw
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
@@ -500,7 +511,7 @@ if run_benchmark:
         asyncio.run(run_benchmark_tests())
 
     if st.session_state["benchmark_results"]:
-        display_statistics(st.session_state["benchmark_results"])
+        display_statistics(st.session_state["benchmark_results"], st.session_state["benchmark_results_raw"])
         test_status_placeholder = st.empty()
 else: 
     st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")

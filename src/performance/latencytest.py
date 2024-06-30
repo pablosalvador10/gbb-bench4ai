@@ -154,74 +154,72 @@ class AzureOpenAIBenchmarkLatency(ABC):
         await asyncio.sleep(different_model_interval)
 
     async def run_latency_benchmark_bulk(
-        self,
-        deployment_names: List[str],
-        max_tokens_list: List[int],
-        same_model_interval: int = 1,
-        different_model_interval: int = 5,
-        iterations: int = 1,
-        temperature: Optional[int] = 0,
-        context_tokens: Optional[int] = None,
-        byop: Optional[List] = None,
-        multiregion: bool = False,
-        prevent_server_caching: Optional[bool] = True,
-        timeout: int = 60,
-        top_p: int = 1,
-        n: int = 1,
-        presence_penalty: float = 0,
-        frequency_penalty: float = 0,
-    ) -> Optional[List[Any]]:
-        """
-        Run latency benchmarks for multiple deployments and token counts concurrently.
-        """
-        tasks = []
-        if byop:
-            byop_chunks = split_list_into_variable_parts(byop)
-            for deployment_name in deployment_names:
-                for max_tokens in max_tokens_list:
-                    for byop_chunk in byop_chunks:
-                        tasks.append(
-                            self.run_latency_benchmark(
-                                deployment_names=[deployment_name],
-                                max_tokens_list=[max_tokens],
-                                iterations=iterations,
-                                same_model_interval=same_model_interval,
-                                different_model_interval=different_model_interval,
-                                temperature=temperature,
-                                byop=byop_chunk,
-                                context_tokens=context_tokens,
-                                prevent_server_caching=prevent_server_caching,
-                                timeout=timeout,
-                                top_p=top_p,
-                                n=n,
-                                presence_penalty=presence_penalty,
-                                frequency_penalty=frequency_penalty,
+            self,
+            deployment_names: List[str],
+            max_tokens_list: List[int],
+            same_model_interval: int = 1,
+            different_model_interval: int = 5,
+            iterations: int = 1,
+            temperature: Optional[int] = 0,
+            context_tokens: Optional[int] = None,
+            byop: Optional[List] = None,
+            prevent_server_caching: Optional[bool] = True,
+            timeout: int = 60,
+            top_p: int = 1,
+            n: int = 1,
+            presence_penalty: float = 0,
+            frequency_penalty: float = 0,
+        ) -> Optional[List[Any]]:
+            """
+            Run latency benchmarks for multiple deployments and token counts concurrently.
+            """
+            tasks = []
+            if byop:
+                byop_chunks = split_list_into_variable_parts(byop)
+                for deployment_name in deployment_names:
+                    for max_tokens in max_tokens_list:
+                        for byop_chunk in byop_chunks:
+                            tasks.append(
+                                self.run_latency_benchmark(
+                                    deployment_names=[deployment_name],
+                                    max_tokens_list=[max_tokens],
+                                    iterations=iterations,
+                                    same_model_interval=same_model_interval,
+                                    different_model_interval=different_model_interval,
+                                    temperature=temperature,
+                                    byop=byop_chunk,
+                                    context_tokens=context_tokens,
+                                    prevent_server_caching=prevent_server_caching,
+                                    timeout=timeout,
+                                    top_p=top_p,
+                                    n=n,
+                                    presence_penalty=presence_penalty,
+                                    frequency_penalty=frequency_penalty,
+                                )
                             )
-                        )
-        else:
-            tasks = [
-                self.run_latency_benchmark(
-                    [deployment_name],
-                    [max_tokens],
-                    iterations,
-                    same_model_interval,
-                    different_model_interval,
-                    temperature,
-                    context_tokens,
-                    byop,
-                    multiregion,
-                    prevent_server_caching,
-                    timeout,
-                    top_p,
-                    n,
-                    presence_penalty,
-                    frequency_penalty,
-                )
-                for deployment_name in deployment_names
-                for max_tokens in max_tokens_list
-            ]
+            else:
+                tasks = [
+                    self.run_latency_benchmark(
+                        deployment_names=[deployment_name],
+                        max_tokens_list=[max_tokens],
+                        iterations=iterations,
+                        same_model_interval=same_model_interval,
+                        different_model_interval=different_model_interval,
+                        temperature=temperature,
+                        byop=None,
+                        context_tokens=context_tokens,
+                        prevent_server_caching=prevent_server_caching,
+                        timeout=timeout,
+                        top_p=top_p,
+                        n=n,
+                        presence_penalty=presence_penalty,
+                        frequency_penalty=frequency_penalty,
+                    )
+                    for deployment_name in deployment_names
+                    for max_tokens in max_tokens_list
+                ]
 
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
 
     def calculate_and_show_statistics(self, show_descriptions: bool = False):
         """
@@ -393,7 +391,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         if key not in self.results:
             self.results[key] = {
                 "ttlt_successfull": [],
-                "ttlt_unsuccessful": [],
+                "ttlt_unsucessfull": [],
                 "tbt": [],
                 "ttft": [],
                 "regions": [],
@@ -513,7 +511,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         }
         count_throttle = error_distribution.get("429", 0)
         successful_runs = len(data["ttlt_successfull"])
-        unsuccessful_runs = len(data["ttlt_unsuccessful"])
+        unsuccessful_runs = len(data["ttlt_unsucessfull"])
 
         stats = {
             "median_ttlt": None,
@@ -836,12 +834,28 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
 
         encoding = get_encoding_from_model_name(deployment_name)
         final_text_response = ""
-
+        region = None
         logger.info(f"Starting call to model {deployment_name} with max tokens {max_tokens} at (Local time): {datetime.now()}, (GMT): {datetime.now(timezone.utc)}")
         async with aiohttp.ClientSession() as session:
-            start_time = time.perf_counter()
-            try:
-                async with session.post(url, headers=headers, json=body, timeout=timeout) as response:
+            async with session.post(url, headers=headers, json=body, timeout=timeout) as response:
+                if region is None:
+                        region = response.headers.get("x-ms-region", "N/A")
+                start_time = time.perf_counter()
+                if response.status != 200:
+                    end_time = time.perf_counter()
+                    time_taken = end_time - start_time
+                    if response.status == 429:
+                        retry_after_str = response.headers.get(RETRY_AFTER_MS_HEADER, "6000")  # Default to 1 second if header is missing
+                        retry_after_ms = float(retry_after_str)
+                        logger.debug(f"429 Too Many Requests: retry-after sleeping for {retry_after_ms}ms")
+                        await asyncio.sleep(retry_after_ms / 1000.0)
+                    logger.error(f"Error during API call: {await response.text()}")
+                    logger.error(f"Exception type: {response.status}")
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    logger.error(f"APIM Request ID: {response.headers.get('apim-request-id', 'N/A')}")
+                    self._handle_error(deployment_name, max_tokens, time_taken, response)
+                    return None
+                else: 
                     prev_end_time = start_time
                     token_generation_count = 0
                     first_token_time = None
@@ -866,12 +880,6 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
                                                 final_text_response += event_text
                                     except json.JSONDecodeError as e:
                                         logger.error(f"Error decoding JSON: {e}")
-            except aiohttp.ClientError as e:
-                logger.error(f"Error during API call: {str(e)}")
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                self._handle_error(deployment_name, max_tokens, None, "-99")
-                return None
-
         end_time = time.perf_counter()
         total_time_taken = end_time - start_time
         token_times = [max(round(time_taken * 1000, 2), 1) for time_taken in token_times]
@@ -885,13 +893,12 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
             headers_dict = {
                 "completion_tokens": token_generation_count,
                 "prompt_tokens": context_num_tokens,
-                "region": response.headers.get("region", "N/A"),
+                "region": region,
                 "utilization": response.headers.get("azure-openai-deployment-utilization", "N/A"),
                 "tbt": TBT,
                 "ttft": round(TTFT, 2),
             }
             self._store_results(deployment_name, max_tokens, headers_dict, round(total_time_taken, 2))
-
             return final_text_response
         else:
             self._handle_error(deployment_name, max_tokens, None, "-99")

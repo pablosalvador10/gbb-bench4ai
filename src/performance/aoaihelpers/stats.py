@@ -8,7 +8,6 @@ from utils.ml_logging import get_logger
 # Set up logger
 logger = get_logger()
 
-
 class ModelPerformanceVisualizer:
     def __init__(self, data: Dict[str, Any]) -> None:
         """
@@ -75,7 +74,7 @@ class ModelPerformanceVisualizer:
         """
         # First figure for boxplot
         fig1, ax1 = plt.subplots(figsize=(12, 6))
-        sns.boxplot(x="model", y="median_time", data=self.df, ax=ax1)
+        sns.boxplot(x="model", y="median_ttlt", data=self.df, ax=ax1)
         ax1.set_title("Median Response Time by Model")
         ax1.tick_params(axis='x', rotation=45)
         ax1.set_ylabel("Time (s)")
@@ -84,9 +83,9 @@ class ModelPerformanceVisualizer:
         fig2 = sns.pairplot(
             self.df,
             vars=[
-                "median_time",
-                "percentile_95_time",
-                "percentile_99_time",
+                "median_ttlt",
+                "percentile_95_ttlt",
+                "percentile_99_ttlt",
             ],
             hue="model",
         )
@@ -131,12 +130,16 @@ class ModelPerformanceVisualizer:
         """
         fig, ax = plt.subplots(figsize=(14, 7))
 
-        melted_df = self.df.melt(id_vars=["model"], value_vars=["best_run_time", "worst_run_time"])
-        sns.barplot(x="model", y="value", hue="variable", data=melted_df, ax=ax)
-        ax.set_title("Best vs Worst Run Times by Model")
-        ax.set_ylabel("Time (s)")
-        ax.set_xlabel("Model")
-        ax.tick_params(axis='x', rotation=45)
+        # Check if columns exist in the DataFrame
+        if "best_run_time" in self.df.columns and "worst_run_time" in self.df.columns:
+            melted_df = self.df.melt(id_vars=["model"], value_vars=["best_run_time", "worst_run_time"])
+            sns.barplot(x="model", y="value", hue="variable", data=melted_df, ax=ax)
+            ax.set_title("Best vs Worst Run Times by Model")
+            ax.set_ylabel("Time (s)")
+            ax.set_xlabel("Model")
+            ax.tick_params(axis='x', rotation=45)
+        else:
+            logger.error("The columns 'best_run_time' and 'worst_run_time' are not present in the DataFrame")
 
         plt.tight_layout()
         return fig
@@ -168,7 +171,7 @@ class ModelPerformanceVisualizer:
         """
         fig, ax = plt.subplots(figsize=(14, 7))
 
-        sns.scatterplot(x="median_prompt_tokens", y="median_time", hue="model", data=self.df, ax=ax)
+        sns.scatterplot(x="median_prompt_tokens", y="median_ttlt", hue="model", data=self.df, ax=ax)
         ax.set_title("Response Time vs. Prompt Tokens by Model")
         ax.set_xlabel("Median Prompt Tokens")
         ax.set_ylabel("Median Time (s)")
@@ -182,16 +185,17 @@ class ModelPerformanceVisualizer:
         """
         self.parse_data()
 
-        fig_time = self.plot_times()
+        fig1, fig2 = self.plot_times()
         fig_tokens = self.plot_tokens()
         fig_errors = self.plot_errors()
         fig_best_worst = self.plot_best_worst_runs()
         fig_heatmap = self.plot_heatmaps()
         fig_time_vs_tokens = self.plot_time_vs_tokens()
 
-        fig_time.plot()
-        fig_tokens.plot()
-        fig_errors.plot()
-        fig_best_worst.plot()
-        fig_heatmap.plot()
-        fig_time_vs_tokens.plot()
+        fig1.show()
+        fig2.savefig('pairplot.png')
+        fig_tokens.show()
+        fig_errors.show()
+        fig_best_worst.show()
+        fig_heatmap.show()
+        fig_time_vs_tokens.show()
