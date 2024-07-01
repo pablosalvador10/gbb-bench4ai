@@ -6,7 +6,6 @@ import plotly.express as px
 import dotenv
 import streamlit as st
 
-from src.aoai.azure_openai import AzureOpenAIManager
 from src.quality.evals import MMLU, TruthfulQA, PubMedQA, CustomEval
 from utils.ml_logging import get_logger
 from typing import Dict, Any, Optional
@@ -467,8 +466,11 @@ with st.expander("Learn More About Metrics for Custom Eval 🧮", expanded=False
     st.markdown(
         """
         **Accuracy**: Number of correct predictions divided by the total number of predictions. Model outputs must be exact matches to ground truth.
+          
         **Answer Similarity**: The similarity between the generated answer and the ground truth answer. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
+          
         **Context Similarity**: The similarity between the generated answer and the context. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
+          
         """
     )
 

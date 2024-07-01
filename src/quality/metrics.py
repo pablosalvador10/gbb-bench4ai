@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 from sentence_transformers import SentenceTransformer
 
 def accuracy(y_pred: Any, y_true: Any) -> int:
