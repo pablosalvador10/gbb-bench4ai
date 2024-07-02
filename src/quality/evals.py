@@ -213,7 +213,7 @@ class MMLU(Eval):
         return output
 
 
-    async def test(self) -> pd.DataFrame:
+    def test(self) -> pd.DataFrame:
         test_data = self._load_data(dataset="cais/mmlu", subset="all", split="test")
         test_data = self.__transform_data(test_data)
 

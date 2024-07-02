@@ -47,11 +47,6 @@ def load_default_deployment(name: Optional[str] = None,
         "stream": False
     }
 
-    if all(value is not None for value in default_deployment.values() if value != False):
-        st.session_state.deployments[default_deployment["name"]] = default_deployment
-    else:
-        st.error("Default deployment settings are missing.")
-
 def add_deployment_form() -> None:
     """
     Render the form to add a new Azure OpenAI deployment.
@@ -197,6 +192,8 @@ async def run_benchmark_tests():
     try:
         results = []
 
+        # TODO: Load and transoform data here. Pass data to the async test call.
+
         if mmlu_select:
             
             mmlu_tasks = get_task_list(test="mmlu")
@@ -289,64 +286,28 @@ batch_c = st.container()
 
 # Sidebar to setup model configuration settings
 with st.sidebar:
-    st.markdown("## ⚙️ Configuration Settings")
-        
-    with st.expander("📘 How to Add New Deployments", expanded=False):
-        st.markdown(
-            """
-            Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
+    st.markdown("## 🤖 Deployment Center ")
 
-            ### Step 1: Enable Multi-Deployment
-            - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
-
-            ### Step 2: Add Deployment Details
-            - Fill in the form with the following details:
-                - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
-                - **API Endpoint**: The endpoint URL for Azure OpenAI.
-                - **API Version**: The version of the Azure OpenAI API you're using.
-                - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
-                - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
-            - Click **Add Deployment** to save your deployment to the session state.
-
-            ### Step 3: View and Manage Deployments
-            - Once added, your deployments are listed under **Loaded AOAI Deployments**.
-            - Click on a deployment to expand and view its details.
-            - You can update any of the deployment details here and click **Update Deployment** to save changes.
-
-            ### How Deployments are Managed
-            - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
-            - You can add multiple deployments and manage them individually from the sidebar.
-            - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
-
-            ### Updating Deployments Across Pages
-            - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
-            - This means you can seamlessly switch between different deployments or update their configurations without losing context.
-
-            Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
-            """,
-            unsafe_allow_html=True
-        )
+    load_default_deployment()
     
-    enable_multi_deployment = st.checkbox("Load New Deployment", help="Check this box to compare performance across multiple deployments in different regions.")
-    
-    if enable_multi_deployment:
+    with st.expander("Add Your MaaS Deployment", expanded=False):
         operation = st.selectbox(
-            "Choose Your MaaS Deployment:",
-            ("AOAI Deployment", "Other"),
+            "Choose Model Family:",
+            ("AOAI", "Other"),
             index=0,
             help="Select the benchmark you want to perform to evaluate AI model performance.",
             placeholder="Select a Benchmark",
         )
-        if operation == "AOAI Deployment":
+        if operation == "AOAI":
             add_deployment_form()
         else: 
             st.info("Other deployment options will be available soon.")
-    else:
-        load_default_deployment()
 
     display_deployments()
 
-    st.markdown("## 🎯 Benchmark Settings")
+    st.markdown("---")
+
+    st.markdown("## 🎯 Benchmark Configuration")
 
     st.markdown("Select the benchmark(s) you'd like to run:")
     mmlu_select = st.checkbox("MMLU")
@@ -423,6 +384,42 @@ with st.expander("Benchmark Guide 📊", expanded=False):
 
             Let's get started and optimize your LLM experience!
             """
+        )
+
+with st.expander("How to Add New Deployments 📘", expanded=False):
+        st.markdown(
+            """
+            Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
+
+            ### Step 1: Enable Multi-Deployment
+            - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
+
+            ### Step 2: Add Deployment Details
+            - Fill in the form with the following details:
+                - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
+                - **API Endpoint**: The endpoint URL for Azure OpenAI.
+                - **API Version**: The version of the Azure OpenAI API you're using.
+                - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
+                - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
+            - Click **Add Deployment** to save your deployment to the session state.
+
+            ### Step 3: View and Manage Deployments
+            - Once added, your deployments are listed under **Loaded AOAI Deployments**.
+            - Click on a deployment to expand and view its details.
+            - You can update any of the deployment details here and click **Update Deployment** to save changes.
+
+            ### How Deployments are Managed
+            - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
+            - You can add multiple deployments and manage them individually from the sidebar.
+            - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
+
+            ### Updating Deployments Across Pages
+            - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
+            - This means you can seamlessly switch between different deployments or update their configurations without losing context.
+
+            Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
+            """,
+            unsafe_allow_html=True
         )
 
 with st.expander("Motivation? ⚡", expanded=False):
