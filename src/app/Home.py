@@ -221,21 +221,12 @@ def display_deployments() -> None:
                 )
 
                 if st.button(f"Update Deployment", key=f"update_{deployment_name}"):
-                    if updated_name != deployment_name:
-                        st.session_state.deployments.pop(deployment_name)
-                        st.session_state.deployments[updated_name] = {
-                            "key": updated_key,
-                            "endpoint": updated_endpoint,
-                            "version": updated_version,
-                            "stream": updated_stream
-                        }
-                    else:
-                        st.session_state.deployments[deployment_name] = {
-                            "key": updated_key,
-                            "endpoint": updated_endpoint,
-                            "version": updated_version,
-                            "stream": updated_stream
-                        }
+                    st.session_state.deployments[deployment_name] = {
+                        "key": updated_key,
+                        "endpoint": updated_endpoint,
+                        "version": updated_version,
+                        "stream": updated_stream
+                    }
                     st.experimental_rerun()
 
                 if st.button(f"Remove Deployment", key=f"remove_{deployment_name}"):

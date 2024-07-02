@@ -157,34 +157,39 @@ def get_task_list(test:str=None):
             obj = MMLU(
                 deployment_config=deployment_config,
                 sample_size=mmlu_subsample/100,
-                log_level="ERROR",
+                log_level="INFO",
                 categories=mmlu_categories
             )
+            data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
+            data = obj.transform_data(df=data)
         if test == "medpub":
             obj = PubMedQA(
                 deployment_config=deployment_config,
                 sample_size=medpub_subsample/100,
                 log_level="ERROR"
             )
+            data = obj.load_data(dataset="qiaojin/PubMedQA", subset="pqa_labeled", split="train", flatten=True)
+            data = obj.transform_data(df=data)
         if test == "truthfulqa":
             obj = TruthfulQA(
                 deployment_config=deployment_config,
                 sample_size=truthful_subsample/100,
                 log_level="ERROR"
             )
-
+            data = obj.load_data(dataset="truthful_qa", subset="multiple_choice", split="validation")
+            data = obj.transform_data(df=data)
         if test == "custom":
             obj = CustomEval(
                 deployment_config=deployment_config,
-                custom_data=custom_df,
                 metrics_list=custom_metrics,
                 sample_size=custom_subsample/100,
                 log_level="ERROR"
             )
+            data = obj.transform_data(df=custom_df)
 
         objects.append(obj)
     
-    tasks = [asyncio.create_task(obj.test()) for obj in objects]
+    tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
     return tasks
 
 # Define an asynchronous function to run benchmark tests and log progress

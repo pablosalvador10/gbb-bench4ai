@@ -23,3 +23,5 @@ markdown
 python-docx
 python-dotenv
 transformers
+transformers
+fuzzywuzzy[speedup]
