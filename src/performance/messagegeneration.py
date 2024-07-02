@@ -193,3 +193,61 @@ class ReplayMessagesGenerator(BaseMessagesGenerator):
         if self.prevent_server_caching:
             return self.add_anticache_prefix(messages, messages_tokens)
         return (messages, messages_tokens)
+
+
+class BYOPMessageGenerator(BaseMessagesGenerator):
+    """
+    Class to generate chat formatted messages.
+    :param model: Model being used in testing.
+    :param prevent_server_caching: When True, random characters will be added to
+        the start of each message to prevent server-side caching.
+    :param max_tokens: Number of requested max_tokens.
+    """
+    _cached_messages_and_tokens: List[Tuple[List[Dict[str, str]], int]] = []
+
+    def __init__(self, model: str, prevent_server_caching: bool, max_tokens: int = None):
+        super().__init__(model, prevent_server_caching)
+        self.max_tokens = max_tokens
+        logging.info("Initializing with user-provided prompt")
+
+    def remove_anticache_prefix(self, messages: List[Dict[str, str]], messages_tokens: int) -> Tuple[List[Dict[str, str]], int]:
+        """
+        Remove the anticache prefix from each user message in messages.
+        Returns a modified copy of messages and an updated token count.
+        """
+        messages = copy.deepcopy(messages)
+        for message in messages:
+            if message["role"] == "user":
+                message["content"] = " ".join(message["content"].split()[1:])
+        messages_tokens = num_tokens_from_messages(messages, self.model)
+        return messages, messages_tokens
+
+    def create_chat_format(self, prompt: str) -> List[Dict[str, str]]:
+        """
+        Create the chat format messages based on the prompt and other conditions.
+        """
+
+        if self.max_tokens is not None:
+            prompt = prompt + (f" Please write a response that should be at least {self.max_tokens} tokens long.")
+        
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+
+        messages_tokens = num_tokens_from_messages(messages, self.model)
+        if self.prevent_server_caching:
+            # Add anticache prefix before we start generating random words to ensure
+            # token count when used in testing is correct
+            messages, messages_tokens = self.add_anticache_prefix(messages, messages_tokens)
+
+        self._cached_messages_and_tokens = [(messages, messages_tokens)]
+        return messages
+
+    def generate_messages(self, prompt: str) -> Tuple[Dict[str, str], int]:
+        """
+        Prepare the message content with the addition of the max tokens context.
+        Also handle the prevention of server-side caching if needed.
+        """
+        messages = self.create_chat_format(prompt)
+        return messages, num_tokens_from_messages(messages, self.model)
