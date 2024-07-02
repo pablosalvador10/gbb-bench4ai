@@ -47,7 +47,7 @@ class Eval:
             logging.basicConfig(level=logging.INFO)
             self.logger.warning(f"Unrecognized log level: {log_level}. Defaulting to INFO")
 
-    def _load_data(self, dataset: str, subset: str, split: str, flatten: bool = False) -> pd.DataFrame:
+    def load_data(self, dataset: str, subset: str, split: str, flatten: bool = False) -> pd.DataFrame:
         # Download dataset
         self.logger.info(f"Loading {dataset} data")
         hf_data = load_dataset(dataset, subset, split=split)
@@ -168,7 +168,7 @@ class MMLU(Eval):
         }
 
 
-    def __transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         # Filter to specified categories of subjects.
         # Broad categories defined in subject2category dict (global) - STEM, Medical, Business, Social Sciences, Humanities, Other
         if self.categories:
@@ -208,21 +208,19 @@ class MMLU(Eval):
             ]
         )
         output = {"generated": response.choices[0].message.content, "correct": row["answer"] ,"subject": row["subject"]}
-        output["score"] = self._score(output["generated"], output["correct"])
-
+        
         return output
 
 
-    def test(self) -> pd.DataFrame:
-        test_data = self._load_data(dataset="cais/mmlu", subset="all", split="test")
-        test_data = self.__transform_data(test_data)
+    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
 
         output_list = []
         self.logger.info("Starting evaluation")
-        for index, row in test_data.iterrows():
-            self.logger.info(f"Evaluating row {index} of {test_data.shape[0]}")
+        for index, row in data.iterrows():
+            self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
             try: 
                 output = self.__call_aoai(row)
+                output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
             except Exception as e:
                 self.logger.warning(f"Skipping...error in row {index}: {e}")
@@ -263,7 +261,7 @@ class PubMedQA(Eval):
         super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
         
 
-    def __transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
@@ -294,21 +292,19 @@ class PubMedQA(Eval):
             ]
         )
         output = {"generated": response.choices[0].message.content, "correct": row["final_decision"]}
-        output["score"] = self._score(output["generated"], output["correct"])
 
         return output
 
 
-    async def test(self) -> pd.DataFrame:
-        test_data = self._load_data(dataset="qiaojin/PubMedQA", subset="pqa_labeled", split="train", flatten=True)
-        test_data = self.__transform_data(test_data)
+    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
 
         output_list = []
         self.logger.info("Starting evaluation")
-        for index, row in test_data.iterrows():
-            self.logger.info(f"Evaluating row {index} of {test_data.shape[0]}")
+        for index, row in data.iterrows():
+            self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
             try: 
                 output = self.__call_aoai(row)
+                output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
             except Exception as e:
                 self.logger.warning(f"Skipping...error in row {index}: {e}")
@@ -347,7 +343,7 @@ class TruthfulQA(Eval):
         super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
         
 
-    def __transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
@@ -377,21 +373,19 @@ class TruthfulQA(Eval):
             ]
         )
         output = {"generated": response.choices[0].message.content, "correct": list(row["mc1_targets"]["labels"]).index(1)}
-        output["score"] = self._score(output["generated"], output["correct"])
         
         return output
 
 
-    async def test(self) -> pd.DataFrame:
-        test_data = self._load_data(dataset="truthful_qa", subset="multiple_choice", split="validation")
-        test_data = self.__transform_data(test_data)
+    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
 
         output_list = []
         self.logger.info("Starting evaluation")
-        for index, row in test_data.iterrows():
-            self.logger.info(f"Evaluating row {index} of {test_data.shape[0]}")
+        for index, row in data.iterrows():
+            self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
             try: 
                 output = self.__call_aoai(row)
+                output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
             except Exception as e:
                 self.logger.warning(f"Skipping...error in row {index}: {e}")
@@ -425,12 +419,11 @@ class CustomEval(Eval):
         test: Run the custom evaluation and output a dataframe
 
     '''
-    def __init__(self, deployment_config: Dict, custom_data: pd.DataFrame, metrics_list: List, sample_size: float = 1.0, log_level: str = "INFO"):
+    def __init__(self, deployment_config: Dict, metrics_list: List, sample_size: float = 1.0, log_level: str = "INFO"):
         super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
-        self.custom_df = custom_data
         self.metrics_list = [x.lower().replace(' ','_') for x in metrics_list]
 
-    def __transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
@@ -474,19 +467,16 @@ class CustomEval(Eval):
         if 'context_similarity' in self.metrics_list:
             row['context_similarity'] = sentence_transformer_similarity(row['context'], row['answer'])
 
-        # TODO: run all scoring functions asynchronously
-
         logging.debug(f"custom score row: {row.keys()}")
         return row
         
 
-    async def test(self) -> pd.DataFrame:
+    async def test(self, data:pd.DataFrame) -> pd.DataFrame:
 
-        self.custom_df = self.__transform_data(self.custom_df)
         output_list = []
         self.logger.info("Starting custom evaluation")
-        for index, row in self.custom_df.iterrows():
-            self.logger.info(f"Evaluating row {index} of {self.custom_df.shape[0]}")
+        for index, row in data.iterrows():
+            self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
             try: 
                 output = self.__call_aoai(row)
                 output = self.__custom_score(output)
