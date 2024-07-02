@@ -3,6 +3,7 @@ import json
 import os
 from typing import Any, Dict, List
 import plotly.graph_objects as go
+import plotly.express as px
 
 import dotenv
 import pandas as pd
@@ -403,29 +404,29 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
     visualizer = ModelPerformanceVisualizer(data=combined_stats)
     visualizer.parse_data()
 
-    visualizer_2 = BenchmarkVisualizer(combined_stats_raw)
+    #TODO: visualizer_2 = BenchmarkVisualizer(combined_stats_raw)
 
     # Adjusting layout for uniform plot sizes
     col1, col2, col3 = st.columns([1, 1, 1], gap="small")
 
     with col1:
-        st.markdown("#### 🕒 Time Analysis")
         try:
-            fig_time, fig_time2  = visualizer.plot_times()
-            st.pyplot(fig_time2)
+            fig1 = visualizer.plot_completion_tokens()
+            st.plotly_chart(fig1, use_container_width=True)
         except Exception as e:
             st.error(f"Error generating Time Analysis plot: {e}")
     
     with col2:
-        st.markdown("#### 🪙 Token Analysis")
-
-        fig_token = visualizer_2.plot_completion_tokens(visualizer_2.unique_model_names[0])
-        st.pyplot(fig_token)
-    with col3:
-        st.markdown("#### 🏆 Best vs Worst")
         try:
-            fig_best_worst = visualizer.plot_best_worst_runs()
-            st.pyplot(fig_best_worst)
+            fig2 = visualizer.plot_prompt_tokens()
+            st.plotly_chart(fig2, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating Time Analysis plot: {e}")
+    with col3:
+        try:
+            fig3 = visualizer.plot_response_time_metrics_comparison()
+            st.plotly_chart(fig3, use_container_width=True)
+            st.toast("Make plots full screen for detailed analysis!")
         except Exception as e:
             st.error(f"Error generating Best and Worst Runs plot: {e}")
 
@@ -585,3 +586,6 @@ st.sidebar.write(
 """,
     unsafe_allow_html=True,
 )
+
+
+       
