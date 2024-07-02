@@ -78,8 +78,11 @@ run_pylint:
 	@echo "Running linter"
 	find . -type f -name "*.py" ! -path "./tests/*" | xargs pylint -disable=logging-fstring-interpolation > utils/pylint_report/pylint_report.txt
 
-make run_speed_test:
+run_speed_test:
 	$(PYTHON_INTERPRETER) ./benchmark/speedtest.py
+
+evals_test:
+	$(PYTHON_INTERPRETER) src/quality/evals.py
 
 run_streamlit:
 	streamlit run src/app/Home.py

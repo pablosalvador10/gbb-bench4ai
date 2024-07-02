@@ -19,6 +19,9 @@ matplotlib
 seaborn 
 plotly
 datasets
+python-dotenv
 markdown
 python-docx
+transformers
 fuzzywuzzy[speedup]
+
