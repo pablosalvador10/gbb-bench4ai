@@ -255,7 +255,7 @@ def main() -> None:
 
     st.toast("Welcome to the RAG Benchmark Factory! Navigate through the 'Tool Help' guide or watch the video and start benchmarking your MaaS solutions!", icon="🚀")
 
-    with st.sidebar.expander("📘 Tool Help Guide", expanded=True):
+    with st.sidebar.expander("📘 Tool Help Guide", expanded=False):
         st.markdown(
             """
             Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
