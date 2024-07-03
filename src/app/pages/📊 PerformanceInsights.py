@@ -1,21 +1,19 @@
 import asyncio
 import json
-import os
 from typing import Any, Dict, List
-import plotly.graph_objects as go
-import plotly.express as px
 
 import dotenv
 import pandas as pd
 import streamlit as st
 
 from src.aoai.azure_openai import AzureOpenAIManager
+from src.app.Home import (add_deployment_form, display_deployments,
+                          load_default_deployment)
 from src.app.outputformatting import markdown_to_docx
-from src.performance.latencyanalyzer import BenchmarkVisualizer
-from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
+from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming,
+                                         AzureOpenAIBenchmarkStreaming)
 from utils.ml_logging import get_logger
-from src.app.Home import add_deployment_form, display_deployments, load_default_deployment
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
@@ -23,7 +21,7 @@ dotenv.load_dotenv(".env")
 # Set up logger
 logger = get_logger()
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
+st.set_option("deprecation.showPyplotGlobalUse", False)
 
 # Initialize session state variables if they don't exist
 session_vars = [
@@ -33,7 +31,7 @@ session_vars = [
     "messages",
     "log_messages",
     "benchmark_results",
-    "deployments"
+    "deployments",
 ]
 initial_values = {
     "conversation_history": [],
@@ -47,7 +45,7 @@ initial_values = {
     ],
     "log_messages": [],
     "benchmark_results": [],
-    "deployments": {}
+    "deployments": {},
 }
 for var in session_vars:
     if var not in st.session_state:
@@ -60,7 +58,10 @@ st.set_page_config(
 
 load_default_deployment()
 
-def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, deployment_id: str) -> AzureOpenAIManager:
+
+def create_azure_openai_manager(
+    api_key: str, endpoint: str, api_version: str, deployment_id: str
+) -> AzureOpenAIManager:
     """
     Create a new Azure OpenAI Manager instance.
     """
@@ -71,7 +72,10 @@ def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, d
         chat_model_name=deployment_id,
     )
 
-def create_benchmark_non_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+
+def create_benchmark_non_streaming_client(
+    api_key: str, endpoint: str, api_version: str
+) -> AzureOpenAIBenchmarkNonStreaming:
     """
     Create a new benchmark client instance.
     """
@@ -81,7 +85,10 @@ def create_benchmark_non_streaming_client(api_key: str, endpoint: str, api_versi
         api_version=api_version,
     )
 
-def create_benchmark_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+
+def create_benchmark_streaming_client(
+    api_key: str, endpoint: str, api_version: str
+) -> AzureOpenAIBenchmarkNonStreaming:
     """
     Create a new benchmark client instance.
     """
@@ -90,6 +97,7 @@ def create_benchmark_streaming_client(api_key: str, endpoint: str, api_version: 
         azure_endpoint=endpoint,
         api_version=api_version,
     )
+
 
 # Sidebar logic
 with st.sidebar:
@@ -103,7 +111,8 @@ with st.sidebar:
 
     if operation == "Latency Benchmark":
         with st.expander("Latency Benchmark Guide 📊", expanded=False):
-            st.markdown("""
+            st.markdown(
+                """
                 **How to Run a Latency Benchmark:**
 
                 1. **Select model settings**: Choose models, max tokens, and iterations for your benchmark tests.
@@ -111,7 +120,8 @@ with st.sidebar:
                 3. **Review results**: View detailed performance metrics after the benchmark completes.
 
                 Optimize your LLM experience with precise performance insights!
-            """)
+            """
+            )
 
         st.markdown("---")
 
@@ -126,7 +136,7 @@ with st.sidebar:
             )
             if operation == "AOAI":
                 add_deployment_form()
-            else: 
+            else:
                 st.info("Other deployment options will be available soon.")
 
         display_deployments()
@@ -134,17 +144,21 @@ with st.sidebar:
         st.markdown("---")
 
         st.markdown("## ⚙️ Configuration Benchmark Settings")
-        
+
         byop_option = st.radio(
             "BYOP (Bring Your Own Prompts)",
             options=["No", "Yes"],
-            help="Select 'Yes' to bring your own prompt or 'No' to use default settings."
+            help="Select 'Yes' to bring your own prompt or 'No' to use default settings.",
         )
 
         if byop_option == "Yes":
             num_iterations = 0
             context_tokens = "BYOP"
-            uploaded_file = st.file_uploader("Upload CSV", type='csv', help="Upload a CSV file with prompts for the benchmark tests.")
+            uploaded_file = st.file_uploader(
+                "Upload CSV",
+                type="csv",
+                help="Upload a CSV file with prompts for the benchmark tests.",
+            )
             if uploaded_file is not None:
                 st.write("File uploaded successfully!")
                 try:
@@ -153,9 +167,13 @@ with st.sidebar:
                         prompts = df["prompts"].tolist()
                         num_iterations = len(prompts)
                     else:
-                        st.error("The uploaded CSV file must contain a 'prompts' column.")
+                        st.error(
+                            "The uploaded CSV file must contain a 'prompts' column."
+                        )
                 except Exception as e:
-                    st.error(f"An error occurred while processing the uploaded file: {e}")
+                    st.error(
+                        f"An error occurred while processing the uploaded file: {e}"
+                    )
         elif byop_option == "No":
             context_tokens = st.slider(
                 "Context Tokens (Input)",
@@ -169,26 +187,34 @@ with st.sidebar:
                 min_value=1,
                 max_value=100,
                 value=50,
-                help="Select the number of iterations for each benchmark test.")
+                help="Select the number of iterations for each benchmark test.",
+            )
             prompts = None
-    
+
         # Custom output tokens checkbox
         custom_output_tokens = st.checkbox("Custom Output Tokens")
         if custom_output_tokens:
             max_tokens_list = "N/A"
-            custom_tokens_input = st.text_input("Type your own max tokens (separate multiple values with commas):", help="Enter custom max tokens for each run.")
+            custom_tokens_input = st.text_input(
+                "Type your own max tokens (separate multiple values with commas):",
+                help="Enter custom max tokens for each run.",
+            )
             if custom_tokens_input:
                 try:
-                    max_tokens_list = [int(token.strip()) for token in custom_tokens_input.split(',')]
+                    max_tokens_list = [
+                        int(token.strip()) for token in custom_tokens_input.split(",")
+                    ]
                 except ValueError:
-                    st.error("Please enter valid integers separated by commas for max tokens.")
+                    st.error(
+                        "Please enter valid integers separated by commas for max tokens."
+                    )
         else:
             options = [100, 500, 800, 1000, 1500, 2000]
             max_tokens_list = st.multiselect(
                 "Select Max Output Tokens (Generation)",
                 options=options,
                 default=[500],
-                help="Select the maximum tokens for each run."
+                help="Select the maximum tokens for each run.",
             )
     with st.expander("AOAI Model Settings", expanded=False):
         # Temperature
@@ -198,26 +224,26 @@ with st.sidebar:
             max_value=1.0,
             value=0.7,
             step=0.1,
-            help="Adjust the temperature to control the randomness of the output. A higher temperature results in more random completions."
+            help="Adjust the temperature to control the randomness of the output. A higher temperature results in more random completions.",
         )
-        
+
         # Prevent Server Caching
         prevent_server_caching = st.radio(
             "Prevent Server Caching",
-            ('Yes', 'No'),
+            ("Yes", "No"),
             index=0,
-            help="Choose 'Yes' to prevent server caching, ensuring that each request is processed freshly."
+            help="Choose 'Yes' to prevent server caching, ensuring that each request is processed freshly.",
         )
-        
+
         # Timeout
         timeout = st.number_input(
             "Timeout (seconds)",
             min_value=1,
             max_value=300,
             value=60,
-            help="Set the maximum time in seconds before the request times out."
+            help="Set the maximum time in seconds before the request times out.",
         )
-        
+
         # Top P
         top_p = st.slider(
             "Top P",
@@ -225,7 +251,7 @@ with st.sidebar:
             max_value=1.0,
             value=1.0,
             step=0.01,
-            help="Adjust Top P to control the nucleus sampling, filtering out the least likely candidates."
+            help="Adjust Top P to control the nucleus sampling, filtering out the least likely candidates.",
         )
         # Presence Penalty
         presence_penalty = st.slider(
@@ -234,9 +260,9 @@ with st.sidebar:
             max_value=2.0,
             value=0.0,
             step=0.1,
-            help="Adjust the presence penalty to discourage or encourage repeated content in completions."
+            help="Adjust the presence penalty to discourage or encourage repeated content in completions.",
         )
-        
+
         # Frequency Penalty
         frequency_penalty = st.slider(
             "Frequency Penalty",
@@ -244,15 +270,17 @@ with st.sidebar:
             max_value=2.0,
             value=0.0,
             step=0.1,
-            help="Adjust the frequency penalty to discourage or encourage frequent content in completions."
+            help="Adjust the frequency penalty to discourage or encourage frequent content in completions.",
         )
-        
+
     st.markdown("---")
     st.markdown("## 🚀 Run Benchmark")
 
     if not st.session_state.deployments:
-        st.error("No deployments found. Please visit the Deployment Center to add deployments.")
-    else: 
+        st.error(
+            "No deployments found. Please visit the Deployment Center to add deployments."
+        )
+    else:
         deployment_names = list(st.session_state.deployments.keys())
         summary_placeholder = st.empty()
 
@@ -278,23 +306,53 @@ with st.sidebar:
         test_status_placeholder = st.empty()
         run_benchmark = st.button("Start Benchmark")
 
-def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, Any]]) -> None:
+
+def display_statistics(
+    stats: List[Dict[str, Any]], stats_raw: List[Dict[str, Any]]
+) -> None:
     """
     Display benchmark statistics in a formatted manner with enhanced user interface.
     """
     st.markdown("## Benchmark Results")
     table = []
     headers = [
-        "Model_MaxTokens", "is_Streaming", "Iterations", "Regions",
-        "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT", "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT",
-        "Median Prompt Tokens", "IQR Prompt Tokens", "Median Completion Tokens", "IQR Completion Tokens",
-        "95th Percentile Completion Tokens", "99th Percentile Completion Tokens", "CV Completion Tokens",
-        "Average TBT (ms)", "Median TBT (ms)", "IQR TBT", "95th Percentile TBT (ms)", "99th Percentile TBT (ms)",
-        "Average TTFT (ms/s)", "Median TTFT (ms/s)", "IQR TTFT", "95th Percentile TTFT (ms/s)", "99th Percentile TTFT (ms/s)",
-        "Error Rate", "Error Types", "Successful Runs", "Unsuccessful Runs",
-        "Throttle Count", "Throttle Rate", "Best Run", "Worst Run",
+        "Model_MaxTokens",
+        "is_Streaming",
+        "Iterations",
+        "Regions",
+        "Average TTLT (s)",
+        "Median TTLT (s)",
+        "IQR TTLT",
+        "95th Percentile TTLT (s)",
+        "99th Percentile TTLT (s)",
+        "CV TTLT",
+        "Median Prompt Tokens",
+        "IQR Prompt Tokens",
+        "Median Completion Tokens",
+        "IQR Completion Tokens",
+        "95th Percentile Completion Tokens",
+        "99th Percentile Completion Tokens",
+        "CV Completion Tokens",
+        "Average TBT (ms)",
+        "Median TBT (ms)",
+        "IQR TBT",
+        "95th Percentile TBT (ms)",
+        "99th Percentile TBT (ms)",
+        "Average TTFT (ms/s)",
+        "Median TTFT (ms/s)",
+        "IQR TTFT",
+        "95th Percentile TTFT (ms/s)",
+        "99th Percentile TTFT (ms/s)",
+        "Error Rate",
+        "Error Types",
+        "Successful Runs",
+        "Unsuccessful Runs",
+        "Throttle Count",
+        "Throttle Rate",
+        "Best Run",
+        "Worst Run",
     ]
-    for stat in stats: 
+    for stat in stats:
         for key, data in stat.items():
             regions = data.get("regions", [])
             regions = [r for r in regions if r is not None]
@@ -334,22 +392,25 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
                 data.get("throttle_count", "N/A"),
                 data.get("throttle_rate", "N/A"),
                 json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A",
+                json.dumps(data.get("worst_run", {}))
+                if data.get("worst_run")
+                else "N/A",
             ]
             table.append(row)
 
     table.sort(key=lambda x: x[3])
 
     df = pd.DataFrame(table, columns=headers)
-    
+
     def color_lowest_median_time(s: pd.Series) -> List[str]:
         is_lowest = s == s.min()
-        return ['background-color: green' if v else '' for v in is_lowest]
-    
-    styled_df = df.style.apply(color_lowest_median_time, subset=['Median TTLT'])
+        return ["background-color: green" if v else "" for v in is_lowest]
+
+    styled_df = df.style.apply(color_lowest_median_time, subset=["Median TTLT"])
     # Add an expander with explanations for all columns in the dataframe
     with st.expander("Column Descriptions", expanded=False):
-        st.markdown("""
+        st.markdown(
+            """
         - **Model_MaxTokens**: The maximum number of tokens the model can process in a single request.
         - **is_Streaming**: Indicates whether the model uses streaming for processing requests.
         - **Iterations**: The number of iterations or runs performed during the analysis.
@@ -385,8 +446,9 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
         - **Throttle Rate**: The rate at which throttling occurred.
         - **Best Run**: Details of the run with the best performance metrics.
         - **Worst Run**: Details of the run with the worst performance metrics.
-        """)
-   
+        """
+        )
+
     styled_df = df.style
     st.dataframe(styled_df)
 
@@ -395,16 +457,16 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
 
     for stat in stats:
         combined_stats.update(stat)
-    
+
     for stat in stats_raw:
         combined_stats_raw.update(stat)
-    
+
     st.markdown("### Visual Insights")
 
     visualizer = ModelPerformanceVisualizer(data=combined_stats)
     visualizer.parse_data()
 
-    #TODO: visualizer_2 = BenchmarkVisualizer(combined_stats_raw)
+    # TODO: visualizer_2 = BenchmarkVisualizer(combined_stats_raw)
 
     # Adjusting layout for uniform plot sizes
     col1, col2, col3 = st.columns([1, 1, 1], gap="small")
@@ -415,7 +477,7 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
             st.plotly_chart(fig1, use_container_width=True)
         except Exception as e:
             st.error(f"Error generating Time Analysis plot: {e}")
-    
+
     with col2:
         try:
             fig2 = visualizer.plot_prompt_tokens()
@@ -429,6 +491,7 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
             st.toast("Make plots full screen for detailed analysis!")
         except Exception as e:
             st.error(f"Error generating Best and Worst Runs plot: {e}")
+
 
 async def run_benchmark_tests() -> None:
     """
@@ -474,21 +537,20 @@ async def run_benchmark_tests() -> None:
         stats = [
             client.calculate_and_show_statistics() for client, _ in deployment_clients
         ]
-        stats_raw = [
-            client.results for client, _ in deployment_clients
-        ]
+        stats_raw = [client.results for client, _ in deployment_clients]
         st.session_state["benchmark_results"] = stats
         st.session_state["benchmark_results_raw"] = stats_raw
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
+
 if run_benchmark:
     summary_placeholder.empty()
     test_status_placeholder.text("Benchmark Fired...")
     if not st.session_state.deployments:
         st.error("No deployments found. Please add a deployment in the sidebar.")
-    else: 
+    else:
         deployment_names = list(st.session_state.deployments.keys())
         st.info(
             f"""
@@ -507,15 +569,21 @@ if run_benchmark:
                 - **Frequency Penalty:** {frequency_penalty}
             """
         )
-    
+
     with st.spinner("Running benchmark tests..."):
         asyncio.run(run_benchmark_tests())
 
     if st.session_state["benchmark_results"]:
-        display_statistics(st.session_state["benchmark_results"], st.session_state["benchmark_results_raw"])
+        display_statistics(
+            st.session_state["benchmark_results"],
+            st.session_state["benchmark_results_raw"],
+        )
         test_status_placeholder = st.empty()
-else: 
-    st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
+else:
+    st.info(
+        "👈 Please configure the benchmark settings and click 'Start Benchmark' to begin."
+    )
+
 
 def download_chat_history() -> None:
     """
@@ -529,6 +597,7 @@ def download_chat_history() -> None:
         mime="application/json",
         key="download-chat-history",
     )
+
 
 def download_ai_response_as_docx_or_pdf() -> None:
     """
@@ -560,6 +629,7 @@ def download_ai_response_as_docx_or_pdf() -> None:
             f"❌ Error generating {file_format} file. Please check the logs for more details."
         )
 
+
 if st.session_state.ai_response:
     with st.sidebar:
         st.markdown("<hr/>", unsafe_allow_html=True)
@@ -586,6 +656,3 @@ st.sidebar.write(
 """,
     unsafe_allow_html=True,
 )
-
-
-       

@@ -203,14 +203,19 @@ class BYOPMessageGenerator(BaseMessagesGenerator):
         the start of each message to prevent server-side caching.
     :param max_tokens: Number of requested max_tokens.
     """
+
     _cached_messages_and_tokens: List[Tuple[List[Dict[str, str]], int]] = []
 
-    def __init__(self, model: str, prevent_server_caching: bool, max_tokens: int = None):
+    def __init__(
+        self, model: str, prevent_server_caching: bool, max_tokens: int = None
+    ):
         super().__init__(model, prevent_server_caching)
         self.max_tokens = max_tokens
         logging.info("Initializing with user-provided prompt")
 
-    def remove_anticache_prefix(self, messages: List[Dict[str, str]], messages_tokens: int) -> Tuple[List[Dict[str, str]], int]:
+    def remove_anticache_prefix(
+        self, messages: List[Dict[str, str]], messages_tokens: int
+    ) -> Tuple[List[Dict[str, str]], int]:
         """
         Remove the anticache prefix from each user message in messages.
         Returns a modified copy of messages and an updated token count.
@@ -228,18 +233,22 @@ class BYOPMessageGenerator(BaseMessagesGenerator):
         """
 
         if self.max_tokens is not None:
-            prompt = prompt + (f" Please write a response that should be at least {self.max_tokens} tokens long.")
-        
+            prompt = prompt + (
+                f" Please write a response that should be at least {self.max_tokens} tokens long."
+            )
+
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ]
 
         messages_tokens = num_tokens_from_messages(messages, self.model)
         if self.prevent_server_caching:
             # Add anticache prefix before we start generating random words to ensure
             # token count when used in testing is correct
-            messages, messages_tokens = self.add_anticache_prefix(messages, messages_tokens)
+            messages, messages_tokens = self.add_anticache_prefix(
+                messages, messages_tokens
+            )
 
         self._cached_messages_and_tokens = [(messages, messages_tokens)]
         return messages

@@ -1,16 +1,15 @@
 from typing import Any, Dict, Tuple
-import matplotlib.pyplot as plt
+
 import pandas as pd
-import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
 
 from utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()
+
 
 class ModelPerformanceVisualizer:
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -71,135 +70,123 @@ class ModelPerformanceVisualizer:
                         record[f"{key}_{subkey}"] = subvalue
             records.append(record)
         self.df = pd.DataFrame.from_records(records)
-    
+
     def plot_completion_tokens(self):
         """
         Plot completion tokens by model using Plotly, with enhanced median representation.
         """
         fig_width, fig_height = 1200, 600
         fig = px.box(
-            self.df, 
-            x="model", 
-            y="median_completion_tokens", 
+            self.df,
+            x="model",
+            y="median_completion_tokens",
             title="Completion Tokens by Model",
             template="plotly_white",
             notched=True,  # Adds a notch to indicate the confidence interval around the median
-            points='all'  # Shows all points to provide a fuller picture of the distribution
+            points="all",  # Shows all points to provide a fuller picture of the distribution
         )
-        
+
         # Adjusted custom markers for median values with detailed hover information and robot emoji
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
-                y=self.df['median_completion_tokens'],
-                mode='markers+text',  # Combine markers and text for display
-                name='Median Tokens 🤖',  # Updated name with robot emoji
+                y=self.df["median_completion_tokens"],
+                mode="markers+text",  # Combine markers and text for display
+                name="Median Tokens 🤖",  # Updated name with robot emoji
                 marker=dict(
-                    color='lightblue',  # Use light blue color for a lighter appearance
+                    color="lightblue",  # Use light blue color for a lighter appearance
                     size=10,  # Adjust size as needed
-                    symbol='circle'  # Use 'circle' symbol for a softer look
+                    symbol="circle",  # Use 'circle' symbol for a softer look
                 ),
-                text=["🤖" for _ in self.df['model']],  # Use robot emoji for each point
+                text=["🤖" for _ in self.df["model"]],  # Use robot emoji for each point
                 textposition="bottom center",  # Position text below the marker
-                hoverinfo='text+name',  # Show custom text and name on hover
-                hovertext=self.df.apply(lambda row: f"Model: {row['model']}\nMedian Tokens: {row['median_completion_tokens']}", axis=1)  # Detailed hover text
+                hoverinfo="text+name",  # Show custom text and name on hover
+                hovertext=self.df.apply(
+                    lambda row: f"Model: {row['model']}\nMedian Tokens: {row['median_completion_tokens']}",
+                    axis=1,
+                ),  # Detailed hover text
             )
-        )
-
-         # Add average TTL as a separate trace with lightning emoji markers
-        fig.add_trace(
-            go.Scatter(
-                x=self.df["model"],
-                y=self.df['average_ttlt'],
-                mode='markers+text',
-                name='⚡Avg TTL',
-                marker=dict(
-                    color='blue',
-                    size=12,
-                    symbol='circle'
-                ),
-                text=["⚡" for _ in self.df['average_ttlt']],
-                textposition="top center",
-                textfont=dict(
-                    color='blue',
-                    size=16
-                ),
-                hovertext=self.df.apply(lambda row: f"{row['model']}: {row['average_ttlt']:.2f}s", axis=1),
-                hoverinfo='text'
-            )
-        )
-        
-        fig.update_xaxes(tickangle=45)
-        fig.update_layout(
-            autosize=False,
-            width=fig_width,
-            height=fig_height
-        )
-        return fig
-    
-    def plot_prompt_tokens(self):
-        """
-        Plot prompt tokens by model using Plotly, with enhanced median representation and human emoji.
-        """
-        fig_width, fig_height = 1200, 600
-        fig = px.box(
-            self.df, 
-            x="model", 
-            y="median_prompt_tokens", 
-            title="Prompt Tokens by Model",
-            template="plotly_white"
         )
 
         # Add average TTL as a separate trace with lightning emoji markers
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
-                y=self.df['average_ttlt'],
-                mode='markers+text',
-                name='⚡Avg TTL',
-                marker=dict(
-                    color='blue',
-                    size=12,
-                    symbol='circle'
-                ),
-                text=["⚡" for _ in self.df['average_ttlt']],
+                y=self.df["average_ttlt"],
+                mode="markers+text",
+                name="⚡Avg TTL",
+                marker=dict(color="blue", size=12, symbol="circle"),
+                text=["⚡" for _ in self.df["average_ttlt"]],
                 textposition="top center",
-                textfont=dict(
-                    color='blue',
-                    size=16
+                textfont=dict(color="blue", size=16),
+                hovertext=self.df.apply(
+                    lambda row: f"{row['model']}: {row['average_ttlt']:.2f}s", axis=1
                 ),
-                hovertext=self.df.apply(lambda row: f"{row['model']}: {row['average_ttlt']:.2f}s", axis=1),
-                hoverinfo='text'
+                hoverinfo="text",
             )
         )
-        
+
+        fig.update_xaxes(tickangle=45)
+        fig.update_layout(autosize=False, width=fig_width, height=fig_height)
+        return fig
+
+    def plot_prompt_tokens(self):
+        """
+        Plot prompt tokens by model using Plotly, with enhanced median representation and human emoji.
+        """
+        fig_width, fig_height = 1200, 600
+        fig = px.box(
+            self.df,
+            x="model",
+            y="median_prompt_tokens",
+            title="Prompt Tokens by Model",
+            template="plotly_white",
+        )
+
+        # Add average TTL as a separate trace with lightning emoji markers
+        fig.add_trace(
+            go.Scatter(
+                x=self.df["model"],
+                y=self.df["average_ttlt"],
+                mode="markers+text",
+                name="⚡Avg TTL",
+                marker=dict(color="blue", size=12, symbol="circle"),
+                text=["⚡" for _ in self.df["average_ttlt"]],
+                textposition="top center",
+                textfont=dict(color="blue", size=16),
+                hovertext=self.df.apply(
+                    lambda row: f"{row['model']}: {row['average_ttlt']:.2f}s", axis=1
+                ),
+                hoverinfo="text",
+            )
+        )
+
         # Adjusted custom markers for median values with detailed hover information and human emoji
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
-                y=self.df['median_prompt_tokens'],
-                mode='markers+text',  # Combine markers and text for display
-                name='Median Tokens 👤',  # Updated name with human emoji
+                y=self.df["median_prompt_tokens"],
+                mode="markers+text",  # Combine markers and text for display
+                name="Median Tokens 👤",  # Updated name with human emoji
                 marker=dict(
-                    color='lightblue',  # Use light blue color for a lighter appearance
+                    color="lightblue",  # Use light blue color for a lighter appearance
                     size=10,  # Adjust size as needed
-                    symbol='circle'  # Use 'circle' symbol for a softer look
+                    symbol="circle",  # Use 'circle' symbol for a softer look
                 ),
-                text=["👤" for _ in self.df['model']],  # Use human emoji for each point
+                text=["👤" for _ in self.df["model"]],  # Use human emoji for each point
                 textposition="bottom center",  # Position text below the marker
-                hoverinfo='text+name',  # Show custom text and name on hover
-                hovertext= self.df.apply(lambda row: f"Model: {row['model']}\nMedian Prompt Tokens: {row['median_prompt_tokens']}", axis=1)  # Detailed hover text
+                hoverinfo="text+name",  # Show custom text and name on hover
+                hovertext=self.df.apply(
+                    lambda row: f"Model: {row['model']}\nMedian Prompt Tokens: {row['median_prompt_tokens']}",
+                    axis=1,
+                ),  # Detailed hover text
             )
         )
-        
+
         fig.update_xaxes(tickangle=45)
-        fig.update_layout(
-            autosize=False,
-            width=fig_width,
-            height=fig_height
-        )
+        fig.update_layout(autosize=False, width=fig_width, height=fig_height)
         return fig
-    
+
     def plot_response_time_metrics_comparison(self):
         """
         Plot a comparison of response time metrics by model using Plotly, including generation tokens and input tokens with emojis.
@@ -211,12 +198,15 @@ class ModelPerformanceVisualizer:
         models = self.df["model"].unique()
 
         # Existing metrics (Time-based)
-        for metric in ["median_ttlt", "average_ttlt", "percentile_95_ttlt", "percentile_99_ttlt"]:
+        for metric in [
+            "median_ttlt",
+            "average_ttlt",
+            "percentile_95_ttlt",
+            "percentile_99_ttlt",
+        ]:
             fig.add_trace(
                 go.Bar(
-                    x=models,
-                    y=self.df.groupby("model")[metric].mean(),
-                    name=metric
+                    x=models, y=self.df.groupby("model")[metric].mean(), name=metric
                 ),
                 secondary_y=False,  # Use the primary y-axis for time-based metrics
             )
@@ -225,14 +215,17 @@ class ModelPerformanceVisualizer:
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
-                y=self.df['median_prompt_tokens'],
-                mode='markers+text',
-                name='Median Prompt Tokens 👤',
-                marker=dict(color='lightblue', size=10, symbol='circle'),
-                text=["👤" for _ in self.df['model']],
+                y=self.df["median_prompt_tokens"],
+                mode="markers+text",
+                name="Median Prompt Tokens 👤",
+                marker=dict(color="lightblue", size=10, symbol="circle"),
+                text=["👤" for _ in self.df["model"]],
                 textposition="bottom center",
-                hoverinfo='text+name',
-                hovertext=self.df.apply(lambda row: f"Model: {row['model']}\nMedian Prompt Tokens: {row['median_prompt_tokens']}", axis=1)
+                hoverinfo="text+name",
+                hovertext=self.df.apply(
+                    lambda row: f"Model: {row['model']}\nMedian Prompt Tokens: {row['median_prompt_tokens']}",
+                    axis=1,
+                ),
             ),
             secondary_y=True,  # Use the secondary y-axis for token metrics
         )
@@ -241,21 +234,24 @@ class ModelPerformanceVisualizer:
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
-                y=self.df['median_completion_tokens'],
-                mode='markers+text',
-                name='Median Completion Tokens 🤖',
-                marker=dict(color='lightblue', size=10, symbol='circle'),
-                text=["🤖" for _ in self.df['model']],
+                y=self.df["median_completion_tokens"],
+                mode="markers+text",
+                name="Median Completion Tokens 🤖",
+                marker=dict(color="lightblue", size=10, symbol="circle"),
+                text=["🤖" for _ in self.df["model"]],
                 textposition="bottom center",
-                hoverinfo='text+name',
-                hovertext=self.df.apply(lambda row: f"Model: {row['model']}\nMedian Completion Tokens: {row['median_completion_tokens']}", axis=1)
+                hoverinfo="text+name",
+                hovertext=self.df.apply(
+                    lambda row: f"Model: {row['model']}\nMedian Completion Tokens: {row['median_completion_tokens']}",
+                    axis=1,
+                ),
             ),
             secondary_y=True,  # Use the secondary y-axis for token metrics
         )
 
         # Update layout to include a secondary y-axis
         fig.update_layout(
-            barmode='group',
+            barmode="group",
             title="Response Time Metrics by Model",
             xaxis_title="Model",
             yaxis_title="Time (seconds)",
@@ -263,7 +259,7 @@ class ModelPerformanceVisualizer:
             width=fig_width,
             height=fig_height,
             template="plotly_white",
-            title_font_size=20
+            title_font_size=20,
         )
 
         # Configure the secondary y-axis
@@ -271,16 +267,21 @@ class ModelPerformanceVisualizer:
 
         return fig
 
-
     def plot_tokens(self):
         """
         Plot token statistics using Plotly and return the figure object.
         """
         token_features = ["median_prompt_tokens", "median_completion_tokens"]
         melted_df = self.df.melt(id_vars=["model"], value_vars=token_features)
-        fig = px.bar(melted_df, x="model", y="value", color="variable", barmode="group",
-                     labels={"value": "Tokens", "variable": "Token Type"},
-                     title="Token Metrics by Model")
+        fig = px.bar(
+            melted_df,
+            x="model",
+            y="value",
+            color="variable",
+            barmode="group",
+            labels={"value": "Tokens", "variable": "Token Type"},
+            title="Token Metrics by Model",
+        )
         fig.update_xaxes(tickangle=45)
         return fig
 
@@ -289,7 +290,7 @@ class ModelPerformanceVisualizer:
         Plot error rates using Plotly and return the figure object.
         """
         fig = px.bar(self.df, x="model", y="error_rate", title="Error Rate by Model")
-        fig.update_traces(marker_color='indianred')
+        fig.update_traces(marker_color="indianred")
         fig.update_xaxes(tickangle=45)
         return fig
 
@@ -298,12 +299,22 @@ class ModelPerformanceVisualizer:
         Compare the best and worst run times using Plotly and return the figure object.
         """
         if "best_run_time" in self.df.columns and "worst_run_time" in self.df.columns:
-            melted_df = self.df.melt(id_vars=["model"], value_vars=["best_run_time", "worst_run_time"])
-            fig = px.bar(melted_df, x="model", y="value", color="variable", barmode="group",
-                         title="Best vs Worst Run Times by Model")
+            melted_df = self.df.melt(
+                id_vars=["model"], value_vars=["best_run_time", "worst_run_time"]
+            )
+            fig = px.bar(
+                melted_df,
+                x="model",
+                y="value",
+                color="variable",
+                barmode="group",
+                title="Best vs Worst Run Times by Model",
+            )
             fig.update_xaxes(tickangle=45)
         else:
-            logger.debug("The columns 'best_run_time' and 'worst_run_time' are not present in the DataFrame")
+            logger.debug(
+                "The columns 'best_run_time' and 'worst_run_time' are not present in the DataFrame"
+            )
             fig = None
         return fig
 
@@ -313,9 +324,11 @@ class ModelPerformanceVisualizer:
         """
         if "regions" in self.df.columns:
             fig = px.imshow(
-                self.df.pivot_table(index="model", columns="regions", values="median_time"),
+                self.df.pivot_table(
+                    index="model", columns="regions", values="median_time"
+                ),
                 labels=dict(x="Region", y="Model", color="Median Time"),
-                title="Performance Heatmap by Region and Model"
+                title="Performance Heatmap by Region and Model",
             )
         else:
             logger.debug("No regional data available for heatmap.")
@@ -326,8 +339,13 @@ class ModelPerformanceVisualizer:
         """
         Plot the relationship between time and tokens using Plotly and return the figure object.
         """
-        fig = px.scatter(self.df, x="median_prompt_tokens", y="median_ttlt", color="model",
-                         title="Response Time vs. Prompt Tokens by Model")
+        fig = px.scatter(
+            self.df,
+            x="median_prompt_tokens",
+            y="median_ttlt",
+            color="model",
+            title="Response Time vs. Prompt Tokens by Model",
+        )
         return fig
 
     def visualize_all(self):

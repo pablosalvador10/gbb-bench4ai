@@ -1,13 +1,16 @@
-import pandas as pd
-import numpy as np
-import seaborn as sns
+from typing import Any, Dict, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy import stats
-from typing import Dict, Any, List, Optional, Tuple
+
 from utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()
+
 
 class BenchmarkVisualizer:
     def __init__(self, benchmark_results: Dict[str, Any]) -> None:
@@ -29,15 +32,17 @@ class BenchmarkVisualizer:
         try:
             all_data = []
             for key, value in self.benchmark_results.items():
-                model_name, tokens = key.rsplit('_', 1)
+                model_name, tokens = key.rsplit("_", 1)
                 for i in range(len(next(iter(value.values())))):
-                    all_data.append({
-                        'model_name': model_name,
-                        'tokens': int(tokens),
-                        'ttlt_successfull': value['ttlt_successfull'][i],
-                        'completion_tokens': value['completion_tokens'][i],
-                        'prompt_tokens': value['prompt_tokens'][i]
-                    })
+                    all_data.append(
+                        {
+                            "model_name": model_name,
+                            "tokens": int(tokens),
+                            "ttlt_successfull": value["ttlt_successfull"][i],
+                            "completion_tokens": value["completion_tokens"][i],
+                            "prompt_tokens": value["prompt_tokens"][i],
+                        }
+                    )
             df = pd.DataFrame(all_data)
             logger.info("DataFrame created successfully")
             return df
@@ -53,9 +58,9 @@ class BenchmarkVisualizer:
         """
         try:
             model_dfs = {}
-            self.unique_model_names = self.df['model_name'].unique()
+            self.unique_model_names = self.df["model_name"].unique()
             for model_name in self.unique_model_names:
-                model_dfs[model_name] = self.df[self.df['model_name'] == model_name]
+                model_dfs[model_name] = self.df[self.df["model_name"] == model_name]
             logger.info("Model DataFrames created successfully")
             return model_dfs
         except Exception as e:
@@ -70,7 +75,9 @@ class BenchmarkVisualizer:
         :return: Correlation matrix DataFrame.
         """
         try:
-            correlation_matrix = df[['ttlt_successfull', 'completion_tokens', 'prompt_tokens']].corr()
+            correlation_matrix = df[
+                ["ttlt_successfull", "completion_tokens", "prompt_tokens"]
+            ].corr()
             logger.info("Correlation matrix calculated successfully")
             return correlation_matrix
         except Exception as e:
@@ -85,11 +92,19 @@ class BenchmarkVisualizer:
         :return: DataFrame with residuals columns added.
         """
         try:
-            slope, intercept, _, _, _ = stats.linregress(df['completion_tokens'], df['ttlt_successfull'])
-            df['Residuals Completion Tokens'] = df['ttlt_successfull'] - (slope * df['completion_tokens'] + intercept)
+            slope, intercept, _, _, _ = stats.linregress(
+                df["completion_tokens"], df["ttlt_successfull"]
+            )
+            df["Residuals Completion Tokens"] = df["ttlt_successfull"] - (
+                slope * df["completion_tokens"] + intercept
+            )
 
-            slope, intercept, _, _, _ = stats.linregress(df['prompt_tokens'], df['ttlt_successfull'])
-            df['Residuals Prompt Tokens'] = df['ttlt_successfull'] - (slope * df['prompt_tokens'] + intercept)
+            slope, intercept, _, _, _ = stats.linregress(
+                df["prompt_tokens"], df["ttlt_successfull"]
+            )
+            df["Residuals Prompt Tokens"] = df["ttlt_successfull"] - (
+                slope * df["prompt_tokens"] + intercept
+            )
 
             logger.info("Residuals calculated successfully")
             return df
@@ -97,7 +112,9 @@ class BenchmarkVisualizer:
             logger.error(f"Error in calculating residuals: {e}")
             raise
 
-    def _identify_top_outliers(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def _identify_top_outliers(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Identify the top outliers for completion tokens and prompt tokens residuals for the provided DataFrame.
 
@@ -105,8 +122,12 @@ class BenchmarkVisualizer:
         :return: Two DataFrames containing the top outliers for completion tokens and prompt tokens.
         """
         try:
-            top_outliers_completion = df.iloc[np.abs(df['Residuals Completion Tokens']).argsort()[-5:]]
-            top_outliers_prompt = df.iloc[np.abs(df['Residuals Prompt Tokens']).argsort()[-5:]]
+            top_outliers_completion = df.iloc[
+                np.abs(df["Residuals Completion Tokens"]).argsort()[-5:]
+            ]
+            top_outliers_prompt = df.iloc[
+                np.abs(df["Residuals Prompt Tokens"]).argsort()[-5:]
+            ]
             logger.info("Top outliers identified successfully")
             return top_outliers_completion, top_outliers_prompt
         except Exception as e:
@@ -124,9 +145,11 @@ class BenchmarkVisualizer:
             df = self.model_dfs[model_name]
             correlation_matrix = self._calculate_correlation_matrix(df)
             plt.figure(figsize=(12, 6))
-            sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
-            plt.title(f'Correlation Matrix for {model_name}')
-            logger.info(f"Correlation matrix plot created successfully for {model_name}")
+            sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f")
+            plt.title(f"Correlation Matrix for {model_name}")
+            logger.info(
+                f"Correlation matrix plot created successfully for {model_name}"
+            )
             return plt
         except Exception as e:
             logger.error(f"Error in plotting correlation matrix for {model_name}: {e}")
@@ -146,16 +169,34 @@ class BenchmarkVisualizer:
             correlation_matrix = self._calculate_correlation_matrix(df)
 
             plt.figure(figsize=(12, 6))
-            sns.regplot(x='completion_tokens', y='ttlt_successfull', data=df, color='blue', label='Completion Tokens vs TTLT')
+            sns.regplot(
+                x="completion_tokens",
+                y="ttlt_successfull",
+                data=df,
+                color="blue",
+                label="Completion Tokens vs TTLT",
+            )
             for i in range(top_outliers_completion.shape[0]):
-                plt.annotate(f"{top_outliers_completion.iloc[i]['completion_tokens']:.2f}, {top_outliers_completion.iloc[i]['ttlt_successfull']:.2f}", 
-                             (top_outliers_completion.iloc[i]['completion_tokens'], top_outliers_completion.iloc[i]['ttlt_successfull']))
-            plt.xlabel('Completion Tokens')
-            plt.ylabel('TTLT Successful')
-            plt.title(f'TTLT Successful vs Completion Tokens for {model_name}')
+                plt.annotate(
+                    f"{top_outliers_completion.iloc[i]['completion_tokens']:.2f}, {top_outliers_completion.iloc[i]['ttlt_successfull']:.2f}",
+                    (
+                        top_outliers_completion.iloc[i]["completion_tokens"],
+                        top_outliers_completion.iloc[i]["ttlt_successfull"],
+                    ),
+                )
+            plt.xlabel("Completion Tokens")
+            plt.ylabel("TTLT Successful")
+            plt.title(f"TTLT Successful vs Completion Tokens for {model_name}")
             plt.legend()
-            plt.text(0.2, 0.8, f"Correlation: {correlation_matrix.loc['completion_tokens', 'ttlt_successfull']:.2f}", transform=plt.gca().transAxes)
-            plt.text(0.2, 0.7, f"Note: Data from {model_name}", transform=plt.gca().transAxes)
+            plt.text(
+                0.2,
+                0.8,
+                f"Correlation: {correlation_matrix.loc['completion_tokens', 'ttlt_successfull']:.2f}",
+                transform=plt.gca().transAxes,
+            )
+            plt.text(
+                0.2, 0.7, f"Note: Data from {model_name}", transform=plt.gca().transAxes
+            )
             logger.info(f"Completion tokens plot created successfully for {model_name}")
             return plt
         except Exception as e:
@@ -176,16 +217,34 @@ class BenchmarkVisualizer:
             correlation_matrix = self._calculate_correlation_matrix(df)
 
             plt.figure(figsize=(12, 6))
-            sns.regplot(x='prompt_tokens', y='ttlt_successfull', data=df, color='red', label='Prompt Tokens vs TTLT')
+            sns.regplot(
+                x="prompt_tokens",
+                y="ttlt_successfull",
+                data=df,
+                color="red",
+                label="Prompt Tokens vs TTLT",
+            )
             for i in range(top_outliers_prompt.shape[0]):
-                plt.annotate(f"{top_outliers_prompt.iloc[i]['prompt_tokens']:.2f}, {top_outliers_prompt.iloc[i]['ttlt_successfull']:.2f}", 
-                             (top_outliers_prompt.iloc[i]['prompt_tokens'], top_outliers_prompt.iloc[i]['ttlt_successfull']))
-            plt.xlabel('Prompt Tokens')
-            plt.ylabel('TTLT Successful')
-            plt.title(f'TTLT Successful vs Prompt Tokens for {model_name}')
+                plt.annotate(
+                    f"{top_outliers_prompt.iloc[i]['prompt_tokens']:.2f}, {top_outliers_prompt.iloc[i]['ttlt_successfull']:.2f}",
+                    (
+                        top_outliers_prompt.iloc[i]["prompt_tokens"],
+                        top_outliers_prompt.iloc[i]["ttlt_successfull"],
+                    ),
+                )
+            plt.xlabel("Prompt Tokens")
+            plt.ylabel("TTLT Successful")
+            plt.title(f"TTLT Successful vs Prompt Tokens for {model_name}")
             plt.legend()
-            plt.text(0.2, 0.8, f"Correlation: {correlation_matrix.loc['prompt_tokens', 'ttlt_successfull']:.2f}", transform=plt.gca().transAxes)
-            plt.text(0.2, 0.7, f"Note: Data from {model_name}", transform=plt.gca().transAxes)
+            plt.text(
+                0.2,
+                0.8,
+                f"Correlation: {correlation_matrix.loc['prompt_tokens', 'ttlt_successfull']:.2f}",
+                transform=plt.gca().transAxes,
+            )
+            plt.text(
+                0.2, 0.7, f"Note: Data from {model_name}", transform=plt.gca().transAxes
+            )
             logger.info(f"Prompt tokens plot created successfully for {model_name}")
             return plt
         except Exception as e:
