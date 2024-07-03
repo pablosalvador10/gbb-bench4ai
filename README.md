@@ -4,16 +4,26 @@
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![AI](https://img.shields.io/badge/AI-enthusiast-7F52FF.svg)
 ![GitHub stars](https://img.shields.io/github/stars/pablosalvador10/gbb-ai-upgrade-llm?style=social)
-![Contributors](https://img.shields.io/github/contributors/pablosalvador10/gbb-ai-upgrade-llm)
-![Forks](https://img.shields.io/github/forks/pablosalvador10/gbb-ai-upgrade-llm?style=social)
 ![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-ai-upgrade-llm)
-![Pull Requests](https://img.shields.io/github/issues-pr/pablosalvador10/gbb-ai-upgrade-llm?color=0088ff)
 ![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
-![Made with Love in Python](https://img.shields.io/badge/Made%20with-Love%20in%20Python-1f425f.svg)
-[![Documentation Status](https://readthedocs.org/projects/gbb-ai-upgrade-llm/badge/?version=latest)](https://gbb-ai-upgrade-llm.readthedocs.io/en/latest/?badge=latest)
-[![Code Coverage](https://codecov.io/gh/pablosalvador10/gbb-ai-upgrade-llm/branch/main/graph/badge.svg)](https://codecov.io/gh/pablosalvador10/gbb-ai-upgrade-llm)
-![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=pablosalvador10.gbb-ai-upgrade-llm)
-![GitHub last commit](https://img.shields.io/github/last-commit/pablosalvador10/gbb-ai-upgrade-llm)
+
+<img  src="https://readme-components.vercel.app/api?component=text&text=GBB AI&fill=linear-gradient%28to%20top%2C%20%23a18cd1%200%25%2C%20%23fbc2eb%20100%25%29%3B">
+
+## Technologies & Tools
+
+### Programming Languages
+![Python Logo](https://readme-components.vercel.app/api?component=logo&logo=python&text=false&animation=spin)
+
+
+### Skills Progress
+![CSS Progress](https://readme-components.vercel.app/api?component=linearprogress&value=10&skill=css&fill=linear-gradient%2862deg%2C%20%238EC5FC%200%25%2C%20%23E0C3FC%20100%25%29%3B%0A)
+
+### Interactive Elements
+[![button](https://readme-components.vercel.app/api?component=button&text=Button&fill=ffc0cd&textfill=white)](https://github.com/pablosalvador10)
+
+
+
+
 
 
 > [!TIP]
