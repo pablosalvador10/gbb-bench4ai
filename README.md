@@ -7,11 +7,9 @@
 ![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-ai-upgrade-llm)
 ![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
 
-<img  src="https://readme-components.vercel.app/api?component=text&text=GBB AI&fill=linear-gradient%28to%20top%2C%20%23a18cd1%200%25%2C%20%23fbc2eb%20100%25%29%3B">
-
 ## Technologies & Tools
 
-### Programming Languages
+<!-- ### Programming Languages
 ![Python Logo](https://readme-components.vercel.app/api?component=logo&logo=python&text=false&animation=spin)
 
 
@@ -19,7 +17,7 @@
 ![CSS Progress](https://readme-components.vercel.app/api?component=linearprogress&value=10&skill=css&fill=linear-gradient%2862deg%2C%20%238EC5FC%200%25%2C%20%23E0C3FC%20100%25%29%3B%0A)
 
 ### Interactive Elements
-[![button](https://readme-components.vercel.app/api?component=button&text=Button&fill=ffc0cd&textfill=white)](https://github.com/pablosalvador10)
+[![button](https://readme-components.vercel.app/api?component=button&text=Button&fill=ffc0cd&textfill=white)](https://github.com/pablosalvador10) -->
 
 
 
