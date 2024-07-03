@@ -1,5 +1,7 @@
 from typing import Any
+
 from sentence_transformers import SentenceTransformer
+
 
 def accuracy(y_pred: Any, y_true: Any) -> int:
     if y_pred == y_true:
@@ -9,8 +11,9 @@ def accuracy(y_pred: Any, y_true: Any) -> int:
 
 
 def sentence_transformer_similarity(corpusA: str, corpusB: str) -> float:
-    
-    model = SentenceTransformer("all-mpnet-base-v2") # Docs: https://www.sbert.net/docs/sentence_transformer/pretrained_models.html
+    model = SentenceTransformer(
+        "all-mpnet-base-v2"
+    )  # Docs: https://www.sbert.net/docs/sentence_transformer/pretrained_models.html
     # get embeddings for each sentence
     embeddingsA = model.encode(corpusA.split("."))
     embeddingsB = model.encode(corpusB.split("."))
@@ -18,6 +21,6 @@ def sentence_transformer_similarity(corpusA: str, corpusB: str) -> float:
     sim_tensor = model.similarity(embeddingsA, embeddingsB)
     # Get the maximum similarity for each sentence across the comparison
     max_sims = sim_tensor.max(axis=1).values
-    
+
     # Return average of max sims
     return max_sims.mean()

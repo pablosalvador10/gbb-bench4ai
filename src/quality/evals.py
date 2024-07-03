@@ -1,16 +1,18 @@
-from utils.ml_logging import get_logger
-from datasets import load_dataset
-from openai import AzureOpenAI
-from src.quality.metrics import accuracy, sentence_transformer_similarity
+import asyncio
+import logging
+import os
 from typing import Dict, List
 
-import logging
 import pandas as pd
-import os
-import asyncio
+from datasets import load_dataset
+from openai import AzureOpenAI
+
+from src.quality.metrics import accuracy, sentence_transformer_similarity
+from utils.ml_logging import get_logger
+
 
 class Eval:
-    '''
+    """
     Parent class for all evaluation benchmarks
     Inputs:
         deployment_config:
@@ -20,14 +22,16 @@ class Eval:
             version: API version
         sample_size: fraction of data to sample for evaluation (optional)
         log_level: logging level (optional)
-    
+
     Protected Methods:
         _score: Compare the generated answer to the correct answer
         _load_data: Load the dataset from the MMLU benchmark into memory
-    
-    '''
 
-    def __init__(self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"):
+    """
+
+    def __init__(
+        self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"
+    ):
         self.sample_size = sample_size
         self._key = deployment_config["key"]
         self._base = deployment_config["endpoint"]
@@ -45,9 +49,13 @@ class Eval:
             logging.basicConfig(level=logging.ERROR)
         else:
             logging.basicConfig(level=logging.INFO)
-            self.logger.warning(f"Unrecognized log level: {log_level}. Defaulting to INFO")
+            self.logger.warning(
+                f"Unrecognized log level: {log_level}. Defaulting to INFO"
+            )
 
-    def load_data(self, dataset: str, subset: str, split: str, flatten: bool = False) -> pd.DataFrame:
+    def load_data(
+        self, dataset: str, subset: str, split: str, flatten: bool = False
+    ) -> pd.DataFrame:
         # Download dataset
         self.logger.info(f"Loading {dataset} data")
         hf_data = load_dataset(dataset, subset, split=split)
@@ -56,8 +64,7 @@ class Eval:
         df = hf_data.to_pandas()
         self.logger.info(f"Load Complete. {df.shape[0]} rows.")
         return df
-    
-   
+
     def _score(self, generated: str, correct: str) -> int:
         self.logger.debug(f"Scoring {str(generated)} vs. {str(correct)}")
         try:
@@ -65,19 +72,26 @@ class Eval:
                 return 1
             else:
                 return 0
-        
+
         except TypeError as t:
-            self.logger.warning(f"TypeError while scoring {generated} vs. {correct} : {t}")
+            self.logger.warning(
+                f"TypeError while scoring {generated} vs. {correct} : {t}"
+            )
             return 0
         except ValueError as v:
-            self.logger.warning(f"ValueError while scoring {generated} vs. {correct} : {v}")
+            self.logger.warning(
+                f"ValueError while scoring {generated} vs. {correct} : {v}"
+            )
             return 0
         except Exception as e:
-            self.logger.warning(f"Exception while scoring {generated} vs. {correct} : {e}")
+            self.logger.warning(
+                f"Exception while scoring {generated} vs. {correct} : {e}"
+            )
             return 0
-        
+
+
 class MMLU(Eval):
-    '''
+    """
     This is a class implementing the MMLU benchmark evaluation.
     Inputs:
         deployment_config:
@@ -93,7 +107,7 @@ class MMLU(Eval):
     Inhereted Methods:
         _score: Compare the generated answer to the correct answer
         _load_data: Load the dataset from the MMLU benchmark into memory
-        
+
     Private Methods:
         __transform_data: Transform the dataset into a format that can be used by the Azure OpenAI API
         __call_aoai: Call the Azure OpenAI API to generate an answer
@@ -101,11 +115,22 @@ class MMLU(Eval):
     Public Method:
         test: Run the MMLU evaluation and output a dataframe
 
-    '''
-    def __init__(self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO", categories: list = None):
-        super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
+    """
+
+    def __init__(
+        self,
+        deployment_config: dict,
+        sample_size: float = 1.0,
+        log_level: str = "INFO",
+        categories: list = None,
+    ):
+        super().__init__(
+            deployment_config=deployment_config,
+            sample_size=sample_size,
+            log_level=log_level,
+        )
         self.categories = categories
-        
+
         global subject2category
         subject2category = {
             "abstract_algebra": "stem",
@@ -167,7 +192,6 @@ class MMLU(Eval):
             "world_religions": "humanities",
         }
 
-
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         # Filter to specified categories of subjects.
         # Broad categories defined in subject2category dict (global) - STEM, Medical, Business, Social Sciences, Humanities, Other
@@ -176,24 +200,26 @@ class MMLU(Eval):
             self.categories = [c.replace(" ", "_") for c in self.categories]
             df["category"] = df["subject"].map(subject2category)
             df = df[df["category"].isin(self.categories)]
-            self.logger.info(f"Trimmed dataset to specified categories: {df.value_counts('category')}")
+            self.logger.info(
+                f"Trimmed dataset to specified categories: {df.value_counts('category')}"
+            )
 
         # Subset data based on subject
         self.logger.info(f"Sampling data to {self.sample_size*100}% of each subject")
-        df=df.groupby('subject',as_index = False, group_keys=False).apply(lambda s: s.sample(frac=self.sample_size,replace=False)).reset_index()
+        df = (
+            df.groupby("subject", as_index=False, group_keys=False)
+            .apply(lambda s: s.sample(frac=self.sample_size, replace=False))
+            .reset_index()
+        )
 
         self.logger.info(f"Data loaded. {df.shape[0]} rows.")
         return df
 
-     
     def __call_aoai(self, row: list) -> dict:
-
         client = AzureOpenAI(
-                            azure_endpoint = self._base, 
-                            api_key=self._key,  
-                            api_version=self.version
-                            )
-        
+            azure_endpoint=self._base, api_key=self._key, api_version=self.version
+        )
+
         sys_message = "Complete the given problem to the best of your ability. \
                         Accuracy is very important. \
                         Choices are a list of quoted strings with a starting index of 0 \
@@ -204,21 +230,26 @@ class MMLU(Eval):
             model=self.model,
             messages=[
                 {"role": "system", "content": sys_message},
-                {"role": "user", "content": f"Question: {row['question']}.  Choices: {row['choices']}. Answer:"},
-            ]
+                {
+                    "role": "user",
+                    "content": f"Question: {row['question']}.  Choices: {row['choices']}. Answer:",
+                },
+            ],
         )
-        output = {"generated": response.choices[0].message.content, "correct": row["answer"] ,"subject": row["subject"]}
-        
+        output = {
+            "generated": response.choices[0].message.content,
+            "correct": row["answer"],
+            "subject": row["subject"],
+        }
+
         return output
 
-
     async def test(self, data: pd.DataFrame) -> pd.DataFrame:
-
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
             self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
-            try: 
+            try:
                 output = self.__call_aoai(row)
                 output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
@@ -228,13 +259,23 @@ class MMLU(Eval):
         self.logger.info("Evaluation complete")
 
         self.logger.info("Aggregating Results")
-        results = pd.DataFrame(output_list).groupby("subject").agg({"score": "mean"}).reset_index()
-        results_dict = {'deployment': self.model,'test': 'MMLU','overall_score': results.loc[:, 'score'].mean()}
+        results = (
+            pd.DataFrame(output_list)
+            .groupby("subject")
+            .agg({"score": "mean"})
+            .reset_index()
+        )
+        results_dict = {
+            "deployment": self.model,
+            "test": "MMLU",
+            "overall_score": results.loc[:, "score"].mean(),
+        }
 
         return pd.DataFrame([results_dict])
 
+
 class PubMedQA(Eval):
-    '''
+    """
     This is a class implementing the PubMedQA benchmark evaluation.
     Inputs:
         deployment_config:
@@ -248,7 +289,7 @@ class PubMedQA(Eval):
     Inhereted Methods:
         _score: Compare the generated answer to the correct answer
         _load_data: Load the dataset from the benchmark into memory
-        
+
     Private Methods:
         __transform_data: Transform the dataset into a format that can be used by the Azure OpenAI API
         __call_aoai: Call the Azure OpenAI API to generate an answer
@@ -256,27 +297,28 @@ class PubMedQA(Eval):
     Public Method:
         test: Run the PubMedQA evaluation and output a dataframe
 
-    '''
-    def __init__(self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"):
-        super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
-        
+    """
+
+    def __init__(
+        self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"
+    ):
+        super().__init__(
+            deployment_config=deployment_config,
+            sample_size=sample_size,
+            log_level=log_level,
+        )
 
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
-        df=df.sample(frac=self.sample_size,replace=False).reset_index()
+        df = df.sample(frac=self.sample_size, replace=False).reset_index()
         return df
 
-     
     def __call_aoai(self, row: list) -> dict:
-
         client = AzureOpenAI(
-                        azure_endpoint = self._base, 
-                        api_key=self._key,  
-                        api_version=self.version
-                        )
-    
+            azure_endpoint=self._base, api_key=self._key, api_version=self.version
+        )
+
         sys_message = "Complete the given problem to the best of your ability. \
                     Accuracy is very important. \
                     Given a context, answer the research question with either a yes, no, or maybe \
@@ -288,21 +330,25 @@ class PubMedQA(Eval):
             model=self.model,
             messages=[
                 {"role": "system", "content": sys_message},
-                {"role": "user", "content": f"Question: {row['question']}.  Context: {row['context.contexts']}. Answer:"},
-            ]
+                {
+                    "role": "user",
+                    "content": f"Question: {row['question']}.  Context: {row['context.contexts']}. Answer:",
+                },
+            ],
         )
-        output = {"generated": response.choices[0].message.content, "correct": row["final_decision"]}
+        output = {
+            "generated": response.choices[0].message.content,
+            "correct": row["final_decision"],
+        }
 
         return output
 
-
     async def test(self, data: pd.DataFrame) -> pd.DataFrame:
-
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
             self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
-            try: 
+            try:
                 output = self.__call_aoai(row)
                 output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
@@ -311,12 +357,17 @@ class PubMedQA(Eval):
 
         self.logger.info("Evaluation complete.")
         results = pd.DataFrame(output_list).reset_index()
-        results_dict = {'deployment': self.model, 'test': 'MedPub QA' ,'overall_score': results.loc[:, 'score'].mean()}
+        results_dict = {
+            "deployment": self.model,
+            "test": "MedPub QA",
+            "overall_score": results.loc[:, "score"].mean(),
+        }
 
         return pd.DataFrame([results_dict])
 
+
 class TruthfulQA(Eval):
-    '''
+    """
     This is a class implementing the Truthful QA benchmark evaluation.
     Inputs:
         deployment_config:
@@ -330,7 +381,7 @@ class TruthfulQA(Eval):
     Inhereted Methods:
         _score: Compare the generated answer to the correct answer
         _load_data: Load the dataset from the benchmark into memory
-        
+
     Private Methods:
         __transform_data: Transform the dataset into a format that can be used by the Azure OpenAI API
         __call_aoai: Call the Azure OpenAI API to generate an answer
@@ -338,26 +389,27 @@ class TruthfulQA(Eval):
     Public Method:
         test: Run the PubMedQA evaluation and output a dataframe
 
-    '''
-    def __init__(self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"):
-        super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
-        
+    """
+
+    def __init__(
+        self, deployment_config: dict, sample_size: float = 1.0, log_level: str = "INFO"
+    ):
+        super().__init__(
+            deployment_config=deployment_config,
+            sample_size=sample_size,
+            log_level=log_level,
+        )
 
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
-        df=df.sample(frac=self.sample_size,replace=False).reset_index()
+        df = df.sample(frac=self.sample_size, replace=False).reset_index()
         return df
 
-     
     def __call_aoai(self, row: list) -> dict:
-
         client = AzureOpenAI(
-                        azure_endpoint = self._base, 
-                        api_key=self._key,  
-                        api_version=self.version
-                        )
+            azure_endpoint=self._base, api_key=self._key, api_version=self.version
+        )
 
         sys_message = "Complete the given problem to the best of your ability. \
                     Accuracy is very important. \
@@ -369,21 +421,25 @@ class TruthfulQA(Eval):
             model=self.model,
             messages=[
                 {"role": "system", "content": sys_message},
-                {"role": "user", "content": f"Question: {row['question']}.  Choices: {row['mc1_targets']['choices']}. Answer:"},
-            ]
+                {
+                    "role": "user",
+                    "content": f"Question: {row['question']}.  Choices: {row['mc1_targets']['choices']}. Answer:",
+                },
+            ],
         )
-        output = {"generated": response.choices[0].message.content, "correct": list(row["mc1_targets"]["labels"]).index(1)}
-        
+        output = {
+            "generated": response.choices[0].message.content,
+            "correct": list(row["mc1_targets"]["labels"]).index(1),
+        }
+
         return output
 
-
     async def test(self, data: pd.DataFrame) -> pd.DataFrame:
-
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
             self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
-            try: 
+            try:
                 output = self.__call_aoai(row)
                 output["score"] = self._score(output["generated"], output["correct"])
                 output_list.append(output)
@@ -392,12 +448,17 @@ class TruthfulQA(Eval):
 
         self.logger.info("Evaluation complete.")
         results = pd.DataFrame(output_list).reset_index()
-        results_dict = {'deployment': self.model, 'test': "Truthful QA" ,'overall_score': results.loc[:, 'score'].mean()}
+        results_dict = {
+            "deployment": self.model,
+            "test": "Truthful QA",
+            "overall_score": results.loc[:, "score"].mean(),
+        }
 
         return pd.DataFrame([results_dict])
 
+
 class CustomEval(Eval):
-    '''
+    """
     This is a class implementing Custom evaluation.
     Inputs:
         deployment_config:
@@ -409,7 +470,7 @@ class CustomEval(Eval):
         metrics_list: List of metrics to evaluate
         sample_size: fraction of data to sample for evaluation (optional)
         log_level: logging level (optional)
-        
+
     Private Methods:
         __call_aoai: Call the Azure OpenAI API to generate an answer
         __custom_score: Custom scoring function
@@ -418,66 +479,70 @@ class CustomEval(Eval):
     Public Method:
         test: Run the custom evaluation and output a dataframe
 
-    '''
-    def __init__(self, deployment_config: Dict, metrics_list: List, sample_size: float = 1.0, log_level: str = "INFO"):
-        super().__init__(deployment_config=deployment_config, sample_size=sample_size, log_level=log_level)
-        self.metrics_list = [x.lower().replace(' ','_') for x in metrics_list]
+    """
+
+    def __init__(
+        self,
+        deployment_config: Dict,
+        metrics_list: List,
+        sample_size: float = 1.0,
+        log_level: str = "INFO",
+    ):
+        super().__init__(
+            deployment_config=deployment_config,
+            sample_size=sample_size,
+            log_level=log_level,
+        )
+        self.metrics_list = [x.lower().replace(" ", "_") for x in metrics_list]
 
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        
         # Take subset of data
         self.logger.info(f"Sampling data to {self.sample_size*100}% ")
-        df=df.sample(frac=self.sample_size,replace=False).reset_index()
+        df = df.sample(frac=self.sample_size, replace=False).reset_index()
         return df
-     
+
     def __call_aoai(self, row: Dict) -> Dict:
-
         client = AzureOpenAI(
-                        azure_endpoint = self._base, 
-                        api_key=self._key,  
-                        api_version=self.version
-                        )
-        
-        if "context" in row.keys():
-            messages = [
-                {"role": "user","content": f"{row['context']}"},
-                {"role": "system","content": f"{row['prompt']}"}
-            ]
-        else:
-            messages = [
-                {"role": "user","content": f"{row['prompt']}"}
-            ]
-
-        response = client.chat.completions.create(
-            model=self.model,
-            messages=messages
+            azure_endpoint=self._base, api_key=self._key, api_version=self.version
         )
 
-        row['answer'] = response.choices[0].message.content
+        if "context" in row.keys():
+            messages = [
+                {"role": "user", "content": f"{row['context']}"},
+                {"role": "system", "content": f"{row['prompt']}"},
+            ]
+        else:
+            messages = [{"role": "user", "content": f"{row['prompt']}"}]
+
+        response = client.chat.completions.create(model=self.model, messages=messages)
+
+        row["answer"] = response.choices[0].message.content
         logging.debug(f"aoai call row: {row.keys()}")
-        
+
         return row
 
     # Add other custom metrics here
     def __custom_score(self, row: dict) -> dict:
-        if 'accuracy' in self.metrics_list:
-            row['accuracy'] = accuracy(row['ground_truth'], row['answer'])
-        if 'answer_similarity' in self.metrics_list:
-            row['answer_similarity'] = sentence_transformer_similarity(row['ground_truth'], row['answer'])
-        if 'context_similarity' in self.metrics_list:
-            row['context_similarity'] = sentence_transformer_similarity(row['context'], row['answer'])
+        if "accuracy" in self.metrics_list:
+            row["accuracy"] = accuracy(row["ground_truth"], row["answer"])
+        if "answer_similarity" in self.metrics_list:
+            row["answer_similarity"] = sentence_transformer_similarity(
+                row["ground_truth"], row["answer"]
+            )
+        if "context_similarity" in self.metrics_list:
+            row["context_similarity"] = sentence_transformer_similarity(
+                row["context"], row["answer"]
+            )
 
         logging.debug(f"custom score row: {row.keys()}")
         return row
-        
 
-    async def test(self, data:pd.DataFrame) -> pd.DataFrame:
-
+    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
         output_list = []
         self.logger.info("Starting custom evaluation")
         for index, row in data.iterrows():
             self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
-            try: 
+            try:
                 output = self.__call_aoai(row)
                 output = self.__custom_score(output)
                 output_list.append(output)
@@ -486,43 +551,53 @@ class CustomEval(Eval):
 
         self.logger.info("Evaluation complete.")
         results = pd.DataFrame(output_list).reset_index()
-        
+
         self.logger.info("Aggregating Results")
-        results_dict = []   
+        results_dict = []
         for metric in self.metrics_list:
-            results_dict.append({'deployment': self.model, 'test': f"custom {metric}", 'overall_score': results.loc[:, metric].mean()})
-        
+            results_dict.append(
+                {
+                    "deployment": self.model,
+                    "test": f"custom {metric}",
+                    "overall_score": results.loc[:, metric].mean(),
+                }
+            )
+
         return pd.DataFrame(results_dict)
 
-if __name__ == "__main__":
 
-    from dotenv import load_dotenv, find_dotenv
+if __name__ == "__main__":
+    from dotenv import find_dotenv, load_dotenv
 
     load_dotenv(find_dotenv())
     deploy_dict = {
         "model": os.getenv("AOAI_MODEL"),
         "endpoint": os.getenv("AOAI_ENDPOINT"),
         "key": os.getenv("AOAI_KEY"),
-        "version": "2024-02-01"
+        "version": "2024-02-01",
     }
 
     result_list = []
 
-    '''pubmed_eval = PubMedQA(deploy_dict, sample_size=0.005, log_level="INFO")
+    """pubmed_eval = PubMedQA(deploy_dict, sample_size=0.005, log_level="INFO")
     result_list.append(asyncio.run(pubmed_eval.test()))
 
     mmlu_eval = MMLU(deploy_dict, sample_size=0.005, categories = ['Business'], log_level="INFO")
     result_list.append(asyncio.run(mmlu_eval.test()))
 
     truthfulqa_eval = TruthfulQA(deploy_dict, sample_size=0.005, log_level="Info")
-    result_list.append(asyncio.run(truthfulqa_eval.test()))'''
+    result_list.append(asyncio.run(truthfulqa_eval.test()))"""
 
-    test_df = pd.read_csv('src/quality/sample_data/openai_humaneval.csv')
-    test_df = test_df.drop(columns=['Unnamed: 0' ,'task_id','entry_point', 'test'])
-    custom_eval = CustomEval(deployment_config = deploy_dict, custom_data = test_df, metrics_list=['Accuracy'], sample_size=0.01, log_level="INFO")
+    test_df = pd.read_csv("src/quality/sample_data/openai_humaneval.csv")
+    test_df = test_df.drop(columns=["Unnamed: 0", "task_id", "entry_point", "test"])
+    custom_eval = CustomEval(
+        deployment_config=deploy_dict,
+        custom_data=test_df,
+        metrics_list=["Accuracy"],
+        sample_size=0.01,
+        log_level="INFO",
+    )
     result_list.append(asyncio.run(custom_eval.test()))
 
     for result in result_list:
         print(f"Results: \n{result}")
-
-

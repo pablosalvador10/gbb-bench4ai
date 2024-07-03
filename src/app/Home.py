@@ -1,15 +1,16 @@
 import base64
-import streamlit as st
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Load environment variables
 import dotenv
+import streamlit as st
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
 
 FROM_EMAIL = "Pablosalvadorlopez@outlook.com"
+
 
 def get_image_base64(image_path: str) -> str:
     """
@@ -24,6 +25,7 @@ def get_image_base64(image_path: str) -> str:
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
+
 def initialize_session_state(defaults: Dict[str, Any]) -> None:
     """
     Initialize Streamlit session state with default values if not already set.
@@ -34,6 +36,7 @@ def initialize_session_state(defaults: Dict[str, Any]) -> None:
     for var, value in defaults.items():
         if var not in st.session_state:
             st.session_state[var] = value
+
 
 @st.cache_data
 def get_main_content() -> str:
@@ -52,6 +55,7 @@ def get_main_content() -> str:
         <br>
     </h1>
     """
+
 
 @st.cache_data
 def get_markdown_content() -> str:
@@ -93,6 +97,7 @@ def get_markdown_content() -> str:
         - 🔍 **Quality Metrics:** Evaluate the precision and reliability of your AI models.
     """
 
+
 @st.cache_data
 def get_footer_content() -> str:
     """
@@ -119,20 +124,27 @@ def get_footer_content() -> str:
     </div>
     """
 
-def load_default_deployment(name: Optional[str] = None, 
-                            key: Optional[str] = None, 
-                            endpoint: Optional[str] = None, 
-                            version: Optional[str] = None) -> None:
+
+def load_default_deployment(
+    name: Optional[str] = None,
+    key: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    version: Optional[str] = None,
+) -> None:
     """
     Load default deployment settings, optionally from provided parameters.
     Ensures that a deployment with the same name does not already exist.
     """
     # Ensure deployments is a dictionary
-    if 'deployments' not in st.session_state or not isinstance(st.session_state.deployments, dict):
+    if "deployments" not in st.session_state or not isinstance(
+        st.session_state.deployments, dict
+    ):
         st.session_state.deployments = {}
 
     # Check if the deployment name already exists
-    deployment_name = name if name else os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")
+    deployment_name = (
+        name if name else os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")
+    )
     if deployment_name in st.session_state.deployments:
         return  # Exit the function if deployment already exists
 
@@ -141,13 +153,16 @@ def load_default_deployment(name: Optional[str] = None,
         "key": key if key else os.getenv("AZURE_OPENAI_KEY"),
         "endpoint": endpoint if endpoint else os.getenv("AZURE_OPENAI_API_ENDPOINT"),
         "version": version if version else os.getenv("AZURE_OPENAI_API_VERSION"),
-        "stream": False
+        "stream": False,
     }
 
-    if all(value is not None for value in default_deployment.values() if value != False):
+    if all(
+        value is not None for value in default_deployment.values() if value != False
+    ):
         st.session_state.deployments[default_deployment["name"]] = default_deployment
     else:
         st.error("Default deployment settings are missing.")
+
 
 def add_deployment_form() -> None:
     """
@@ -157,83 +172,107 @@ def add_deployment_form() -> None:
         deployment_name = st.text_input(
             "Deployment id",
             help="Enter the deployment ID for Azure OpenAI.",
-            placeholder="e.g., chat-gpt-1234abcd"
+            placeholder="e.g., chat-gpt-1234abcd",
         )
         deployment_key = st.text_input(
             "Azure OpenAI Key",
             help="Enter your Azure OpenAI key.",
             type="password",
-            placeholder="e.g., sk-ab*****.."
+            placeholder="e.g., sk-ab*****..",
         )
         deployment_endpoint = st.text_input(
             "API Endpoint",
             help="Enter the API endpoint for Azure OpenAI.",
-            placeholder="e.g., https://api.openai.com/v1"
+            placeholder="e.g., https://api.openai.com/v1",
         )
         deployment_version = st.text_input(
             "API Version",
             help="Enter the API version for Azure OpenAI.",
-            placeholder="e.g., 2024-02-15-preview"
+            placeholder="e.g., 2024-02-15-preview",
         )
         is_streaming = st.radio(
             "Streaming",
             (True, False),
             index=1,
             format_func=lambda x: "Yes" if x else "No",
-            help="Select 'Yes' if the model will be tested with output in streaming mode."
+            help="Select 'Yes' if the model will be tested with output in streaming mode.",
         )
         submitted = st.form_submit_button("Add Deployment")
-        
+
         if submitted:
-            if deployment_name and deployment_key and deployment_endpoint and deployment_version:
+            if (
+                deployment_name
+                and deployment_key
+                and deployment_endpoint
+                and deployment_version
+            ):
                 if deployment_name not in st.session_state.deployments:
                     st.session_state.deployments[deployment_name] = {
                         "key": deployment_key,
                         "endpoint": deployment_endpoint,
                         "version": deployment_version,
-                        "stream": is_streaming
+                        "stream": is_streaming,
                     }
                     st.success(f"Deployment '{deployment_name}' added successfully.")
                 else:
-                    st.error(f"A deployment with the name '{deployment_name}' already exists.")
+                    st.error(
+                        f"A deployment with the name '{deployment_name}' already exists."
+                    )
             else:
                 st.error("Please fill in all fields.")
+
 
 def display_deployments() -> None:
     """
     Display and manage existing Azure OpenAI deployments.
     """
-    if 'deployments' in st.session_state:
+    if "deployments" in st.session_state:
         st.markdown("##### Loaded Deployments")
         for deployment_name, deployment in st.session_state.deployments.items():
             with st.expander(deployment_name):
-                updated_name = st.text_input(f"Name", value=deployment_name, key=f"name_{deployment_name}")
-                updated_key = st.text_input(f"Key", value=deployment.get('key', ''), type="password", key=f"key_{deployment_name}")
-                updated_endpoint = st.text_input(f"Endpoint", value=deployment.get('endpoint', ''), key=f"endpoint_{deployment_name}")
-                updated_version = st.text_input(f"Version", value=deployment.get('version', ''), key=f"version_{deployment_name}")
+                updated_name = st.text_input(
+                    "Name", value=deployment_name, key=f"name_{deployment_name}"
+                )
+                updated_key = st.text_input(
+                    "Key",
+                    value=deployment.get("key", ""),
+                    type="password",
+                    key=f"key_{deployment_name}",
+                )
+                updated_endpoint = st.text_input(
+                    "Endpoint",
+                    value=deployment.get("endpoint", ""),
+                    key=f"endpoint_{deployment_name}",
+                )
+                updated_version = st.text_input(
+                    "Version",
+                    value=deployment.get("version", ""),
+                    key=f"version_{deployment_name}",
+                )
                 updated_stream = st.radio(
                     "Streaming",
                     (True, False),
                     format_func=lambda x: "Yes" if x else "No",
-                    index=0 if deployment.get('stream', False) else 1,
+                    index=0 if deployment.get("stream", False) else 1,
                     key=f"stream_{deployment_name}",
-                    help="Select 'Yes' if the model will be tested with output in streaming mode."
+                    help="Select 'Yes' if the model will be tested with output in streaming mode.",
                 )
 
-                if st.button(f"Update Deployment", key=f"update_{deployment_name}"):
+                if st.button("Update Deployment", key=f"update_{deployment_name}"):
                     st.session_state.deployments[deployment_name] = {
                         "key": updated_key,
                         "endpoint": updated_endpoint,
                         "version": updated_version,
-                        "stream": updated_stream
+                        "stream": updated_stream,
                     }
                     st.experimental_rerun()
 
-                if st.button(f"Remove Deployment", key=f"remove_{deployment_name}"):
+                if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
                     del st.session_state.deployments[deployment_name]
                     st.experimental_rerun()
     else:
         st.error("No deployments found. Please add a deployment in the sidebar.")
+
 
 def main() -> None:
     """
@@ -253,7 +292,10 @@ def main() -> None:
     }
     initialize_session_state(env_vars)
 
-    st.toast("Welcome to the RAG Benchmark Factory! Navigate through the 'Tool Help' guide or watch the video and start benchmarking your MaaS solutions!", icon="🚀")
+    st.toast(
+        "Welcome to the RAG Benchmark Factory! Navigate through the 'Tool Help' guide or watch the video and start benchmarking your MaaS solutions!",
+        icon="🚀",
+    )
 
     with st.sidebar.expander("📘 Tool Help Guide", expanded=False):
         st.markdown(
@@ -288,14 +330,14 @@ def main() -> None:
 
             Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with st.sidebar:
         st.markdown("## 🤖 Deployment Center ")
 
         load_default_deployment()
-        
+
         with st.expander("Add Your MaaS Deployment", expanded=False):
             operation = st.selectbox(
                 "Choose Model Family:",
@@ -306,7 +348,7 @@ def main() -> None:
             )
             if operation == "AOAI":
                 add_deployment_form()
-            else: 
+            else:
                 st.info("Other deployment options will be available soon.")
 
         display_deployments()
@@ -329,12 +371,13 @@ def main() -> None:
 
                 🙏 **Thank you for contributing!** Your insights are invaluable to us. Together, let's make our service the best it can be!
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-    
+
     st.write(get_main_content(), unsafe_allow_html=True)
     st.markdown(get_markdown_content(), unsafe_allow_html=True)
     st.write(get_footer_content(), unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
