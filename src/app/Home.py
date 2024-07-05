@@ -1,3 +1,6 @@
+# Home.py sets up the home page for a Streamlit app that allows users to 
+# manage Azure OpenAI deployments, including adding, viewing, and updating deployment configurations
+
 import base64
 import os
 from typing import Any, Dict, Optional
@@ -16,11 +19,12 @@ def get_image_base64(image_path: str) -> str:
     """
     Convert an image file to a base64 string.
 
-    Args:
-        image_path (str): Path to the image file.
+    This function reads an image from the specified path and encodes it into a base64 string.
 
-    Returns:
-        str: Base64 encoded string of the image.
+    :param image_path: Path to the image file.
+    :return: Base64 encoded string of the image.
+    :raises FileNotFoundError: If the image file is not found.
+    :raises IOError: If there is an error reading the image file.
     """
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
@@ -30,8 +34,9 @@ def initialize_session_state(defaults: Dict[str, Any]) -> None:
     """
     Initialize Streamlit session state with default values if not already set.
 
-    Args:
-        defaults (Dict[str, Any]): Dictionary of default values.
+    This function ensures that the Streamlit session state contains the specified default values if they are not already present.
+
+    :param defaults: Dictionary of default values.
     """
     for var, value in defaults.items():
         if var not in st.session_state:
@@ -43,8 +48,9 @@ def get_main_content() -> str:
     """
     Get the main content HTML for the app.
 
-    Returns:
-        str: The main content HTML.
+    This function generates the main content HTML for the Streamlit app.
+
+    :return: The main content HTML.
     """
     return f"""
     <h1 style="text-align:center;">
@@ -62,8 +68,9 @@ def get_markdown_content() -> str:
     """
     Get the markdown content for the app.
 
-    Returns:
-        str: The markdown content.
+    This function generates the markdown content for the Streamlit app, providing information about the app's capabilities and resources.
+
+    :return: The markdown content.
     """
     return """
     Our app zeroes in on key performance areas like speed, response time, and accuracy 🤖. It's a one-stop shop for testing Azure OpenAI models, helping you make smarter, cost-effective choices for your AI projects and boosting your capabilities by embracing the latest AI tech with solid, real-world data.
@@ -103,8 +110,9 @@ def get_footer_content() -> str:
     """
     Get the footer content HTML for the app.
 
-    Returns:
-        str: The footer content HTML.
+    This function generates the footer content HTML for the Streamlit app.
+
+    :return: The footer content HTML.
     """
     return """
     <div style="text-align:center; font-size:30px; margin-top:10px;">
@@ -133,7 +141,14 @@ def load_default_deployment(
 ) -> None:
     """
     Load default deployment settings, optionally from provided parameters.
+
     Ensures that a deployment with the same name does not already exist.
+
+    :param name: (Optional) Name of the deployment.
+    :param key: (Optional) Azure OpenAI key.
+    :param endpoint: (Optional) API endpoint for Azure OpenAI.
+    :param version: (Optional) API version for Azure OpenAI.
+    :raises ValueError: If required deployment settings are missing.
     """
     # Ensure deployments is a dictionary
     if "deployments" not in st.session_state or not isinstance(
@@ -167,6 +182,8 @@ def load_default_deployment(
 def add_deployment_form() -> None:
     """
     Render the form to add a new Azure OpenAI deployment.
+
+    This function provides a form in the Streamlit sidebar to add a new deployment, allowing users to specify deployment details.
     """
     with st.form("add_deployment_form"):
         deployment_name = st.text_input(
@@ -225,6 +242,8 @@ def add_deployment_form() -> None:
 def display_deployments() -> None:
     """
     Display and manage existing Azure OpenAI deployments.
+
+    This function renders the existing deployments in the Streamlit sidebar, allowing users to view, update, or remove deployments.
     """
     if "deployments" in st.session_state:
         st.markdown("##### Loaded Deployments")
