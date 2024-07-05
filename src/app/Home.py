@@ -1,5 +1,6 @@
-# Home.py sets up the home page for a Streamlit app that allows users to 
-# manage Azure OpenAI deployments, including adding, viewing, and updating deployment configurations
+"""
+Home.py serves as the foundational script for constructing the home page of a Streamlit application. This application is specifically designed for users to efficiently manage their Azure OpenAI deployments. It provides a user-friendly interface for various operations such as adding new deployment configurations, viewing existing ones, and updating them as needed. The script leverages Streamlit's capabilities to create an interactive web application, making cloud management tasks more accessible and manageable.
+"""
 
 import base64
 import os

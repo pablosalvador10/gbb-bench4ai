@@ -1,3 +1,6 @@
+"""
+This Python script is designed to perform latency testing for the Azure OpenAI service. It includes the necessary imports and setup for asynchronous API calls, backoff strategies for error handling, and utilities for message generation, token counting, and logging. The script leverages environment variables for configuration, sets up a logger for output, and defines constants for use in HTTP headers and user agent identification during API requests. Its purpose is to benchmark the response time and efficiency of various models hosted on Azure OpenAI, aiding in performance analysis and optimization.
+"""
 import asyncio
 import json
 import os
@@ -40,7 +43,6 @@ MAX_RETRY_ATTEMPTS = 3
 MAX_TIMEOUT_SECONDS = 60
 RETRY_AFTER_MS_HEADER = "retry-after-ms"
 
-
 class AzureOpenAIBenchmarkLatency(ABC):
     def __init__(
         self,
@@ -49,20 +51,30 @@ class AzureOpenAIBenchmarkLatency(ABC):
         api_version: Optional[str] = None,
     ):
         """
-        Base class for AzureOpenAIBenchmark with the API key, API version, and endpoint.
+        Initializes an instance of AzureOpenAIBenchmarkLatency.
+
+        This base class is designed for benchmarking latency on Azure OpenAI services. It requires API key, API version, and endpoint for Azure OpenAI services. If not provided, these values are attempted to be retrieved from environment variables.
+
+        :param api_key: The API key for authenticating requests to Azure OpenAI. Defaults to the environment variable 'AZURE_OPENAI_KEY' if not provided.
+        :param azure_endpoint: The endpoint URL for Azure OpenAI services. Defaults to the environment variable 'AZURE_OPENAI_API_ENDPOINT' if not provided.
+        :param api_version: The version of the Azure OpenAI API to use. Defaults to the environment variable 'AZURE_OPENAI_API_VERSION' or '2023-05-15' if neither is provided.
         """
-        self.api_key = api_key or os.getenv("AZURE_OPENAI_KEY")
-        self.api_version = (
+        self.api_key: Optional[str] = api_key or os.getenv("AZURE_OPENAI_KEY")
+        self.api_version: str = (
             api_version or os.getenv("AZURE_OPENAI_API_VERSION") or "2023-05-15"
         )
-        self.azure_endpoint = azure_endpoint or os.getenv("AZURE_OPENAI_API_ENDPOINT")
+        self.azure_endpoint: Optional[str] = azure_endpoint or os.getenv("AZURE_OPENAI_API_ENDPOINT")
         self._validate_api_configurations()
-        self.results = {}
-        self.is_streaming = "N/A"
+        self.results: dict = {}
+        self.is_streaming: str = "N/A"
 
-    def _validate_api_configurations(self):
+    def _validate_api_configurations(self) -> None:
         """
-        Validates if all necessary configurations are set.
+        Validates if all necessary configurations are set for the Azure OpenAI API connection.
+
+        This method checks if the API key, Azure endpoint, and API version are all provided. If any of these are missing, it raises a ValueError indicating that one or more necessary configurations are not set.
+
+        :raises ValueError: If the API key, Azure endpoint, or API version is not provided.
         """
         if not all(
             [
@@ -91,7 +103,21 @@ class AzureOpenAIBenchmarkLatency(ABC):
         frequency_penalty: float = 0,
     ):
         """
-        Make an asynchronous chat completion call and log the time taken for the call.
+        Asynchronously makes a chat completion call to the specified deployment and logs the latency.
+
+        This abstract method should be implemented to make an API call to the Azure OpenAI service or any other specified deployment, capturing and logging the time taken for the call to complete.
+
+        :param deployment_name: The name of the deployment to which the call is made.
+        :param max_tokens: The maximum number of tokens to generate in the completion.
+        :param temperature: Controls randomness in generation. Setting to 0 results in deterministic output. Defaults to 0.
+        :param timeout: The maximum time in seconds to wait for the call to complete. Defaults to 120.
+        :param prompt: The input text to generate completions for. Optional.
+        :param context_tokens: The number of tokens to consider from the prompt for generating completions. Optional.
+        :param prevent_server_caching: If True, prevents the server from caching the request. Defaults to True.
+        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.
+        :param n: The number of completions to generate. Defaults to 1.
+        :param presence_penalty: Adds a penalty for repeated usage of the same token in the completion. Defaults to 0.
+        :param frequency_penalty: Adds a penalty for the frequency of token usage in the completion. Defaults to 0.
         """
         pass
 
@@ -113,7 +139,24 @@ class AzureOpenAIBenchmarkLatency(ABC):
         frequency_penalty: float = 0,
     ):
         """
-        Run asynchronous tests across different deployments and token counts.
+        Runs asynchronous latency benchmarks across different deployments and configurations.
+
+        This method is designed to test the latency of various deployments with different configurations. It iterates over a list of deployment names and max token counts, performing a specified number of iterations for each combination. It supports testing with different intervals between calls to the same model and calls to different models to simulate real-world usage patterns.
+
+        :param deployment_names: A list of deployment names to test.
+        :param max_tokens_list: A list of maximum token counts to use for each test.
+        :param iterations: The number of times to test each deployment and token count combination. Defaults to 1.
+        :param same_model_interval: The wait time in seconds between calls to the same model. Defaults to 1 second.
+        :param different_model_interval: The wait time in seconds between calls to different models. Defaults to 5 seconds.
+        :param temperature: Controls randomness in generation. Setting to 0 results in deterministic output. Optional.
+        :param byop: A list of BYOP (Bring Your Own Prompt) configurations to test. Optional.
+        :param context_tokens: The number of tokens to consider from the prompt for generating completions. Optional.
+        :param prevent_server_caching: If True, prevents the server from caching the request. Defaults to True.
+        :param timeout: The maximum time in seconds to wait for the call to complete. Defaults to 60 seconds.
+        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.
+        :param n: The number of completions to generate. Defaults to 1.
+        :param presence_penalty: Adds a penalty for repeated usage of the same token in the completion. Defaults to 0.
+        :param frequency_penalty: Adds a penalty for the frequency of token usage in the completion. Defaults to 0.
         """
         if byop:
             for deployment_name in deployment_names:
@@ -172,7 +215,25 @@ class AzureOpenAIBenchmarkLatency(ABC):
         frequency_penalty: float = 0,
     ) -> Optional[List[Any]]:
         """
-        Run latency benchmarks for multiple deployments and token counts concurrently.
+        Runs latency benchmarks for multiple deployments and token counts concurrently.
+
+        This method is designed to test the latency of various deployments with different configurations in a bulk, concurrent manner. It iterates over a list of deployment names and max token counts, performing a specified number of iterations for each combination. It supports testing with different intervals between calls to the same model and calls to different models to simulate real-world usage patterns.
+
+        :param deployment_names: A list of deployment names to test.
+        :param max_tokens_list: A list of maximum token counts to use for each test.
+        :param same_model_interval: The wait time in seconds between calls to the same model. Defaults to 1 second.
+        :param different_model_interval: The wait time in seconds between calls to different models. Defaults to 5 seconds.
+        :param iterations: The number of times to test each deployment and token count combination. Defaults to 1.
+        :param temperature: Controls randomness in generation. Setting to 0 results in deterministic output. Optional.
+        :param context_tokens: The number of tokens to consider from the prompt for generating completions. Optional.
+        :param byop: A list of BYOP (Bring Your Own Prompt) configurations to test. Optional.
+        :param prevent_server_caching: If True, prevents the server from caching the request. Defaults to True.
+        :param timeout: The maximum time in seconds to wait for the call to complete. Defaults to 60 seconds.
+        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.
+        :param n: The number of completions to generate. Defaults to 1.
+        :param presence_penalty: Adds a penalty for repeated usage of the same token in the completion. Defaults to 0.
+        :param frequency_penalty: Adds a penalty for the frequency of token usage in the completion. Defaults to 0.
+        :return: An optional list of results from the benchmark tests. Each element in the list corresponds to a test result for a specific deployment and token count combination.
         """
         tasks = []
         if byop:
@@ -224,10 +285,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
     def calculate_and_show_statistics(self, show_descriptions: bool = False):
         """
-        Calculate and display statistics for all tests conducted.
+        Calculates and displays statistics for all tests conducted.
 
-        Args:
-            show_descriptions (bool): Whether to show descriptions for each statistic header.
+        This method processes the results of latency tests, calculating various statistics such as average latency, minimum latency, maximum latency, and standard deviation. It can optionally display descriptions for each statistic to provide more context to the user.
+
+        :param show_descriptions: If True, includes descriptions for each statistic alongside their values. Defaults to False.
         """
         stats = {
             key: self._calculate_statistics(data) for key, data in self.results.items()
@@ -371,10 +433,12 @@ class AzureOpenAIBenchmarkLatency(ABC):
     @staticmethod
     def save_statistics_to_file(stats: Dict, location: str):
         """
-        Save the statistics to a JSON file.
+        Saves the collected statistics to a specified file in JSON format.
 
-        :param stats: Statistics data.
-        :param location: File path to save the data.
+        This method takes a dictionary of statistics and writes it to a file at the specified location in JSON format. It is useful for persisting the results of latency tests or other statistical analyses for later review or processing.
+
+        :param stats: A dictionary containing the statistics to be saved. The keys should be the names of the statistics, and the values should be their corresponding values.
+        :param location: The file path where the statistics should be saved. If the file does not exist, it will be created. If it does exist, it will be overwritten.
         """
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(location), exist_ok=True)
@@ -386,8 +450,14 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self, deployment_name: str, max_tokens: int, headers: Dict, time_taken=None
     ):
         """
-        Store the results from each API call for later analysis.
-        Includes handling cases where the response might be None due to failed API calls.
+        Stores the results of API calls for latency testing.
+
+        This method is responsible for recording the outcomes of individual API calls made during latency testing. It captures various details such as the deployment name, the maximum number of tokens requested, the headers sent with the request, and the time taken for the call to complete. This information is crucial for analyzing the performance and reliability of the API under test.
+
+        :param deployment_name: The name of the deployment to which the API call was made.
+        :param max_tokens: The maximum number of tokens that were requested in the API call.
+        :param headers: A dictionary containing the headers that were sent with the API call.
+        :param time_taken: The duration, in seconds, that the API call took to complete. This parameter is optional and should be provided if the call was successful.
         """
         key = f"{deployment_name}_{max_tokens}"
 
@@ -444,11 +514,14 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self, deployment_name: str, max_tokens: int, time_taken: int, response
     ):
         """
-        Handle exceptions during API calls and store error details.
+        Handles errors encountered during API calls and logs the details.
 
-        :param deployment_name: Model deployment name.
-        :param max_tokens: Maximum tokens parameter for the call.
-        :param response: Response from the API call.
+        This method is invoked when an API call results in an error. It records the error details, including the deployment name, the maximum number of tokens requested, the time taken for the call, and the response received from the API. This information is crucial for diagnosing issues and improving the reliability and performance of the API.
+
+        :param deployment_name: The name of the deployment to which the API call was made.
+        :param max_tokens: The maximum number of tokens that were requested in the API call.
+        :param time_taken: The duration, in seconds, that the API call took to complete.
+        :param response: The response object received from the API call. This includes any error messages or codes returned by the API.
         """
         key = f"{deployment_name}_{max_tokens}"
         if key not in self.results:
@@ -489,10 +562,12 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
     def _calculate_statistics(self, data: Dict) -> Dict:
         """
-        Calculate and return the statistical metrics for test results.
+        Calculates statistical metrics based on the provided test data.
 
-        :param data: Test data collected.
-        :return: Dictionary of calculated statistical metrics.
+        This method processes the test data collected during API performance tests to calculate various statistical metrics. These metrics include average response time, minimum and maximum response times, standard deviation, and potentially other relevant statistics such as percentiles. The calculated statistics are returned in a dictionary, providing a comprehensive overview of the API's performance characteristics.
+
+        :param data: A dictionary containing the test data, typically including response times and possibly error rates or other relevant metrics.
+        :return: A dictionary containing the calculated statistical metrics, offering insights into the performance and reliability of the tested API.
         """
         total_requests = data["number_of_iterations"]
         ttlts = list(filter(None, data.get("ttlt_successfull", [])))
@@ -642,14 +717,14 @@ class AzureOpenAIBenchmarkLatency(ABC):
         max_tokens: int = None,
     ) -> List[Dict[str, str]]:
         """
-        Generates test messages for latency testing, either by using a provided prompt or generating random messages.
+        This method is designed to prepare a set of messages for latency testing of a language model API. It can either use a specific prompt provided by the user or generate random messages if no prompt is given. The method allows for the simulation of context by specifying a number of tokens, and it can also prevent server-side caching of requests by adding random prefixes to the messages. The maximum number of tokens to be generated can be specified as well.
 
-        :param model_name: Name of the model to be used for generating messages.
-        :param prompt: Optional. A specific prompt to generate messages from. If None, random messages are generated.
-        :param context_tokens: Optional. The number of tokens to simulate as context. Defaults to 1000 if not provided.
-        :param prevent_server_caching: Whether to add random prefixes to messages to prevent server-side caching.
-        :param max_tokens: Optional. The maximum number of tokens to generate.
-        :return: A list of generated messages.
+        :param model_name: The name of the model for which messages are being generated.
+        :param prompt: An optional parameter that allows the user to specify a prompt for message generation. If not provided, messages will be generated randomly.
+        :param context_tokens: An optional parameter to specify the number of tokens to simulate as context for the message. If not provided, a default value is used.
+        :param prevent_server_caching: A boolean parameter that, when set to True, adds random prefixes to messages to prevent server-side caching of the requests.
+        :param max_tokens: An optional parameter that specifies the maximum number of tokens to generate for each message.
+        :return: A list of dictionaries, each containing a generated message. The messages are ready to be used for latency testing.
         """
         # Set default context tokens if not provided
         if context_tokens is None:
@@ -680,7 +755,11 @@ class AzureOpenAIBenchmarkLatency(ABC):
 class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
     def __init__(self, api_key, azure_endpoint, api_version="2024-02-15-preview"):
         """
-        Initialize the AzureOpenAIBenchmarkNonStreaming with the API key, API version, and endpoint.
+        This class is designed for conducting latency benchmarks on the Azure OpenAI service without using streaming capabilities. It extends a base class that handles general latency benchmarking tasks. The constructor initializes the class with necessary details such as the API key, endpoint, and API version. It also initializes a dictionary to store results and sets a flag indicating that streaming is not used in this benchmark.
+
+        :param api_key: The API key required to authenticate requests to the Azure OpenAI service.
+        :param azure_endpoint: The endpoint URL of the Azure OpenAI service.
+        :param api_version: The version of the API to use for requests. Defaults to "2024-02-15-preview".
         """
         super().__init__(api_key, azure_endpoint, api_version)
         self.results = {}
@@ -708,18 +787,25 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
         frequency_penalty: float = 0,
     ):
         """
-        Make an asynchronous chat completion call to the Azure OpenAI API and log the time taken for the call.
+        Asynchronously makes a chat completion call to the Azure OpenAI API and logs the time taken for the call.
 
-        :param deployment_name: Name of the model deployment to use.
-        :param max_tokens: Maximum number of tokens to generate.
-        :param temperature: The temperature to use for the chat completion. Defaults to 0.
-        :param timeout: Timeout for the API call in seconds. Updated to 120 seconds.
-        :param context_tokens: Number of context tokens to use. If not provided, 1000 tokens are used as default.
-        :param prevent_server_caching: Flag to indicate if server caching should be prevented. Default is True.
-        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Default is 1.
-        :param n: Number of completions to generate. Default is 1.
-        :param presence_penalty: Adjusts the likelihood of new words based on their presence in the text so far. Default is 0.
-        :param frequency_penalty: Adjusts the likelihood of new words based on their frequency in the text so far. Default is 0.
+        This method is designed to handle asynchronous API calls to the Azure OpenAI service, utilizing exponential backoff with full jitter for retry logic in case of client errors. It supports a wide range of parameters to customize the chat completion request, including the ability to prevent server caching, control diversity via nucleus sampling, and adjust the likelihood of new words based on their presence or frequency in the text so far.
+
+        :param deployment_name: Name of the model deployment to use for generating completions.
+        :param max_tokens: Maximum number of tokens to generate in the completion.
+        :param temperature: Controls randomness in generation, with 0 being deterministic. Defaults to 0.0.
+        :param timeout: Timeout for the API call in seconds. Defaults to 120 seconds to accommodate longer processing times.
+        :param prompt: Initial text to generate completions for. If None, an empty string is assumed.
+        :param context_tokens: Number of context tokens to consider for generating completions. If not provided, a default value is used.
+        :param prevent_server_caching: If True, modifies the prompt in a way to prevent server-side caching of the request. Defaults to True.
+        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.0.
+        :param n: Number of completions to generate for each prompt. Defaults to 1.
+        :param presence_penalty: Adjusts the likelihood of new words based on their presence in the text so far. Defaults to 0.0.
+        :param frequency_penalty: Adjusts the likelihood of new words based on their frequency in the text so far. Defaults to 0.0.
+        :param stop_sequences: A list of strings where the API should stop generating further tokens. Useful for defining natural endpoints in generated text.
+        :param return_prompt: If True, the response includes the prompt along with the generated completion. Defaults to False.
+
+        The method handles client errors by retrying the request using an exponential backoff strategy with full jitter to mitigate the impact of retry storms. It gives up on retrying if the error code is terminal (400, 401, 403, 404, 429, 500), indicating that further attempts are unlikely to succeed.
         """
 
         url = f"{self.azure_endpoint}/openai/deployments/{deployment_name}/chat/completions?api-version={self.api_version}"
@@ -785,7 +871,15 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
 class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
     def __init__(self, api_key, azure_endpoint, api_version="2024-02-15-preview"):
         """
-        Initialize the AzureOpenAILatencyBenchmark with the API key, API version, and endpoint.
+        Initializes the AzureOpenAIBenchmarkStreaming class, which is designed to conduct latency benchmarks on the Azure OpenAI service using streaming capabilities. This class extends AzureOpenAIBenchmarkLatency, inheriting its setup and functionality but with modifications to support streaming.
+
+        Streaming is particularly useful for scenarios where real-time interaction with the model is required, such as chat applications or where the response from the model needs to be processed as it arrives rather than after the entire response is received.
+
+        :param api_key: The API key required to authenticate requests to the Azure OpenAI service. This key should have the necessary permissions to access the API and perform requests.
+        :param azure_endpoint: The endpoint URL of the Azure OpenAI service. This URL is specific to the Azure resource you have created and is used to direct requests to the correct service instance.
+        :param api_version: The version of the API to use for requests. This parameter allows for specifying the version of the API, enabling the use of newer or older versions as needed. Defaults to "2024-02-15-preview", which is a placeholder for the latest version available at the time of writing.
+
+        The constructor initializes the base class with the provided parameters and sets an additional property, `is_streaming`, to True. This property is used to differentiate between streaming and non-streaming benchmark tests and to enable specific logic required for handling streaming responses.
         """
         super().__init__(api_key, azure_endpoint, api_version)
         self.is_streaming = True
@@ -812,7 +906,24 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         frequency_penalty: float = 0,
     ) -> Optional[str]:
         """
-        Make a chat completion call and print the time taken for the call.
+        Asynchronously makes a chat completion call to the Azure OpenAI API and logs the time taken for the call.
+
+        This method is designed to handle asynchronous API calls to the Azure OpenAI service, utilizing exponential backoff with full jitter for retry logic in case of client errors. It supports a wide range of parameters to customize the chat completion request, including the ability to prevent server caching, control diversity via nucleus sampling, and adjust the likelihood of new words based on their presence or frequency in the text so far.
+
+        :param deployment_name: Name of the model deployment to use for generating completions.
+        :param max_tokens: Maximum number of tokens to generate in the completion.
+        :param temperature: Controls randomness in generation, with 0 being deterministic. Defaults to 0.0.
+        :param timeout: Timeout for the API call in seconds. Defaults to 120 seconds to accommodate longer processing times.
+        :param prompt: Initial text to generate completions for. If None, an empty string is assumed.
+        :param context_tokens: Number of context tokens to consider for generating completions. If not provided, a default value is used.
+        :param prevent_server_caching: If True, modifies the prompt in a way to prevent server-side caching of the request. Defaults to True.
+        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.0.
+        :param n: Number of completions to generate for each prompt. Defaults to 1.
+        :param presence_penalty: Adjusts the likelihood of new words based on their presence in the text so far. Defaults to 0.0.
+        :param frequency_penalty: Adjusts the likelihood of new words based on their frequency in the text so far. Defaults to 0.0.
+        :param stop_sequences: A list of strings where the API should stop generating further tokens. Useful for defining natural endpoints in generated text.
+
+        The method handles client errors by retrying the request using an exponential backoff strategy with full jitter to mitigate the impact of retry storms. It gives up on retrying if the error code is terminal (400, 401, 403, 404, 429, 500), indicating that further attempts are unlikely to succeed.
         """
         url = f"{self.azure_endpoint}/openai/deployments/{deployment_name}/chat/completions?api-version={self.api_version}"
         if context_tokens is None:
