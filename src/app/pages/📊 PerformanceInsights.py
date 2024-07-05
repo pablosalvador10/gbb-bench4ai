@@ -39,7 +39,7 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
     if "settings" not in st.session_state:
         st.session_state["settings"] = {}
     if "results" not in st.session_state:
-        st.session_state["results"] = []
+        st.session_state["results"] = {}
 
 session_vars = [
     "conversation_history", "ai_response", "chat_history", "messages", 
@@ -416,7 +416,7 @@ def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) 
 
 
 
-async def run_benchmark_tests(summary_placeholder: st.delta_generator.DeltaGenerator, 
+async def run_benchmark_tests(result_placeholder: st.delta_generator.DeltaGenerator, 
                               test_status_placeholder: st.delta_generator.DeltaGenerator, 
                               ) -> None:
     """
@@ -466,24 +466,41 @@ async def run_benchmark_tests(summary_placeholder: st.delta_generator.DeltaGener
         st.session_state["benchmark_results"] = stats
         st.session_state["benchmark_results_raw"] = stats_raw
         results = BenchmarkPerformanceResult(result=stats, settings=st.session_state["settings"])
-        st.session_state["results"] = results
-        summary_placeholder.empty()
-        ask_user_for_result_display_preference(results)
+        st.session_state["results"][results.id] = results
         test_status_placeholder.text("Benchmark Completed")
-        display_statistics(stats, stats_raw)
+        display_results(result_placeholder=result_placeholder, stats=stats, results=results)
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
 
-def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, Any]]) -> None:
+def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
+                    stats: List[Dict[str, Any]] = None, 
+                    results: BenchmarkPerformanceResult = None, 
+                    id: str = None, 
+                    stats_raw: List[Dict[str, Any]] = None,
+                    ) -> None:
     """
     Display benchmark statistics in a formatted manner with enhanced user interface.
 
     :param stats: List of benchmark statistics.
     :param stats_raw: List of raw benchmark statistics.
     """
-    st.markdown("## 📈 Benchmark Results")
+    try:
+        if id:
+            results = st.session_state["results"][id]     
+            if not isinstance(results, BenchmarkPerformanceResult) or results.result is None:
+                raise ValueError("Results are not available for the given ID.")
+            result_placeholder.write(f"Displaying results for ID: {id}")
+            result_placeholder.write(f'''Result: {st.session_state["results"]}''')
+            result_placeholder.write(f"Result: {results}")
+            result_placeholder.write(f"Timestamp: {results.timestamp}")
+            stats = results.result
+    except ValueError as e:
+        result_placeholder.write(f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Sorry for the inconvenience! 😓 Please try another ID. 🔄")
+
+    ask_user_for_result_display_preference(results)
+    result_placeholder.write("## 📈 Benchmark Results")
     headers = [
         "Model_MaxTokens", "is_Streaming", "Iterations", "Regions", "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT",
         "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT", "Median Prompt Tokens", "IQR Prompt Tokens",
@@ -517,7 +534,7 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
 
     df = pd.DataFrame(table, columns=headers)
 
-    with st.expander("Column Descriptions", expanded=False):
+    with result_placeholder.expander("Column Descriptions", expanded=False):
         st.markdown(
             """
             - **Model_MaxTokens**: The maximum number of tokens the model can process in a single request.
@@ -558,38 +575,38 @@ def display_statistics(stats: List[Dict[str, Any]], stats_raw: List[Dict[str, An
             """
         )
 
-    st.dataframe(df.style)
+    result_placeholder.write(df.style)
 
     combined_stats = {key: val for stat in stats for key, val in stat.items()}
 
     #TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
     #combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
 
-    st.markdown("### 🤔 Visual Insights")
+    result_placeholder.write("### 🤔 Visual Insights")
 
     visualizer = ModelPerformanceVisualizer(data=combined_stats)
     visualizer.parse_data()
 
-    col1, col2, col3 = st.columns([1, 1, 1], gap="small")
+    col1, col2, col3 = result_placeholder.columns([1, 1, 1], gap="small")
 
     with col1:
         try:
-            st.plotly_chart(visualizer.plot_completion_tokens(), use_container_width=True)
+            col1.plotly_chart(visualizer.plot_completion_tokens(), use_container_width=True)
         except Exception as e:
-            st.error(f"Error generating Completion Tokens plot: {e}")
+            col1.error(f"Error generating Completion Tokens plot: {e}")
 
     with col2:
         try:
-            st.plotly_chart(visualizer.plot_prompt_tokens(), use_container_width=True)
+            col2.plotly_chart(visualizer.plot_prompt_tokens(), use_container_width=True)
         except Exception as e:
-            st.error(f"Error generating Prompt Tokens plot: {e}")
+            col2.error(f"Error generating Prompt Tokens plot: {e}")
 
     with col3:
         try:
-            st.plotly_chart(visualizer.plot_response_time_metrics_comparison(), use_container_width=True)
-            st.toast("Make plots full screen for detailed analysis!")
+            col3.plotly_chart(visualizer.plot_response_time_metrics_comparison(), use_container_width=True)
+            col3.toast("Make plots full screen for detailed analysis!")
         except Exception as e:
-            st.error(f"Error generating Response Time Metrics plot: {e}")
+            col3.error(f"Error generating Response Time Metrics plot: {e}")
 
 
 def download_chat_history() -> None:
@@ -669,19 +686,37 @@ def main() -> None:
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("## 🚀 Run Benchmark")
-    summary_placeholder = st.empty()
     test_status_placeholder = st.sidebar.empty()
     run_benchmark = st.sidebar.button("Start Benchmark")   
-    deployment_names = list(st.session_state.deployments.keys())
-
+    deployment_names = list(st.session_state.get('deployments', {}).keys())
+    result_placeholder = st.empty()
     if run_benchmark:
         test_status_placeholder.text("Running Benchmark...🕒")
         with st.spinner("🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"): 
-            asyncio.run(run_benchmark_tests(summary_placeholder, test_status_placeholder))
-    else: 
-        st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
-        deployment_names = list(st.session_state.deployments.keys())
-        display_benchmark_summary(deployment_names)
+            try:
+                asyncio.run(run_benchmark_tests(result_placeholder, test_status_placeholder))
+            except Exception as e:
+                st.error(f"An error occurred while running the benchmark: {e}")
+    else:
+        if deployment_names:
+            display_benchmark_summary(deployment_names)
+        
+        if "results" in st.session_state and st.session_state["results"]:
+            # Corrected code to get the latest key from the dictionary
+            latest_run_key = max(st.session_state["results"].keys()) if st.session_state["results"] else None  
+            logger.info(f"Latest Run Key: {latest_run_key}")         
+            display_results(id=latest_run_key)  # Display the latest run by default
+            
+            # Provide a dropdown to select and display previous runs
+            selected_run_key = st.sidebar.selectbox(
+                "Select a Run",
+                options=range(len(st.session_state["results"])),
+                format_func=lambda x: f"Run {x + 1}"  # Display as Run 1, Run 2, etc.
+            )
+            if selected_run_key is not None:
+                display_results(id=selected_run_key)
+        else:
+            result_placeholder.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
 
 
     if st.session_state.ai_response:
