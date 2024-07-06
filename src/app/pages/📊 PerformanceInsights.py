@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 import dotenv
 import pandas as pd
 import streamlit as st
+import os
 
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.Home import add_deployment_form, display_deployments, load_default_deployment
@@ -40,6 +41,24 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
         st.session_state["settings"] = {}
     if "results" not in st.session_state:
         st.session_state["results"] = {}
+
+    # Environment variables for Azure OpenAI and other services
+    env_vars = {
+        "AZURE_OPENAI_KEY": st.session_state.get('AZURE_OPENAI_KEY', os.getenv("AZURE_OPENAI_KEY")),
+        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": st.session_state.get('AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID', os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")),
+        "AZURE_OPENAI_API_ENDPOINT": st.session_state.get('AZURE_OPENAI_API_ENDPOINT', os.getenv("AZURE_OPENAI_API_ENDPOINT")),
+        "AZURE_OPENAI_API_VERSION": st.session_state.get('AZURE_OPENAI_API_VERSION', os.getenv("AZURE_OPENAI_API_VERSION")),
+    }
+    st.session_state.update(env_vars)
+
+    # Initialize Azure OpenAI Manager if it hasn't been initialized yet
+    if "azure_openai_manager" not in st.session_state:
+        st.session_state["azure_openai_manager"] = AzureOpenAIManager(
+            api_key=st.session_state["AZURE_OPENAI_KEY"],
+            azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
+            api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
+            chat_model_name=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"]
+        )
 
 session_vars = [
     "conversation_history", "ai_response", "chat_history", "messages", 
@@ -467,8 +486,7 @@ async def run_benchmark_tests(result_placeholder: st.delta_generator.DeltaGenera
         st.session_state["benchmark_results_raw"] = stats_raw
         results = BenchmarkPerformanceResult(result=stats, settings=st.session_state["settings"])
         st.session_state["results"][results.id] = results
-        test_status_placeholder.text("Benchmark Completed")
-        display_results(result_placeholder=result_placeholder, stats=stats, results=results)
+        test_status_placeholder.markdown(f"Benchmark <span style='color: grey;'>{results.id}</span> Completed", unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
@@ -491,122 +509,129 @@ def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
             results = st.session_state["results"][id]     
             if not isinstance(results, BenchmarkPerformanceResult) or results.result is None:
                 raise ValueError("Results are not available for the given ID.")
-            result_placeholder.write(f"Displaying results for ID: {id}")
-            result_placeholder.write(f'''Result: {st.session_state["results"]}''')
-            result_placeholder.write(f"Result: {results}")
-            result_placeholder.write(f"Timestamp: {results.timestamp}")
             stats = results.result
     except ValueError as e:
-        result_placeholder.write(f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Sorry for the inconvenience! 😓 Please try another ID. 🔄")
+        st.warning(f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Error: {e}. Sorry for the inconvenience! 😓 Please try another ID. 🔄")
+    
+    with st.container(border=False):
+        ask_user_for_result_display_preference(results)
+        if id:
+            st.markdown(f"## 📈 Benchmark Results")
+            st.toast(f"You are viewing results from Run ID: {id}", icon="ℹ️")
+        else: 
+            st.markdown(f"## 📈 Benchmark Results")
+            st.toast(f"ℹ️ You are viewing results from Run ID: {id}", icon="ℹ️")
 
-    ask_user_for_result_display_preference(results)
-    result_placeholder.write("## 📈 Benchmark Results")
-    headers = [
-        "Model_MaxTokens", "is_Streaming", "Iterations", "Regions", "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT",
-        "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT", "Median Prompt Tokens", "IQR Prompt Tokens",
-        "Median Completion Tokens", "IQR Completion Tokens", "95th Percentile Completion Tokens",
-        "99th Percentile Completion Tokens", "CV Completion Tokens", "Average TBT (ms)", "Median TBT (ms)", "IQR TBT",
-        "95th Percentile TBT (ms)", "99th Percentile TBT (ms)", "Average TTFT (ms/s)", "Median TTFT (ms/s)", "IQR TTFT",
-        "95th Percentile TTFT (ms/s)", "99th Percentile TTFT (ms/s)", "Error Rate", "Error Types", "Successful Runs",
-        "Unsuccessful Runs", "Throttle Count", "Throttle Rate", "Best Run", "Worst Run"
-    ]
-
-    table = [
-        [
-            key, data.get("is_Streaming", "N/A"), data.get("number_of_iterations", "N/A"),
-            ", ".join(set([r for r in data.get("regions", []) if r])) or "N/A",
-            data.get("average_ttlt", "N/A"), data.get("median_ttlt", "N/A"), data.get("iqr_ttlt", "N/A"),
-            data.get("percentile_95_ttlt", "N/A"), data.get("percentile_99_ttlt", "N/A"), data.get("cv_ttlt", "N/A"),
-            data.get("median_prompt_tokens", "N/A"), data.get("iqr_prompt_tokens", "N/A"),
-            data.get("median_completion_tokens", "N/A"), data.get("iqr_completion_tokens", "N/A"),
-            data.get("percentile_95_completion_tokens", "N/A"), data.get("percentile_99_completion_tokens", "N/A"),
-            data.get("cv_completion_tokens", "N/A"), data.get("average_tbt", "N/A"), data.get("median_tbt", "N/A"),
-            data.get("iqr_tbt", "N/A"), data.get("percentile_95_tbt", "N/A"), data.get("percentile_99_tbt", "N/A"),
-            data.get("average_ttft", "N/A"), data.get("median_ttft", "N/A"), data.get("iqr_ttft", "N/A"),
-            data.get("percentile_95_ttft", "N/A"), data.get("percentile_99_ttft", "N/A"), data.get("error_rate", "N/A"),
-            data.get("errors_types", "N/A"), data.get("successful_runs", "N/A"), data.get("unsuccessful_runs", "N/A"),
-            data.get("throttle_count", "N/A"), data.get("throttle_rate", "N/A"),
-            json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-            json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A"
+        headers = [
+            "Model_MaxTokens", "is_Streaming", "Iterations", "Regions", "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT",
+            "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT", "Median Prompt Tokens", "IQR Prompt Tokens",
+            "Median Completion Tokens", "IQR Completion Tokens", "95th Percentile Completion Tokens",
+            "99th Percentile Completion Tokens", "CV Completion Tokens", "Average TBT (ms)", "Median TBT (ms)", "IQR TBT",
+            "95th Percentile TBT (ms)", "99th Percentile TBT (ms)", "Average TTFT (ms/s)", "Median TTFT (ms/s)", "IQR TTFT",
+            "95th Percentile TTFT (ms/s)", "99th Percentile TTFT (ms/s)", "Error Rate", "Error Types", "Successful Runs",
+            "Unsuccessful Runs", "Throttle Count", "Throttle Rate", "Best Run", "Worst Run"
         ]
-        for stat in stats for key, data in stat.items()
-    ]
 
-    df = pd.DataFrame(table, columns=headers)
+        table = [
+            [
+                key, data.get("is_Streaming", "N/A"), data.get("number_of_iterations", "N/A"),
+                ", ".join(set([r for r in data.get("regions", []) if r])) or "N/A",
+                data.get("average_ttlt", "N/A"), data.get("median_ttlt", "N/A"), data.get("iqr_ttlt", "N/A"),
+                data.get("percentile_95_ttlt", "N/A"), data.get("percentile_99_ttlt", "N/A"), data.get("cv_ttlt", "N/A"),
+                data.get("median_prompt_tokens", "N/A"), data.get("iqr_prompt_tokens", "N/A"),
+                data.get("median_completion_tokens", "N/A"), data.get("iqr_completion_tokens", "N/A"),
+                data.get("percentile_95_completion_tokens", "N/A"), data.get("percentile_99_completion_tokens", "N/A"),
+                data.get("cv_completion_tokens", "N/A"), data.get("average_tbt", "N/A"), data.get("median_tbt", "N/A"),
+                data.get("iqr_tbt", "N/A"), data.get("percentile_95_tbt", "N/A"), data.get("percentile_99_tbt", "N/A"),
+                data.get("average_ttft", "N/A"), data.get("median_ttft", "N/A"), data.get("iqr_ttft", "N/A"),
+                data.get("percentile_95_ttft", "N/A"), data.get("percentile_99_ttft", "N/A"), data.get("error_rate", "N/A"),
+                data.get("errors_types", "N/A"), data.get("successful_runs", "N/A"), data.get("unsuccessful_runs", "N/A"),
+                data.get("throttle_count", "N/A"), data.get("throttle_rate", "N/A"),
+                json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
+                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A"
+            ]
+            for stat in stats for key, data in stat.items()
+        ]
 
-    with result_placeholder.expander("Column Descriptions", expanded=False):
-        st.markdown(
-            """
-            - **Model_MaxTokens**: The maximum number of tokens the model can process in a single request.
-            - **is_Streaming**: Indicates whether the model uses streaming for processing requests.
-            - **Iterations**: The number of iterations or runs performed during the analysis.
-            - **Regions**: Geographic regions where the deployments were executed.
-            - **Average TTLT**: The average Total Time to Last Token across all runs.
-            - **Median TTLT**: The median Total Time to Last Token, reducing the impact of outliers.
-            - **IQR TTLT**: Interquartile Range for Total Time to Last Token, indicating the spread of the middle 50% of the data.
-            - **95th Percentile TTLT**: Time below which 95% of the Total Time to Last Token measurements fall.
-            - **99th Percentile TTLT**: Time below which 99% of the Total Time to Last Token measurements fall.
-            - **CV TTLT**: Coefficient of Variation for Total Time to Last Token, indicating the relative variability.
-            - **Median Prompt Tokens**: The median number of tokens in the prompts used.
-            - **IQR Prompt Tokens**: Interquartile Range for the number of prompt tokens.
-            - **Median Completion Tokens**: The median number of tokens in the completions generated.
-            - **IQR Completion Tokens**: Interquartile Range for the number of completion tokens.
-            - **95th Percentile Completion Tokens**: Number of tokens below which 95% of the completion token counts fall.
-            - **99th Percentile Completion Tokens**: Number of tokens below which 99% of the completion token counts fall.
-            - **CV Completion Tokens**: Coefficient of Variation for completion tokens, indicating the relative variability.
-            - **Average TBT**: The average Time Before Throttling across all runs.
-            - **Median TBT**: The median Time Before Throttling, reducing the impact of outliers.
-            - **IQR TBT**: Interquartile Range for Time Before Throttling, indicating the spread of the middle 50% of the data.
-            - **95th Percentile TBT**: Time below which 95% of the Time Before Throttling measurements fall.
-            - **99th Percentile TBT**: Time below which 99% of the Time Before Throttling measurements fall.
-            - **Average TTFT**: The average Time to First Token across all runs.
-            - **Median TTFT**: The median Time to First Token, reducing the impact of outliers.
-            - **IQR TTFT**: Interquartile Range for Time to First Token, indicating the spread of the middle 50% of the data.
-            - **95th Percentile TTFT**: Time below which 95% of the Time to First Token measurements fall.
-            - **99th Percentile TTFT**: Time below which 99% of the Time to First Token measurements fall.
-            - **Error Rate**: The percentage of runs that resulted in errors.
-            - **Error Types**: The types of errors encountered during the runs.
-            - **Successful Runs**: The number of runs that completed successfully without errors.
-            - **Unsuccessful Runs**: The number of runs that did not complete successfully due to errors.
-            - **Throttle Count**: The number of times throttling occurred during the runs.
-            - **Throttle Rate**: The rate at which throttling occurred.
-            - **Best Run**: Details of the run with the best performance metrics.
-            - **Worst Run**: Details of the run with the worst performance metrics.
-            """
-        )
+        df = pd.DataFrame(table, columns=headers)
 
-    result_placeholder.write(df.style)
+        with st.expander("Column Descriptions", expanded=False):
+            st.markdown(
+                """
+                - **Model_MaxTokens**: The maximum number of tokens the model can process in a single request.
+                - **is_Streaming**: Indicates whether the model uses streaming for processing requests.
+                - **Iterations**: The number of iterations or runs performed during the analysis.
+                - **Regions**: Geographic regions where the deployments were executed.
+                - **Average TTLT**: The average Total Time to Last Token across all runs.
+                - **Median TTLT**: The median Total Time to Last Token, reducing the impact of outliers.
+                - **IQR TTLT**: Interquartile Range for Total Time to Last Token, indicating the spread of the middle 50% of the data.
+                - **95th Percentile TTLT**: Time below which 95% of the Total Time to Last Token measurements fall.
+                - **99th Percentile TTLT**: Time below which 99% of the Total Time to Last Token measurements fall.
+                - **CV TTLT**: Coefficient of Variation for Total Time to Last Token, indicating the relative variability.
+                - **Median Prompt Tokens**: The median number of tokens in the prompts used.
+                - **IQR Prompt Tokens**: Interquartile Range for the number of prompt tokens.
+                - **Median Completion Tokens**: The median number of tokens in the completions generated.
+                - **IQR Completion Tokens**: Interquartile Range for the number of completion tokens.
+                - **95th Percentile Completion Tokens**: Number of tokens below which 95% of the completion token counts fall.
+                - **99th Percentile Completion Tokens**: Number of tokens below which 99% of the completion token counts fall.
+                - **CV Completion Tokens**: Coefficient of Variation for completion tokens, indicating the relative variability.
+                - **Average TBT**: The average Time Before Throttling across all runs.
+                - **Median TBT**: The median Time Before Throttling, reducing the impact of outliers.
+                - **IQR TBT**: Interquartile Range for Time Before Throttling, indicating the spread of the middle 50% of the data.
+                - **95th Percentile TBT**: Time below which 95% of the Time Before Throttling measurements fall.
+                - **99th Percentile TBT**: Time below which 99% of the Time Before Throttling measurements fall.
+                - **Average TTFT**: The average Time to First Token across all runs.
+                - **Median TTFT**: The median Time to First Token, reducing the impact of outliers.
+                - **IQR TTFT**: Interquartile Range for Time to First Token, indicating the spread of the middle 50% of the data.
+                - **95th Percentile TTFT**: Time below which 95% of the Time to First Token measurements fall.
+                - **99th Percentile TTFT**: Time below which 99% of the Time to First Token measurements fall.
+                - **Error Rate**: The percentage of runs that resulted in errors.
+                - **Error Types**: The types of errors encountered during the runs.
+                - **Successful Runs**: The number of runs that completed successfully without errors.
+                - **Unsuccessful Runs**: The number of runs that did not complete successfully due to errors.
+                - **Throttle Count**: The number of times throttling occurred during the runs.
+                - **Throttle Rate**: The rate at which throttling occurred.
+                - **Best Run**: Details of the run with the best performance metrics.
+                - **Worst Run**: Details of the run with the worst performance metrics.
+                """
+            )
 
-    combined_stats = {key: val for stat in stats for key, val in stat.items()}
+        st.write(df.style)
 
-    #TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
-    #combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
+        combined_stats = {key: val for stat in stats for key, val in stat.items()}
 
-    result_placeholder.write("### 🤔 Visual Insights")
+        #TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
+        #combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
 
-    visualizer = ModelPerformanceVisualizer(data=combined_stats)
-    visualizer.parse_data()
+        st.write("### 🤔 Visual Insights")
 
-    col1, col2, col3 = result_placeholder.columns([1, 1, 1], gap="small")
+        visualizer = ModelPerformanceVisualizer(data=combined_stats)
+        visualizer.parse_data()
 
-    with col1:
-        try:
-            col1.plotly_chart(visualizer.plot_completion_tokens(), use_container_width=True)
-        except Exception as e:
-            col1.error(f"Error generating Completion Tokens plot: {e}")
-
-    with col2:
-        try:
-            col2.plotly_chart(visualizer.plot_prompt_tokens(), use_container_width=True)
-        except Exception as e:
-            col2.error(f"Error generating Prompt Tokens plot: {e}")
-
-    with col3:
-        try:
-            col3.plotly_chart(visualizer.plot_response_time_metrics_comparison(), use_container_width=True)
-            col3.toast("Make plots full screen for detailed analysis!")
-        except Exception as e:
-            col3.error(f"Error generating Response Time Metrics plot: {e}")
+        # Create tabs for each plot
+        tab1, tab2, tab3 = st.tabs(["Completion Tokens", "Prompt Tokens", "Response Time Metrics"])
+        
+        # Completion Tokens Plot
+        with tab1:
+            try:
+                st.plotly_chart(visualizer.plot_completion_tokens(), use_container_width=True)
+            except Exception as e:
+                st.error(f"Error generating Completion Tokens plot: {e}")
+        
+        # Prompt Tokens Plot
+        with tab2:
+            try:
+                st.plotly_chart(visualizer.plot_prompt_tokens(), use_container_width=True)
+            except Exception as e:
+                st.error(f"Error generating Prompt Tokens plot: {e}")
+        
+        # Response Time Metrics Comparison Plot
+        with tab3:
+            try:
+                st.plotly_chart(visualizer.plot_response_time_metrics_comparison(), use_container_width=True)
+                st.toast("Make plots full screen for detailed analysis!")
+            except Exception as e:
+                st.error(f"Error generating Response Time Metrics plot: {e}")
 
 
 def download_chat_history() -> None:
@@ -676,7 +701,77 @@ def display_benchmark_summary(deployment_names):
             - **Frequency Penalty:** {st.session_state['settings']['frequency_penalty']}
         """
     )
+    
+async def generate_ai_response(user_query, system_message):
+    try:
+        with st.spinner("🤖 Thinking..."):
+            ai_response, _ = await asyncio.to_thread(
+                st.session_state.azure_openai_manager.generate_chat_response,
+                conversation_history=st.session_state.conversation_history,
+                system_message_content=system_message,
+                query=user_query,
+                max_tokens=3000,
+            )
+        st.balloons()
+        return ai_response
+    except Exception as e:
+        st.error(f"An error occurred while generating the AI response: {e}")
+        return None
+    
+def initialize_chatbot() -> None:
+    """
+    Initialize a simple chatbot interface for user interaction.
+    """
+    # Custom CSS to create borders around the container
+    st.markdown("""
+        <style>
+        .chatbot-container {
+            border: 2px solid #f0f2f6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
+    # Container for the chatbot interface
+    with st.container():
+        st.markdown('<div class="chatbot-container">', unsafe_allow_html=True)
+
+        st.title("Chat with Benchmark Results")
+
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
+        # Display existing messages
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # User input for feedback or additional instructions
+        feedback_prompt = st.chat_input("Enter your feedback or additional instructions:")
+
+        if feedback_prompt:
+            st.session_state.messages.append({"role": "user", "content": feedback_prompt})
+            with st.chat_message("user"):
+                st.markdown(feedback_prompt)
+
+            # Adjusted to use asyncio.run for calling the async function
+            ai_response = asyncio.run(
+                generate_ai_response(
+                    feedback_prompt,
+                    "Please analyze the benchmark results and provide proof or explanations to assist the user with their question."
+                )
+            )
+            if ai_response:
+                st.session_state.messages.append({"role": "assistant", "content": ai_response})
+
+                st.markdown("### Updated AI Response")
+                st.markdown(ai_response, unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)  # Close the custom container div
 
 def main() -> None:
     """
@@ -687,37 +782,48 @@ def main() -> None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("## 🚀 Run Benchmark")
     test_status_placeholder = st.sidebar.empty()
-    run_benchmark = st.sidebar.button("Start Benchmark")   
+    button_label = "Start New Benchmark" if "results" in st.session_state and st.session_state["results"] else "Start Benchmark"
+    run_benchmark = st.sidebar.button(button_label)   
     deployment_names = list(st.session_state.get('deployments', {}).keys())
     result_placeholder = st.empty()
+    # Check if the benchmark should be run
     if run_benchmark:
-        test_status_placeholder.text("Running Benchmark...🕒")
-        with st.spinner("🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"): 
+        test_status_placeholder.markdown("Running Benchmark...🕒")
+        with st.spinner("🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"):
             try:
                 asyncio.run(run_benchmark_tests(result_placeholder, test_status_placeholder))
             except Exception as e:
                 st.error(f"An error occurred while running the benchmark: {e}")
-    else:
-        if deployment_names:
-            display_benchmark_summary(deployment_names)
+    else: 
+        display_benchmark_summary(deployment_names)
+    
+    if "results" in st.session_state and st.session_state["results"]:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("## 📊 Select a Benchmark Run")
+        st.sidebar.markdown("Please select a benchmark run from the list below to view its results:")
         
-        if "results" in st.session_state and st.session_state["results"]:
-            # Corrected code to get the latest key from the dictionary
-            latest_run_key = max(st.session_state["results"].keys()) if st.session_state["results"] else None  
-            logger.info(f"Latest Run Key: {latest_run_key}")         
-            display_results(id=latest_run_key)  # Display the latest run by default
-            
-            # Provide a dropdown to select and display previous runs
+        # Filter out keys for runs that are not empty
+        run_keys = [key for key in st.session_state.get("results", {}).keys() if st.session_state["results"][key].result] 
+
+        if run_keys:  # If there are non-empty runs
+            # Ensure the latest run is selected by default
+            default_index = len(run_keys) if run_keys else 0
             selected_run_key = st.sidebar.selectbox(
                 "Select a Run",
-                options=range(len(st.session_state["results"])),
-                format_func=lambda x: f"Run {x + 1}"  # Display as Run 1, Run 2, etc.
+                options=run_keys,  
+                format_func=lambda x: f"Run {x}",
+                index=default_index - 1  # Adjust for 0-based indexing
             )
-            if selected_run_key is not None:
-                display_results(id=selected_run_key)
+            st.sidebar.markdown(f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>", unsafe_allow_html=True)
+            display_results(result_placeholder=result_placeholder, id=selected_run_key)
         else:
-            result_placeholder.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
+            st.info("There are no runs available at this moment. Please try again later.")
+    else:
+        # This message is shown if there are no deployment names and no results in the session state
+        st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
 
+    st.markdown("---")
+    initialize_chatbot()
 
     if st.session_state.ai_response:
         with st.sidebar:
