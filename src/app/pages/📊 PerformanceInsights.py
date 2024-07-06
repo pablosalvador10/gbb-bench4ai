@@ -11,6 +11,8 @@ from src.aoai.azure_openai import AzureOpenAIManager
 from src.app.Home import (add_deployment_form, display_deployments,
                           load_default_deployment)
 from src.app.outputformatting import markdown_to_docx
+from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
+                             prompt_message_ai_benchmarking_buddy_latency)
 from src.app.results import BenchmarkPerformanceResult
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
 from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming,
@@ -83,12 +85,29 @@ session_vars = [
 initial_values = {
     "conversation_history": [],
     "ai_response": "",
-    "chat_history": [],
-    "messages": [
+    "chat_history": [
         {
             "role": "assistant",
-            "content": "Hello! I'm your AI-powered Performance Insights Guide. Feel free to ask me anything about your benchmark results or any queries you might have !",
+            "content": (
+                "🚀 Ask away! Your friendly BenchmarkAI Buddy is all ears and ready to dive into your queries. "
+                "Got a burning question? A curious thought? Or just want to chat about data insights? "
+                "I'm here to make sense of the numbers and bring a smile to your face! 😄📊"
+            ),
         }
+    ],
+    "messages": [
+        {
+            "role": "system",
+            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! Your friendly BenchmarkAI Buddy is all ears and ready to dive into your queries. "
+                "Got a burning question? A curious thought? Or just want to chat about data insights? "
+                "I'm here to make sense of the numbers and bring a smile to your face! 😄📊"
+            ),
+        },
     ],
     "log_messages": [],
     "benchmark_results": [],
@@ -853,7 +872,7 @@ def initialize_chatbot() -> None:
     Initialize a chatbot interface for user interaction with enhanced features.
     """
     st.markdown(
-        "<h3 style='text-align: center;'>BenchmarkAI Buddy 🤖</h3>",
+        "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
         unsafe_allow_html=True,
     )
 
@@ -862,30 +881,33 @@ def initialize_chatbot() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Container for the chatbot interface
-    with st.container(height=500):
-        chat_container = st.container()
-        with chat_container:
-            for message in st.session_state.messages:
-                role = message["role"]
-                content = message["content"]
-                avatar_style = "🧑‍💻" if role == "user" else "🤖"
-                with st.chat_message(role, avatar=avatar_style):
-                    st.markdown(
-                        f"<div style='padding: 10px; border-radius: 5px;'>{content}</div>",
-                        unsafe_allow_html=True,
-                    )
+    respond_conatiner = st.container(height=400)
 
-        # User input for feedback or additional instructions
-        prompt = st.chat_input("What is up?")
-        if prompt:
-            st.session_state.messages.append({"role": "user", "content": prompt})
+    with respond_conatiner:
+        for message in st.session_state.chat_history:
+            role = message["role"]
+            content = message["content"]
+            avatar_style = "🧑‍💻" if role == "user" else "🤖"
+            with st.chat_message(role, avatar=avatar_style):
+                st.markdown(
+                    f"<div style='padding: 10px; border-radius: 5px;'>{content}</div>",
+                    unsafe_allow_html=True,
+                )
+
+    # User input for feedback or additional instructions
+    prompt = st.chat_input("Ask away!")
+    if prompt:
+        prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
+            st.session_state["results"], prompt
+        )
+        st.session_state.messages.append({"role": "user", "content": prompt_ai_ready})
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with respond_conatiner:
             with st.chat_message("user", avatar="🧑‍💻"):
                 st.markdown(
                     f"<div style='padding: 10px; border-radius: 5px;'>{prompt}</div>",
                     unsafe_allow_html=True,
                 )
-
             # Generate AI response (asynchronously)
             with st.chat_message("assistant", avatar="🤖"):
                 stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
@@ -893,12 +915,7 @@ def initialize_chatbot() -> None:
                     messages=[
                         {
                             "role": "system",
-                            "content": (
-                                "You are an expert in benchmark analysis. The user will send you questions about past benchmarks "
-                                "that are provided in Dictionary format. Your task is to understand these questions and provide detailed, "
-                                "insightful, and accurate analysis based on the benchmark data. Be ready to answer questions and offer as much "
-                                "analysis as possible to assist the user."
-                            ),
+                            "content": (SYSTEM_MESSAGE_LATENCY),
                         }
                     ]
                     + [
@@ -911,14 +928,9 @@ def initialize_chatbot() -> None:
                     stream=True,
                 )
                 ai_response = st.write_stream(stream)
-                st.session_state.messages.append(
+                st.session_state.chat_history.append(
                     {"role": "assistant", "content": ai_response}
                 )
-
-    st.markdown(
-        "<p style='text-align: center; font-style: italic;'>Your friendly BenchmarkAI Buddy 🤖 is here to help!</p>",
-        unsafe_allow_html=True,
-    )
 
 
 def main() -> None:
@@ -957,21 +969,19 @@ def main() -> None:
             "Please select a benchmark run from the list below to view its results:"
         )
 
-        # Filter out keys for runs that are not empty
         run_keys = [
             key
             for key in st.session_state.get("results", {}).keys()
             if st.session_state["results"][key]["result"] is not None
         ]
 
-        if run_keys:  # If there are non-empty runs
-            # Ensure the latest run is selected by default
+        if run_keys:
             default_index = len(run_keys) if run_keys else 0
             selected_run_key = st.sidebar.selectbox(
                 "Select a Run",
                 options=run_keys,
                 format_func=lambda x: f"Run {x}",
-                index=default_index - 1,  # Adjust for 0-based indexing
+                index=default_index - 1,  # Select the last run by default
             )
             st.sidebar.markdown(
                 f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>",
@@ -983,9 +993,8 @@ def main() -> None:
                 "There are no runs available at this moment. Please try again later."
             )
     else:
-        # This message is shown if there are no deployment names and no results in the session state
         st.info(
-            "👈 Please configure the benchmark settings and click 'Start Benchmark' to begin."
+            "👈 Hey - you haven't fired any benchmarks yet. Please configure the benchmark settings and click 'Start Benchmark' to begin."
         )
 
     st.write(
