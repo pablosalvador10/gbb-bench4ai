@@ -43,6 +43,7 @@ MAX_RETRY_ATTEMPTS = 3
 MAX_TIMEOUT_SECONDS = 60
 RETRY_AFTER_MS_HEADER = "retry-after-ms"
 
+
 class AzureOpenAIBenchmarkLatency(ABC):
     def __init__(
         self,
@@ -63,7 +64,9 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self.api_version: str = (
             api_version or os.getenv("AZURE_OPENAI_API_VERSION") or "2023-05-15"
         )
-        self.azure_endpoint: Optional[str] = azure_endpoint or os.getenv("AZURE_OPENAI_API_ENDPOINT")
+        self.azure_endpoint: Optional[str] = azure_endpoint or os.getenv(
+            "AZURE_OPENAI_API_ENDPOINT"
+        )
         self._validate_api_configurations()
         self.results: dict = {}
         self.is_streaming: str = "N/A"

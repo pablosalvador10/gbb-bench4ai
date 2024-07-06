@@ -1,18 +1,20 @@
 import asyncio
 import json
-from typing import Any, Dict, List, Optional
+import os
+from typing import Any, Dict, List
 
 import dotenv
 import pandas as pd
 import streamlit as st
-import os
 
 from src.aoai.azure_openai import AzureOpenAIManager
-from src.app.Home import add_deployment_form, display_deployments, load_default_deployment
+from src.app.Home import (add_deployment_form, display_deployments,
+                          load_default_deployment)
 from src.app.outputformatting import markdown_to_docx
-from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
-from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 from src.app.results import BenchmarkPerformanceResult
+from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
+from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming,
+                                         AzureOpenAIBenchmarkStreaming)
 from utils.ml_logging import get_logger
 
 # Load environment variables if not already loaded
@@ -21,10 +23,7 @@ dotenv.load_dotenv(".env")
 # Set up logger
 logger = get_logger()
 
-# Configure Streamlit options
-st.set_option("deprecation.showPyplotGlobalUse", False)
 
-# Initialize session state variables if they don't exist
 def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
     """
     Initialize Streamlit session state with default values if not already set.
@@ -35,7 +34,7 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
     for var in vars:
         if var not in st.session_state:
             st.session_state[var] = initial_values.get(var, None)
-    
+
     # Add a dictionary named 'settings' to the session state if it doesn't exist
     if "settings" not in st.session_state:
         st.session_state["settings"] = {}
@@ -44,10 +43,19 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
 
     # Environment variables for Azure OpenAI and other services
     env_vars = {
-        "AZURE_OPENAI_KEY": st.session_state.get('AZURE_OPENAI_KEY', os.getenv("AZURE_OPENAI_KEY")),
-        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": st.session_state.get('AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID', os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")),
-        "AZURE_OPENAI_API_ENDPOINT": st.session_state.get('AZURE_OPENAI_API_ENDPOINT', os.getenv("AZURE_OPENAI_API_ENDPOINT")),
-        "AZURE_OPENAI_API_VERSION": st.session_state.get('AZURE_OPENAI_API_VERSION', os.getenv("AZURE_OPENAI_API_VERSION")),
+        "AZURE_OPENAI_KEY": st.session_state.get(
+            "AZURE_OPENAI_KEY", os.getenv("AZURE_OPENAI_KEY")
+        ),
+        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": st.session_state.get(
+            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID",
+            os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"),
+        ),
+        "AZURE_OPENAI_API_ENDPOINT": st.session_state.get(
+            "AZURE_OPENAI_API_ENDPOINT", os.getenv("AZURE_OPENAI_API_ENDPOINT")
+        ),
+        "AZURE_OPENAI_API_VERSION": st.session_state.get(
+            "AZURE_OPENAI_API_VERSION", os.getenv("AZURE_OPENAI_API_VERSION")
+        ),
     }
     st.session_state.update(env_vars)
 
@@ -57,18 +65,36 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
             api_key=st.session_state["AZURE_OPENAI_KEY"],
             azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
             api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
-            chat_model_name=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"]
+            chat_model_name=st.session_state[
+                "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"
+            ],
         )
 
+
 session_vars = [
-    "conversation_history", "ai_response", "chat_history", "messages", 
-    "log_messages", "benchmark_results", "deployments"
+    "conversation_history",
+    "ai_response",
+    "chat_history",
+    "messages",
+    "log_messages",
+    "benchmark_results",
+    "deployments",
 ]
 initial_values = {
-    "conversation_history": [], "ai_response": "", "chat_history": [],
-    "messages": [{"role": "assistant", "content": "Hey, this is your AI assistant. Please look at the AI request submit and let's work together to make your content shine!"}],
-    "log_messages": [], "benchmark_results": [], "deployments": {}
+    "conversation_history": [],
+    "ai_response": "",
+    "chat_history": [],
+    "messages": [
+        {
+            "role": "assistant",
+            "content": "Hello! I'm your AI-powered Performance Insights Guide. Feel free to ask me anything about your benchmark results or any queries you might have !",
+        }
+    ],
+    "log_messages": [],
+    "benchmark_results": [],
+    "deployments": {},
 }
+
 initialize_session_state(session_vars, initial_values)
 
 st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="📊")
@@ -76,7 +102,9 @@ st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="�
 load_default_deployment()
 
 
-def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, deployment_id: str) -> AzureOpenAIManager:
+def create_azure_openai_manager(
+    api_key: str, endpoint: str, api_version: str, deployment_id: str
+) -> AzureOpenAIManager:
     """
     Create a new Azure OpenAI Manager instance.
 
@@ -86,10 +114,17 @@ def create_azure_openai_manager(api_key: str, endpoint: str, api_version: str, d
     :param deployment_id: Deployment ID for Azure OpenAI.
     :return: AzureOpenAIManager instance.
     """
-    return AzureOpenAIManager(api_key=api_key, azure_endpoint=endpoint, api_version=api_version, chat_model_name=deployment_id)
+    return AzureOpenAIManager(
+        api_key=api_key,
+        azure_endpoint=endpoint,
+        api_version=api_version,
+        chat_model_name=deployment_id,
+    )
 
 
-def create_benchmark_non_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkNonStreaming:
+def create_benchmark_non_streaming_client(
+    api_key: str, endpoint: str, api_version: str
+) -> AzureOpenAIBenchmarkNonStreaming:
     """
     Create a new benchmark client instance for non-streaming.
 
@@ -98,10 +133,14 @@ def create_benchmark_non_streaming_client(api_key: str, endpoint: str, api_versi
     :param api_version: API version for Azure OpenAI.
     :return: AzureOpenAIBenchmarkNonStreaming instance.
     """
-    return AzureOpenAIBenchmarkNonStreaming(api_key=api_key, azure_endpoint=endpoint, api_version=api_version)
+    return AzureOpenAIBenchmarkNonStreaming(
+        api_key=api_key, azure_endpoint=endpoint, api_version=api_version
+    )
 
 
-def create_benchmark_streaming_client(api_key: str, endpoint: str, api_version: str) -> AzureOpenAIBenchmarkStreaming:
+def create_benchmark_streaming_client(
+    api_key: str, endpoint: str, api_version: str
+) -> AzureOpenAIBenchmarkStreaming:
     """
     Create a new benchmark client instance for streaming.
 
@@ -110,7 +149,9 @@ def create_benchmark_streaming_client(api_key: str, endpoint: str, api_version: 
     :param api_version: API version for Azure OpenAI.
     :return: AzureOpenAIBenchmarkStreaming instance.
     """
-    return AzureOpenAIBenchmarkStreaming(api_key=api_key, azure_endpoint=endpoint, api_version=api_version)
+    return AzureOpenAIBenchmarkStreaming(
+        api_key=api_key, azure_endpoint=endpoint, api_version=api_version
+    )
 
 
 def configure_sidebar() -> None:
@@ -120,10 +161,10 @@ def configure_sidebar() -> None:
     with st.sidebar:
         st.markdown("## 🎯 Benchmark Selection")
         operation = st.selectbox(
-            "Choose Your Benchmark:", 
+            "Choose Your Benchmark:",
             ("Latency Benchmark", "Throughput Benchmark by Model"),
             help="Select the benchmark you want to perform to evaluate AI model performance.",
-            placeholder="Select a Benchmark"
+            placeholder="Select a Benchmark",
         )
 
         if operation == "Latency Benchmark":
@@ -145,11 +186,11 @@ def configure_sidebar() -> None:
             st.markdown("## 🤖 Deployment Center ")
             with st.expander("Add Your MaaS Deployment", expanded=False):
                 deployment_operation = st.selectbox(
-                    "Choose Model Family:", 
+                    "Choose Model Family:",
                     ("AOAI", "Other"),
                     index=0,
                     help="Select the benchmark you want to perform to evaluate AI model performance.",
-                    placeholder="Select a Benchmark"
+                    placeholder="Select a Benchmark",
                 )
                 if deployment_operation == "AOAI":
                     add_deployment_form()
@@ -161,6 +202,7 @@ def configure_sidebar() -> None:
             st.markdown("---")
 
             configure_benchmark_settings()
+
 
 def configure_benchmark_settings() -> None:
     """
@@ -181,13 +223,14 @@ def configure_benchmark_settings() -> None:
 
     configure_aoai_model_settings()
 
+
 def configure_byop_settings() -> None:
     """
     Configure BYOP (Bring Your Own Prompts) settings.
     """
     # Ensure 'settings' exists in 'st.session_state'
-    if 'settings' not in st.session_state:
-        st.session_state['settings'] = {}
+    if "settings" not in st.session_state:
+        st.session_state["settings"] = {}
 
     num_iterations = 0
     context_tokens = "BYOP"
@@ -196,9 +239,9 @@ def configure_byop_settings() -> None:
         type="csv",
         help="Upload a CSV file with prompts for the benchmark tests.",
     )
-    
+
     # Add 'context_tokens' to the 'settings' dictionary
-    st.session_state['settings']['context_tokens'] = context_tokens
+    st.session_state["settings"]["context_tokens"] = context_tokens
 
     if uploaded_file is not None:
         st.write("File uploaded successfully!")
@@ -208,19 +251,18 @@ def configure_byop_settings() -> None:
                 prompts = df["prompts"].tolist()
                 num_iterations = len(prompts)
                 # Add 'prompts' and 'num_iterations' to the 'settings' dictionary
-                st.session_state['settings']['prompts'] = prompts
-                st.session_state['settings']['num_iterations'] = num_iterations
+                st.session_state["settings"]["prompts"] = prompts
+                st.session_state["settings"]["num_iterations"] = num_iterations
                 custom_output_tokens = st.checkbox("Custom Output Tokens")
                 if custom_output_tokens:
                     max_tokens_list = configure_custom_tokens()
                 else:
                     max_tokens_list = configure_default_tokens()
-                st.session_state['settings']['max_tokens_list'] = max_tokens_list
+                st.session_state["settings"]["max_tokens_list"] = max_tokens_list
             else:
                 st.error("The uploaded CSV file must contain a 'prompts' column.")
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
-    
 
 
 def configure_default_settings() -> None:
@@ -228,8 +270,8 @@ def configure_default_settings() -> None:
     Configure default benchmark settings.
     """
     # Ensure 'settings' exists in 'st.session_state'
-    if 'settings' not in st.session_state:
-        st.session_state['settings'] = {}
+    if "settings" not in st.session_state:
+        st.session_state["settings"] = {}
 
     context_tokens = st.slider(
         "Context Tokens (Input)",
@@ -254,11 +296,13 @@ def configure_default_settings() -> None:
         max_tokens_list = configure_default_tokens()
 
     # Add inputs to the 'settings' dictionary
-    st.session_state['settings']['context_tokens'] = context_tokens
-    st.session_state['settings']['num_iterations'] = num_iterations
-    st.session_state['settings']['prompts'] = prompts  # This will be None unless modified later
-    st.session_state['settings']['custom_output_tokens'] = custom_output_tokens
-    st.session_state['settings']['max_tokens_list'] = max_tokens_list
+    st.session_state["settings"]["context_tokens"] = context_tokens
+    st.session_state["settings"]["num_iterations"] = num_iterations
+    st.session_state["settings"][
+        "prompts"
+    ] = prompts  # This will be None unless modified later
+    st.session_state["settings"]["custom_output_tokens"] = custom_output_tokens
+    st.session_state["settings"]["max_tokens_list"] = max_tokens_list
 
 
 def configure_custom_tokens() -> List[int]:
@@ -287,13 +331,13 @@ def configure_default_tokens() -> List[int]:
     :return: List of default max tokens.
     """
     options = [100, 500, 800, 1000, 1500, 2000]
-    default_tokens =  st.multiselect(
+    default_tokens = st.multiselect(
         "Select Max Output Tokens (Generation)",
         options=options,
         default=[500],
         help="Select the maximum tokens for each run.",
     )
-    st.session_state['settings']['default_tokens'] = default_tokens
+    st.session_state["settings"]["default_tokens"] = default_tokens
     return default_tokens
 
 
@@ -305,8 +349,8 @@ def configure_aoai_model_settings() -> dict:
     """
     with st.expander("AOAI Model Settings", expanded=False):
         # Ensure 'settings' exists in 'session_state'
-        if 'settings' not in st.session_state:
-            st.session_state['settings'] = {}
+        if "settings" not in st.session_state:
+            st.session_state["settings"] = {}
 
         st.session_state["settings"]["temperature"] = st.slider(
             "Temperature",
@@ -322,7 +366,9 @@ def configure_aoai_model_settings() -> dict:
             index=0,
             help="Choose 'Yes' to prevent server caching, ensuring that each request is processed freshly.",
         )
-        st.session_state["settings"]["prevent_server_caching"] = True if prevent_server_caching == "Yes" else False
+        st.session_state["settings"]["prevent_server_caching"] = (
+            True if prevent_server_caching == "Yes" else False
+        )
 
         st.session_state["settings"]["timeout"] = st.number_input(
             "Timeout (seconds)",
@@ -363,8 +409,7 @@ def configure_aoai_model_settings() -> dict:
 
 
 def display_code_setting_sdk(deployment_names) -> None:
-
-    code = f'''
+    code = f"""
     from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 
     API_KEY = {st.session_state["deployments"][deployment_names[0]]["key"]}
@@ -387,19 +432,20 @@ def display_code_setting_sdk(deployment_names) -> None:
         top_p: {st.session_state['settings']['top_p']},
         n= 1,
         presence_penalty={st.session_state['settings']['presence_penalty']},
-        frequency_penalty={st.session_state['settings']['frequency_penalty']}'''
+        frequency_penalty={st.session_state['settings']['frequency_penalty']}"""
 
     st.markdown("##### Test Settings")
-    st.code(code, language='python')
+    st.code(code, language="python")
+
 
 def display_human_readable_settings(deployment_names, results) -> None:
     # Benchmark Details
     benchmark_details = f"""
     **Benchmark Details:**
-    - **ID:** `{results.id}`
-    - **Timestamp:** `{results.timestamp}`
+    - **ID:** `{results["id"]}`
+    - **Timestamp:** `{results["timestamp"]}`
     """
-    
+
     # Benchmark Configuration Summary
     benchmark_configuration_summary = f"""
     #### Benchmark Configuration Summary
@@ -416,28 +462,28 @@ def display_human_readable_settings(deployment_names, results) -> None:
         - **Presence Penalty:** {st.session_state['settings']['presence_penalty']}
         - **Frequency Penalty:** {st.session_state['settings']['frequency_penalty']}
     """
-    
+
     # Display using st.markdown
     st.markdown(benchmark_details, unsafe_allow_html=True)
     st.markdown(benchmark_configuration_summary, unsafe_allow_html=True)
 
-def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) -> None: 
+
+def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) -> None:
     col1, col2 = st.columns(2)
     deployment_names = list(st.session_state.deployments.keys())
-    
+
     with col1:
         with st.expander("👨‍💻 Reproduce Run Using SDK", expanded=False):
             display_code_setting_sdk(deployment_names)
-    
+
     with col2:
         with st.expander("👥 Benchmark Configuration Details", expanded=False):
             display_human_readable_settings(deployment_names, results)
 
 
-
-async def run_benchmark_tests(result_placeholder: st.delta_generator.DeltaGenerator, 
-                              test_status_placeholder: st.delta_generator.DeltaGenerator, 
-                              ) -> None:
+async def run_benchmark_tests(
+    test_status_placeholder: st.delta_generator.DeltaGenerator,
+) -> None:
     """
     Run the benchmark tests asynchronously, with detailed configuration for each test.
 
@@ -456,48 +502,66 @@ async def run_benchmark_tests(result_placeholder: st.delta_generator.DeltaGenera
     """
     try:
         deployment_clients = [
-            (create_benchmark_streaming_client(deployment["key"], deployment["endpoint"], deployment["version"]) if deployment["stream"] else create_benchmark_non_streaming_client(deployment["key"], deployment["endpoint"], deployment["version"]), deployment_name)
+            (
+                create_benchmark_streaming_client(
+                    deployment["key"], deployment["endpoint"], deployment["version"]
+                )
+                if deployment["stream"]
+                else create_benchmark_non_streaming_client(
+                    deployment["key"], deployment["endpoint"], deployment["version"]
+                ),
+                deployment_name,
+            )
             for deployment_name, deployment in st.session_state.deployments.items()
         ]
 
         tasks = [
             client.run_latency_benchmark_bulk(
                 deployment_names=[deployment_name],
-                max_tokens_list=st.session_state['settings']['max_tokens_list'],
-                iterations=st.session_state['settings']['num_iterations'],
-                context_tokens=st.session_state['settings']['context_tokens'],
-                temperature=st.session_state['settings']['temperature'],
-                byop=st.session_state['settings']['prompts'],
-                prevent_server_caching=st.session_state['settings']['prevent_server_caching'],
-                timeout=st.session_state['settings']['timeout'],
-                top_p=st.session_state['settings']['top_p'],
+                max_tokens_list=st.session_state["settings"]["max_tokens_list"],
+                iterations=st.session_state["settings"]["num_iterations"],
+                context_tokens=st.session_state["settings"]["context_tokens"],
+                temperature=st.session_state["settings"]["temperature"],
+                byop=st.session_state["settings"]["prompts"],
+                prevent_server_caching=st.session_state["settings"][
+                    "prevent_server_caching"
+                ],
+                timeout=st.session_state["settings"]["timeout"],
+                top_p=st.session_state["settings"]["top_p"],
                 n=1,
-                presence_penalty=st.session_state['settings']['presence_penalty'],
-                frequency_penalty=st.session_state['settings']['frequency_penalty'],
+                presence_penalty=st.session_state["settings"]["presence_penalty"],
+                frequency_penalty=st.session_state["settings"]["frequency_penalty"],
             )
             for client, deployment_name in deployment_clients
         ]
 
         await asyncio.gather(*tasks)
 
-        stats = [client.calculate_and_show_statistics() for client, _ in deployment_clients]
+        stats = [
+            client.calculate_and_show_statistics() for client, _ in deployment_clients
+        ]
         stats_raw = [client.results for client, _ in deployment_clients]
         st.session_state["benchmark_results"] = stats
         st.session_state["benchmark_results_raw"] = stats_raw
-        results = BenchmarkPerformanceResult(result=stats, settings=st.session_state["settings"])
-        st.session_state["results"][results.id] = results
-        test_status_placeholder.markdown(f"Benchmark <span style='color: grey;'>{results.id}</span> Completed", unsafe_allow_html=True)
+        results = BenchmarkPerformanceResult(
+            result=stats, settings=st.session_state["settings"]
+        )
+        st.session_state["results"][results.id] = results.to_dict()
+        test_status_placeholder.markdown(
+            f"Benchmark <span style='color: grey;'>{results.id}</span> Completed",
+            unsafe_allow_html=True,
+        )
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
 
-def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
-                    stats: List[Dict[str, Any]] = None, 
-                    results: BenchmarkPerformanceResult = None, 
-                    id: str = None, 
-                    stats_raw: List[Dict[str, Any]] = None,
-                    ) -> None:
+def display_results(
+    stats: List[Dict[str, Any]] = None,
+    results: BenchmarkPerformanceResult = None,
+    id: str = None,
+    stats_raw: List[Dict[str, Any]] = None,
+) -> None:
     """
     Display benchmark statistics in a formatted manner with enhanced user interface.
 
@@ -506,51 +570,105 @@ def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
     """
     try:
         if id:
-            results = st.session_state["results"][id]     
-            if not isinstance(results, BenchmarkPerformanceResult) or results.result is None:
+            results = st.session_state["results"][id]
+            if results["result"] is None:
                 raise ValueError("Results are not available for the given ID.")
-            stats = results.result
+            stats = results["result"]
     except ValueError as e:
-        st.warning(f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Error: {e}. Sorry for the inconvenience! 😓 Please try another ID. 🔄")
-    
+        st.warning(
+            f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Error: {e}. Sorry for the inconvenience! 😓 Please try another ID. 🔄"
+        )
+        return
+
     with st.container(border=False):
         ask_user_for_result_display_preference(results)
         if id:
-            st.markdown(f"## 📈 Benchmark Results")
+            st.markdown("## 📈 Benchmark Results")
             st.toast(f"You are viewing results from Run ID: {id}", icon="ℹ️")
-        else: 
-            st.markdown(f"## 📈 Benchmark Results")
-            st.toast(f"ℹ️ You are viewing results from Run ID: {id}", icon="ℹ️")
+        else:
+            st.markdown("## 📈 Benchmark Results")
+            st.toast(f"You are viewing results from Run ID: {id}", icon="ℹ️")
 
         headers = [
-            "Model_MaxTokens", "is_Streaming", "Iterations", "Regions", "Average TTLT (s)", "Median TTLT (s)", "IQR TTLT",
-            "95th Percentile TTLT (s)", "99th Percentile TTLT (s)", "CV TTLT", "Median Prompt Tokens", "IQR Prompt Tokens",
-            "Median Completion Tokens", "IQR Completion Tokens", "95th Percentile Completion Tokens",
-            "99th Percentile Completion Tokens", "CV Completion Tokens", "Average TBT (ms)", "Median TBT (ms)", "IQR TBT",
-            "95th Percentile TBT (ms)", "99th Percentile TBT (ms)", "Average TTFT (ms/s)", "Median TTFT (ms/s)", "IQR TTFT",
-            "95th Percentile TTFT (ms/s)", "99th Percentile TTFT (ms/s)", "Error Rate", "Error Types", "Successful Runs",
-            "Unsuccessful Runs", "Throttle Count", "Throttle Rate", "Best Run", "Worst Run"
+            "Model_MaxTokens",
+            "is_Streaming",
+            "Iterations",
+            "Regions",
+            "Average TTLT (s)",
+            "Median TTLT (s)",
+            "IQR TTLT",
+            "95th Percentile TTLT (s)",
+            "99th Percentile TTLT (s)",
+            "CV TTLT",
+            "Median Prompt Tokens",
+            "IQR Prompt Tokens",
+            "Median Completion Tokens",
+            "IQR Completion Tokens",
+            "95th Percentile Completion Tokens",
+            "99th Percentile Completion Tokens",
+            "CV Completion Tokens",
+            "Average TBT (ms)",
+            "Median TBT (ms)",
+            "IQR TBT",
+            "95th Percentile TBT (ms)",
+            "99th Percentile TBT (ms)",
+            "Average TTFT (ms/s)",
+            "Median TTFT (ms/s)",
+            "IQR TTFT",
+            "95th Percentile TTFT (ms/s)",
+            "99th Percentile TTFT (ms/s)",
+            "Error Rate",
+            "Error Types",
+            "Successful Runs",
+            "Unsuccessful Runs",
+            "Throttle Count",
+            "Throttle Rate",
+            "Best Run",
+            "Worst Run",
         ]
 
         table = [
             [
-                key, data.get("is_Streaming", "N/A"), data.get("number_of_iterations", "N/A"),
+                key,
+                data.get("is_Streaming", "N/A"),
+                data.get("number_of_iterations", "N/A"),
                 ", ".join(set([r for r in data.get("regions", []) if r])) or "N/A",
-                data.get("average_ttlt", "N/A"), data.get("median_ttlt", "N/A"), data.get("iqr_ttlt", "N/A"),
-                data.get("percentile_95_ttlt", "N/A"), data.get("percentile_99_ttlt", "N/A"), data.get("cv_ttlt", "N/A"),
-                data.get("median_prompt_tokens", "N/A"), data.get("iqr_prompt_tokens", "N/A"),
-                data.get("median_completion_tokens", "N/A"), data.get("iqr_completion_tokens", "N/A"),
-                data.get("percentile_95_completion_tokens", "N/A"), data.get("percentile_99_completion_tokens", "N/A"),
-                data.get("cv_completion_tokens", "N/A"), data.get("average_tbt", "N/A"), data.get("median_tbt", "N/A"),
-                data.get("iqr_tbt", "N/A"), data.get("percentile_95_tbt", "N/A"), data.get("percentile_99_tbt", "N/A"),
-                data.get("average_ttft", "N/A"), data.get("median_ttft", "N/A"), data.get("iqr_ttft", "N/A"),
-                data.get("percentile_95_ttft", "N/A"), data.get("percentile_99_ttft", "N/A"), data.get("error_rate", "N/A"),
-                data.get("errors_types", "N/A"), data.get("successful_runs", "N/A"), data.get("unsuccessful_runs", "N/A"),
-                data.get("throttle_count", "N/A"), data.get("throttle_rate", "N/A"),
+                data.get("average_ttlt", "N/A"),
+                data.get("median_ttlt", "N/A"),
+                data.get("iqr_ttlt", "N/A"),
+                data.get("percentile_95_ttlt", "N/A"),
+                data.get("percentile_99_ttlt", "N/A"),
+                data.get("cv_ttlt", "N/A"),
+                data.get("median_prompt_tokens", "N/A"),
+                data.get("iqr_prompt_tokens", "N/A"),
+                data.get("median_completion_tokens", "N/A"),
+                data.get("iqr_completion_tokens", "N/A"),
+                data.get("percentile_95_completion_tokens", "N/A"),
+                data.get("percentile_99_completion_tokens", "N/A"),
+                data.get("cv_completion_tokens", "N/A"),
+                data.get("average_tbt", "N/A"),
+                data.get("median_tbt", "N/A"),
+                data.get("iqr_tbt", "N/A"),
+                data.get("percentile_95_tbt", "N/A"),
+                data.get("percentile_99_tbt", "N/A"),
+                data.get("average_ttft", "N/A"),
+                data.get("median_ttft", "N/A"),
+                data.get("iqr_ttft", "N/A"),
+                data.get("percentile_95_ttft", "N/A"),
+                data.get("percentile_99_ttft", "N/A"),
+                data.get("error_rate", "N/A"),
+                data.get("errors_types", "N/A"),
+                data.get("successful_runs", "N/A"),
+                data.get("unsuccessful_runs", "N/A"),
+                data.get("throttle_count", "N/A"),
+                data.get("throttle_rate", "N/A"),
                 json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A"
+                json.dumps(data.get("worst_run", {}))
+                if data.get("worst_run")
+                else "N/A",
             ]
-            for stat in stats for key, data in stat.items()
+            for stat in stats
+            for key, data in stat.items()
         ]
 
         df = pd.DataFrame(table, columns=headers)
@@ -600,8 +718,8 @@ def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
 
         combined_stats = {key: val for stat in stats for key, val in stat.items()}
 
-        #TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
-        #combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
+        # TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
+        # combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
 
         st.write("### 🤔 Visual Insights")
 
@@ -609,26 +727,35 @@ def display_results(result_placeholder: st.delta_generator.DeltaGenerator,
         visualizer.parse_data()
 
         # Create tabs for each plot
-        tab1, tab2, tab3 = st.tabs(["Completion Tokens", "Prompt Tokens", "Response Time Metrics"])
-        
+        tab1, tab2, tab3 = st.tabs(
+            ["Completion Tokens", "Prompt Tokens", "Response Time Metrics"]
+        )
+
         # Completion Tokens Plot
         with tab1:
             try:
-                st.plotly_chart(visualizer.plot_completion_tokens(), use_container_width=True)
+                st.plotly_chart(
+                    visualizer.plot_completion_tokens(), use_container_width=True
+                )
             except Exception as e:
                 st.error(f"Error generating Completion Tokens plot: {e}")
-        
+
         # Prompt Tokens Plot
         with tab2:
             try:
-                st.plotly_chart(visualizer.plot_prompt_tokens(), use_container_width=True)
+                st.plotly_chart(
+                    visualizer.plot_prompt_tokens(), use_container_width=True
+                )
             except Exception as e:
                 st.error(f"Error generating Prompt Tokens plot: {e}")
-        
+
         # Response Time Metrics Comparison Plot
         with tab3:
             try:
-                st.plotly_chart(visualizer.plot_response_time_metrics_comparison(), use_container_width=True)
+                st.plotly_chart(
+                    visualizer.plot_response_time_metrics_comparison(),
+                    use_container_width=True,
+                )
                 st.toast("Make plots full screen for detailed analysis!")
             except Exception as e:
                 st.error(f"Error generating Response Time Metrics plot: {e}")
@@ -674,7 +801,9 @@ def download_ai_response_as_docx_or_pdf() -> None:
             )
     except Exception as e:
         logger.error(f"Error generating {file_format} file: {e}")
-        st.error(f"❌ Error generating {file_format} file. Please check the logs for more details.")
+        st.error(
+            f"❌ Error generating {file_format} file. Please check the logs for more details."
+        )
 
 
 def display_benchmark_summary(deployment_names):
@@ -701,77 +830,96 @@ def display_benchmark_summary(deployment_names):
             - **Frequency Penalty:** {st.session_state['settings']['frequency_penalty']}
         """
     )
-    
+
+
 async def generate_ai_response(user_query, system_message):
     try:
-        with st.spinner("🤖 Thinking..."):
-            ai_response, _ = await asyncio.to_thread(
-                st.session_state.azure_openai_manager.generate_chat_response,
-                conversation_history=st.session_state.conversation_history,
-                system_message_content=system_message,
-                query=user_query,
-                max_tokens=3000,
-            )
-        st.balloons()
+        ai_response, _ = await asyncio.to_thread(
+            st.session_state.azure_openai_manager.generate_chat_response,
+            conversation_history=st.session_state.conversation_history,
+            system_message_content=system_message,
+            query=user_query,
+            max_tokens=3000,
+            stream=True,
+        )
         return ai_response
     except Exception as e:
         st.error(f"An error occurred while generating the AI response: {e}")
         return None
-    
+
+
 def initialize_chatbot() -> None:
     """
-    Initialize a simple chatbot interface for user interaction.
+    Initialize a chatbot interface for user interaction with enhanced features.
     """
-    # Custom CSS to create borders around the container
-    st.markdown("""
-        <style>
-        .chatbot-container {
-            border: 2px solid #f0f2f6;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    st.markdown(
+        "<h3 style='text-align: center;'>BenchmarkAI Buddy 🤖</h3>",
+        unsafe_allow_html=True,
+    )
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
     # Container for the chatbot interface
-    with st.container():
-        st.markdown('<div class="chatbot-container">', unsafe_allow_html=True)
-
-        st.title("Chat with Benchmark Results")
-
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = []
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
-
-        # Display existing messages
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    with st.container(height=500):
+        chat_container = st.container()
+        with chat_container:
+            for message in st.session_state.messages:
+                role = message["role"]
+                content = message["content"]
+                avatar_style = "🧑‍💻" if role == "user" else "🤖"
+                with st.chat_message(role, avatar=avatar_style):
+                    st.markdown(
+                        f"<div style='padding: 10px; border-radius: 5px;'>{content}</div>",
+                        unsafe_allow_html=True,
+                    )
 
         # User input for feedback or additional instructions
-        feedback_prompt = st.chat_input("Enter your feedback or additional instructions:")
-
-        if feedback_prompt:
-            st.session_state.messages.append({"role": "user", "content": feedback_prompt})
-            with st.chat_message("user"):
-                st.markdown(feedback_prompt)
-
-            # Adjusted to use asyncio.run for calling the async function
-            ai_response = asyncio.run(
-                generate_ai_response(
-                    feedback_prompt,
-                    "Please analyze the benchmark results and provide proof or explanations to assist the user with their question."
+        prompt = st.chat_input("What is up?")
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user", avatar="🧑‍💻"):
+                st.markdown(
+                    f"<div style='padding: 10px; border-radius: 5px;'>{prompt}</div>",
+                    unsafe_allow_html=True,
                 )
-            )
-            if ai_response:
-                st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
-                st.markdown("### Updated AI Response")
-                st.markdown(ai_response, unsafe_allow_html=True)
+            # Generate AI response (asynchronously)
+            with st.chat_message("assistant", avatar="🤖"):
+                stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
+                    model=st.session_state.azure_openai_manager.chat_model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are an expert in benchmark analysis. The user will send you questions about past benchmarks "
+                                "that are provided in Dictionary format. Your task is to understand these questions and provide detailed, "
+                                "insightful, and accurate analysis based on the benchmark data. Be ready to answer questions and offer as much "
+                                "analysis as possible to assist the user."
+                            ),
+                        }
+                    ]
+                    + [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    temperature=0.3,
+                    max_tokens=1000,
+                    seed=555,
+                    stream=True,
+                )
+                ai_response = st.write_stream(stream)
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": ai_response}
+                )
 
-        st.markdown('</div>', unsafe_allow_html=True)  # Close the custom container div
+    st.markdown(
+        "<p style='text-align: center; font-style: italic;'>Your friendly BenchmarkAI Buddy 🤖 is here to help!</p>",
+        unsafe_allow_html=True,
+    )
+
 
 def main() -> None:
     """
@@ -782,47 +930,72 @@ def main() -> None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("## 🚀 Run Benchmark")
     test_status_placeholder = st.sidebar.empty()
-    button_label = "Start New Benchmark" if "results" in st.session_state and st.session_state["results"] else "Start Benchmark"
-    run_benchmark = st.sidebar.button(button_label)   
-    deployment_names = list(st.session_state.get('deployments', {}).keys())
-    result_placeholder = st.empty()
+    button_label = (
+        "Start New Benchmark"
+        if "results" in st.session_state and st.session_state["results"]
+        else "Start Benchmark"
+    )
+    run_benchmark = st.sidebar.button(button_label)
+    deployment_names = list(st.session_state.get("deployments", {}).keys())
     # Check if the benchmark should be run
     if run_benchmark:
         test_status_placeholder.markdown("Running Benchmark...🕒")
-        with st.spinner("🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"):
+        with st.spinner(
+            "🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"
+        ):
             try:
-                asyncio.run(run_benchmark_tests(result_placeholder, test_status_placeholder))
+                asyncio.run(run_benchmark_tests(test_status_placeholder))
             except Exception as e:
                 st.error(f"An error occurred while running the benchmark: {e}")
-    else: 
+    else:
         display_benchmark_summary(deployment_names)
-    
+
     if "results" in st.session_state and st.session_state["results"]:
         st.sidebar.markdown("---")
         st.sidebar.markdown("## 📊 Select a Benchmark Run")
-        st.sidebar.markdown("Please select a benchmark run from the list below to view its results:")
-        
+        st.sidebar.markdown(
+            "Please select a benchmark run from the list below to view its results:"
+        )
+
         # Filter out keys for runs that are not empty
-        run_keys = [key for key in st.session_state.get("results", {}).keys() if st.session_state["results"][key].result] 
+        run_keys = [
+            key
+            for key in st.session_state.get("results", {}).keys()
+            if st.session_state["results"][key]["result"] is not None
+        ]
 
         if run_keys:  # If there are non-empty runs
             # Ensure the latest run is selected by default
             default_index = len(run_keys) if run_keys else 0
             selected_run_key = st.sidebar.selectbox(
                 "Select a Run",
-                options=run_keys,  
+                options=run_keys,
                 format_func=lambda x: f"Run {x}",
-                index=default_index - 1  # Adjust for 0-based indexing
+                index=default_index - 1,  # Adjust for 0-based indexing
             )
-            st.sidebar.markdown(f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>", unsafe_allow_html=True)
-            display_results(result_placeholder=result_placeholder, id=selected_run_key)
+            st.sidebar.markdown(
+                f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>",
+                unsafe_allow_html=True,
+            )
+            display_results(id=selected_run_key)
         else:
-            st.info("There are no runs available at this moment. Please try again later.")
+            st.info(
+                "There are no runs available at this moment. Please try again later."
+            )
     else:
         # This message is shown if there are no deployment names and no results in the session state
-        st.info("👈 Please configure the benchmark settings and click 'Start Benchmark' to begin.")
+        st.info(
+            "👈 Please configure the benchmark settings and click 'Start Benchmark' to begin."
+        )
 
-    st.markdown("---")
+    st.write(
+        """
+        <div style="text-align:center; font-size:30px; margin-top:10px;">
+            ...
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.markdown("")
     initialize_chatbot()
 
     if st.session_state.ai_response:
@@ -832,6 +1005,7 @@ def main() -> None:
                 download_ai_response_as_docx_or_pdf()
                 download_chat_history()
 
+    st.markdown("")
     st.sidebar.write(
         """
         <div style="text-align:center; font-size:30px; margin-top:10px;">

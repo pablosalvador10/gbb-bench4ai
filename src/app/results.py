@@ -4,8 +4,9 @@ It is designed to standardize the way test outcomes are recorded, including uniq
 the test was conducted. This facilitates easier comparison, analysis, and storage of test results.
 """
 
-import uuid
 import datetime
+import uuid
+
 
 class BenchmarkPerformanceResult:
     """
@@ -14,24 +15,24 @@ class BenchmarkPerformanceResult:
     Attributes:
         id (str): A unique identifier for the test result.
         timestamp (datetime.datetime): The date and time when the test was conducted.
-        result (str): The outcome of the benchmark test.
+        result (dict): The outcome of the benchmark test, stored as a dictionary.
         settings (dict): The configuration settings used for the test.
 
     Methods:
         to_dict: Converts the instance into a dictionary representation.
     """
 
-    def __init__(self, result, settings):
+    def __init__(self, result: dict, settings: dict):
         """
         Initializes a new instance of the BenchmarkPerformanceResult class.
 
         Args:
-            result (str): The outcome of the benchmark test.
+            result (dict): The outcome of the benchmark test, stored as a dictionary.
             settings (dict): The configuration settings used for the test.
         """
         self.id = str(uuid.uuid4())
         self.timestamp = datetime.datetime.now()
-        self.result = result
+        self.result = result  # Ensure this is a dictionary
         self.settings = settings
 
     def to_dict(self):

@@ -56,7 +56,6 @@ MODEL_TO_ENCODING = {
 }
 
 
-
 def detect_model_encoding(model_name: str) -> Tuple[str, str]:
     """
     Detects the encoding for a given model name based on predefined mappings, and returns the best matching model name.

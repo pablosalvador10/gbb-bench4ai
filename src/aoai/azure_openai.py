@@ -291,7 +291,7 @@ class AzureOpenAIManager:
             logger.error(f"Contextual response generation error: {e}")
             return None
 
-    def generate_chat_response(
+    async def generate_chat_response(
         self,
         query: str,
         conversation_history: List[Dict[str, str]] = [],
