@@ -472,96 +472,104 @@ else:
 
 # Footer Section
 
-st.markdown("#### 📚 Resources and Information:")
+st.markdown("#### 📚 Resources and Information")
 
-with st.expander("Benchmark Guide 📊", expanded=False):
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["Benchmark Guide", "How to Add New Deployments", "Motivation?", "Learn More About Public Benchmarks", "Learn More About Metrics for Custom Eval", "What Else Can I do in this App?"]
+)
+
+# Benchmark Guide
+with tab1:
     st.markdown(
         """
-            Ready to test the  quality of your LLMs? Our benchmarking tool makes it easy! 📊✨
+        Ready to test the quality of your LLMs? Our benchmarking tool makes it easy! 📊✨
 
-            Here's how it works:
-            1. **Select your model settings**: Choose the tests to run, the models to evaluate, and other input parameters in the side bar.
-            2. **Run the benchmark**: Hit the 'Run Benchmark' to run your selected evaluations. Wait for tests to complete.
-            3. **Review the results**: Once the benchmark is complete, view detailed results on this page.
+        Here's how it works:
+        1. **Select your model settings**: Choose the tests to run, the models to evaluate, and other input parameters in the side bar.
+        2. **Run the benchmark**: Hit the 'Run Benchmark' to run your selected evaluations. Wait for tests to complete.
+        3. **Review the results**: Once the benchmark is complete, view detailed results on this page.
 
-            Let's get started and optimize your LLM experience!
-            """
+        Let's get started and optimize your LLM experience!
+        """
     )
 
-with st.expander("How to Add New Deployments 📘", expanded=False):
+# How to Add New Deployments
+with tab2:
     st.markdown(
         """
-            Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
+        Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
 
-            ### Step 1: Enable Multi-Deployment
-            - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
+        ### Step 1: Enable Multi-Deployment
+        - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
 
-            ### Step 2: Add Deployment Details
-            - Fill in the form with the following details:
-                - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
-                - **API Endpoint**: The endpoint URL for Azure OpenAI.
-                - **API Version**: The version of the Azure OpenAI API you're using.
-                - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
-                - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
-            - Click **Add Deployment** to save your deployment to the session state.
+        ### Step 2: Add Deployment Details
+        - Fill in the form with the following details:
+            - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
+            - **API Endpoint**: The endpoint URL for Azure OpenAI.
+            - **API Version**: The version of the Azure OpenAI API you're using.
+            - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
+            - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
+        - Click **Add Deployment** to save your deployment to the session state.
 
-            ### Step 3: View and Manage Deployments
-            - Once added, your deployments are listed under **Loaded AOAI Deployments**.
-            - Click on a deployment to expand and view its details.
-            - You can update any of the deployment details here and click **Update Deployment** to save changes.
+        ### Step 3: View and Manage Deployments
+        - Once added, your deployments are listed under **Loaded AOAI Deployments**.
+        - Click on a deployment to expand and view its details.
+        - You can update any of the deployment details here and click **Update Deployment** to save changes.
 
-            ### How Deployments are Managed
-            - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
-            - You can add multiple deployments and manage them individually from the sidebar.
-            - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
+        ### How Deployments are Managed
+        - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
+        - You can add multiple deployments and manage them individually from the sidebar.
+        - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
 
-            ### Updating Deployments Across Pages
-            - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
-            - This means you can seamlessly switch between different deployments or update their configurations without losing context.
+        ### Updating Deployments Across Pages
+        - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
+        - This means you can seamlessly switch between different deployments or update their configurations without losing context.
 
-            Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
-            """,
+        Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
+        """,
         unsafe_allow_html=True,
     )
 
-with st.expander("Motivation? ⚡", expanded=False):
+# Motivation?
+with tab3:
     st.markdown(
         """
         Public benchmarks are often used to assess foundation model performance across a wide variety of tasks. 
         However, the fine print of many of these test reveals inconsistent prompting methodology which leads to confusing and unreliable results.   
         
         The goal of this repository is to provide a **transparent**, **flexible**, and **standadized** method to repeatably compare different foundation models or model versions. 
-        This repsoitory is designed to be executed to uniquely compare _my_ existing model to _my_ challenger model(s) as opposed to relying on public benchmarks executed on a model instantiation managed by some other entity.
+        This repository is designed to be executed to uniquely compare _my_ existing model to _my_ challenger model(s) as opposed to relying on public benchmarks executed on a model instantiation managed by some other entity.
         """
     )
 
-with st.expander("Learn More About Public Benchmarks 📖", expanded=False):
+# Learn More About Public Benchmarks
+with tab4:
     st.markdown(
         """
-            **MMLU**  
+        **MMLU**  
+        
+        This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57 tasks including elementary mathematics, US history, computer science, law, and more. To attain high accuracy on this test, models must possess extensive world knowledge and problem solving ability.  
+        
+        We have grouped some of the tasks into broader categories for easier targeted execution. These categories are: STEM, Medical, Business, Social Sciences, Humanities, and Other.
+        
+        [Paper](https://arxiv.org/pdf/2009.03300) | [HuggingFace Dataset](https://huggingface.co/datasets/cais/mmlu)
+        
+        **Truthful QA**
+        
+        TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance, and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.  
+        
+        [Paper](https://arxiv.org/pdf/2109.07958) | [HuggingFace Dataset](https://huggingface.co/datasets/truthfulqa/truthful_qa) | [GitHub](https://github.com/sylinrl/TruthfulQA)
             
-            This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57 tasks including elementary mathematics, US history, computer science, law, and more. To attain high accuracy on this test, models must possess extensive world knowledge and problem solving ability.  
-            
-            We have grouped some of the taks into borader categories for easier targeted execution. These categories are: STEM, Medical, Business, Social Sciences, Humanities, and Other.
-            
-            [Paper](https://arxiv.org/pdf/2009.03300) | [HuggingFace Dataset](https://huggingface.co/datasets/cais/mmlu)
-            
-            **Truthful QA**
-            
-            TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.  
-            
-            [Paper](https://arxiv.org/pdf/2109.07958) | [HuggingFace Dataset](https://huggingface.co/datasets/truthfulqa/truthful_qa) | [GitHub](https://github.com/sylinrl/TruthfulQA)
-                
-            **PubMedQA**
-            
-            The task of PubMedQA is to answer research questions with yes/no/maybe _(e.g.: Do preoperative statins reduce atrial fibrillation after coronary artery bypass grafting?)_ using the corresponding abstracts. PubMedQA has 1k expert labeled instances. 
-            
-            [Paper](https://arxiv.org/pdf/1909.06146`) | [HuggingFace Dataset](https://huggingface.co/datasets/qiaojin/PubMedQA) | [Website](https://pubmedqa.github.io/) | [GitHub](https://github.com/pubmedqa/pubmedqa)
-
+        **PubMedQA**
+        
+        The task of PubMedQA is to answer research questions with yes/no/maybe _(e.g.: Do preoperative statins reduce atrial fibrillation after coronary artery bypass grafting?)_ using the corresponding abstracts. PubMedQA has 1k expert labeled instances. 
+        
+        [Paper](https://arxiv.org/pdf/1909.06146`) | [HuggingFace Dataset](https://huggingface.co/datasets/qiaojin/PubMedQA) | [Website](https://pubmedqa.github.io/) | [GitHub](https://github.com/pubmedqa/pubmedqa)
         """
     )
 
-with st.expander("Learn More About Metrics for Custom Eval 🧮", expanded=False):
+# Learn More About Metrics for Custom Eval
+with tab5:
     st.markdown(
         """
         **Accuracy**: Number of correct predictions divided by the total number of predictions. Model outputs must be exact matches to ground truth.
@@ -569,11 +577,11 @@ with st.expander("Learn More About Metrics for Custom Eval 🧮", expanded=False
         **Answer Similarity**: The similarity between the generated answer and the ground truth answer. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
           
         **Context Similarity**: The similarity between the generated answer and the context. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
-          
         """
     )
 
-with st.expander("What Else Can I do in this App? 🤔", expanded=False):
+# What Else Can I do in this App?
+with tab6:
     st.markdown(
         """
         Dive into the capabilities of our application:

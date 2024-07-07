@@ -573,6 +573,7 @@ async def run_benchmark_tests(
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
+        st.stop()
 
 
 def display_results(
@@ -959,6 +960,7 @@ def main() -> None:
                 asyncio.run(run_benchmark_tests(test_status_placeholder))
             except Exception as e:
                 st.error(f"An error occurred while running the benchmark: {e}")
+                st.stop()
     else:
         display_benchmark_summary(deployment_names)
 

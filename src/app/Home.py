@@ -55,14 +55,101 @@ def get_main_content() -> str:
     """
     return f"""
     <h1 style="text-align:center;">
-        Welcome to upgrade your RAG 🚀
+        Welcome to the GBB MaaS Upgrade Hub!
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> with the RAG Benchmark Factory app </span> 
+        <span style="font-style:italic; font-size:0.4em;"> Your ultimate benchmarking destination </span> 
         <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """
+import streamlit as st
 
+@st.cache_data()
+def create_support_center_content():
+    content = {
+        "How to Use the Deployment Center": """
+            ### 🌟 Getting Started with the Deployment Center
+
+            Adding new deployments allows you to compare performance across multiple MaaS deployments. Follow this step-by-step guide to add and manage your deployments:
+
+            **Step 1: Add Your MaaS Deployment**
+
+            1. Navigate to the `Deployment Center` located at the top of the sidebar.
+            2. You will find two sections: `Add your MaaS deployment` and `Loaded deployments`.
+                - `Add your MaaS deployment`: Here, you can add a new deployment.
+                - `Loaded deployments`: This section displays deployments that are already loaded and ready to use.
+            3. To add a new deployment, proceed to the next step.
+        
+            **Step 2: Add Deployment Details**
+            - Fill in the form with the following details:
+                - **Deployment ID:** Your chat model deployment ID.
+                - **Azure OpenAI Key:** Your Azure OpenAI key (treated as confidential).
+                - **API Endpoint:** The endpoint URL for Azure OpenAI.
+                - **API Version:** The version of the Azure OpenAI API you're using.
+                - **Streaming:** Select 'Yes' if the model will output in streaming mode.
+            - Click **Add Deployment** to save your deployment to the session state.
+
+            **Step 3: View and Manage Deployments**
+            - Your deployments will be listed under **Loaded Deployments**.
+            - Click on a deployment to expand and view its details.
+            - You can update any deployment details and click **Update Deployment** to save changes.
+            - To remove a deployment, click **Remove Deployment**.
+        """,
+        "How Deployments are Managed": """
+            ### 🌟 Managing Deployments in the Deployment Center
+            - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
+            - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
+
+            **Updating Deployments Across Pages**
+            - Any updates made to a deployment from one page are reflected across the entire app, allowing seamless switching between different deployments or updating their configurations without losing context.
+        """,
+        "How to Collaborate on the Project": """
+            ### 🛠️ Resource Links
+            - **GitHub Repository:** [Access the GitHub repo](https://github.com/pablosalvador10/gbb-ai-upgrade-llm)
+            - **Feedback Form:** [Share your feedback](https://example.com/feedback-form)
+
+            ### 💬 Want to Collaborate or Share Your Feedback?
+            - **Join Our Community:** Connect with experts and enthusiasts in our [community forums](#).
+            - **Provide Feedback:** Use our [feedback form](#) or [GitHub Issues](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues) to share your thoughts and suggestions.
+        """,
+        "How to Navigate Through the App": """
+            ### 🌐 Navigating the App
+            - **Home:** This is the main page you're currently on.
+            - **Performance Insights:** Gain in-depth insights into model performance, including throughput and latency analysis.
+            - **Quality Metrics:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
+        """,
+        "Feedback": """
+            🐞 **Encountered a bug?** Or have a **feature request**? We're all ears!
+
+            Your feedback is crucial in helping us make our service better. If you've stumbled upon an issue or have an idea to enhance our platform, don't hesitate to let us know.
+
+            📝 **Here's how you can help:**
+            - Click on the link below to open a new issue on our GitHub repository.
+            - Provide a detailed description of the bug or the feature you envision. The more details, the better!
+            - Submit your issue. We'll review it as part of our ongoing effort to improve.
+
+            [🔗 Open an Issue on GitHub](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues)
+
+            Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://example.com/feedback-form) to fill out our form. 
+
+            🙏 **Thank you for contributing!** Your insights are invaluable to us.
+        """
+    }
+    return content
+
+def display_support_center():
+    st.sidebar.markdown("## 🛠️ Support Center")
+    tab1, tab2 = st.sidebar.tabs(["📘 How-To Guide", "🌟 Feedback!"])
+    content = create_support_center_content()
+
+    with tab1:
+        for title, markdown_content in content.items():
+            if title != "Feedback":  # Exclude Feedback section from tab1
+                with st.expander(title):
+                    st.markdown(markdown_content)
+
+    with tab2:
+        st.markdown(content["Feedback"])
 
 @st.cache_data
 def get_markdown_content() -> str:
@@ -74,7 +161,7 @@ def get_markdown_content() -> str:
     :return: The markdown content.
     """
     return """
-    Our app zeroes in on key performance areas like speed, response time, and accuracy 🤖. It's a one-stop shop for testing Azure OpenAI models, helping you make smarter, cost-effective choices for your AI projects and boosting your capabilities by embracing the latest AI tech with solid, real-world data.
+    Our app focuses on dual intent and provides key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter, cost-effective decisions regarding the choice of foundation model for your AI projects. By leveraging the latest AI technology and solid data, specifically your OWN data, it enhances your capabilities.
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
         <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
@@ -85,26 +172,24 @@ def get_markdown_content() -> str:
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
     </div>
 
-    The platform boasts a user-friendly interface, streamlining the process of benchmarking various models for both latency and throughput. 
-    Additionally, it facilitates a comprehensive quality evaluation, ensuring a thorough assessment of model performance.
+    Our app features a user-friendly interface that streamlines the benchmarking process for your preferred MaaS (a.k.a Gpt-4o). 
+    It allows you to bring your own prompts (BYOP) for a personalized benchmarking experience with your data. Discover performance insights and benefit from an extensive quality evaluation for a comprehensive analysis of model performance.
 
-    ### Curious to Learn More?
-    - Discover the power of [Azure OpenAI](https://azure.microsoft.com/en-us/services/openai/) and how it's changing the world of AI
-    - Join the conversation in our [community forums]() where experts and enthusiasts discuss the latest trends and challenges in AI.
-    - Explore the **MMLU** benchmark, a massive multitask test covering 57 tasks across various knowledge domains. [Learn more](https://huggingface.co/datasets/cais/mmlu).
-    - Investigate **Truthful QA**, a benchmark designed to assess the truthfulness of language models. [Discover](https://huggingface.co/datasets/truthfulqa/truthful_qa).
-    - Delve into **PubMedQA**, a unique challenge for models to answer research questions based on abstracts. [Explore](https://huggingface.co/datasets/qiaojin/PubMedQA).
-    
-    #### Getting Started
-    Make sure you've got your keys ready. Check the sidebar under 'Add Required Environment Variables' for all the details.
+    #### 🌟 Getting Started
+    To kick things off, we recommend watching the above introductory video for a smooth start.. If you have any questions, the 'How-To Guide' in the sidebar offers a comprehensive step-by-step walkthrough.
 
-    - **Easy Navigation:** 
-        - You're on the main page right now. 
-        - 👈 The navigation tool at the top right corner is your best friend here. It's super easy to use and lets you jump to different parts of the app in no time.
-        - 📊 **Performance Insights:** Dive deep into model performance, exploring throughput and latency.
-        - 🔍 **Quality Metrics:** Evaluate the precision and reliability of your AI models.
+    - **Navigating the App:** The navigation tool in the top right corner is designed for seamless switching between different sections of the app: 
+        - 👋 **Home:** The main page you're currently on.
+        - 📊 **Performance Insights:** Gain in-depth insights into model performance, including throughput and latency analysis.
+        - 🔍 **Quality Metrics:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
+  
+    #### 💬 Want to Collaborate or Share Your Feedback?
+    - **Join Our Community:** Dive into our [chat group](#) to connect with both experts and enthusiasts alike. Share your thoughts, ask questions, and engage with the community.
+
+    - **Feedback Options:**
+        - **For Developers/Coders:** We encourage you to provide feedback directly through GitHub Actions. This method allows for a streamlined process to review and implement your valuable suggestions. For step-by-step, please refer to the 'Feedback' section in the sidebar.
+        - **For Everyone:** If you don't have access to GitHub, no worries! Your insights are still incredibly important to us. Please share your thoughts by filling out our [feedback form](#). We're eager to hear from you and make improvements based on your feedback.
     """
-
 
 @st.cache_data
 def get_footer_content() -> str:
@@ -312,47 +397,6 @@ def main() -> None:
     }
     initialize_session_state(env_vars)
 
-    st.toast(
-        "Welcome to the RAG Benchmark Factory! Navigate through the 'Tool Help' guide or watch the video and start benchmarking your MaaS solutions!",
-        icon="🚀",
-    )
-
-    with st.sidebar.expander("📘 Tool Help Guide", expanded=False):
-        st.markdown(
-            """
-            Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
-
-            ### Step 1: Enable Multi-Deployment
-            - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
-
-            ### Step 2: Add Deployment Details
-            - Fill in the form with the following details:
-                - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
-                - **API Endpoint**: The endpoint URL for Azure OpenAI.
-                - **API Version**: The version of the Azure OpenAI API you're using.
-                - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
-                - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
-            - Click **Add Deployment** to save your deployment to the session state.
-
-            ### Step 3: View and Manage Deployments
-            - Once added, your deployments are listed under **Loaded Deployments**.
-            - Click on a deployment to expand and view its details.
-            - You can update any of the deployment details here and click **Update Deployment** to save changes.
-
-            ### How Deployments are Managed
-            - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
-            - You can add multiple deployments and manage them individually from the sidebar.
-            - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
-
-            ### Updating Deployments Across Pages
-            - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
-            - This means you can seamlessly switch between different deployments or update their configurations without losing context.
-
-            Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
-            """,
-            unsafe_allow_html=True,
-        )
-
     with st.sidebar:
         st.markdown("## 🤖 Deployment Center ")
 
@@ -373,26 +417,9 @@ def main() -> None:
 
         display_deployments()
 
-        st.markdown("---")
+    st.sidebar.divider()
 
-        with st.expander("We Value Your Feedback! 🌟", expanded=False):
-            st.markdown(
-                """
-                🐞 **Encountered a bug?** Or 🚀 have a **feature request**? We're all ears!
-
-                Your feedback is crucial in helping us make our service better. If you've stumbled upon an issue or have an idea to enhance our platform, don't hesitate to let us know.
-
-                📝 **Here's how you can help:**
-                - Click on the link below to open a new issue on our GitHub repository.
-                - Provide a detailed description of the bug or the feature you envision. The more details, the better!
-                - Submit your issue. We'll review it as part of our ongoing effort to improve.
-
-                [🔗 Open an Issue on GitHub](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues)
-
-                🙏 **Thank you for contributing!** Your insights are invaluable to us. Together, let's make our service the best it can be!
-                """,
-                unsafe_allow_html=True,
-            )
+    display_support_center()
 
     st.write(get_main_content(), unsafe_allow_html=True)
     st.markdown(get_markdown_content(), unsafe_allow_html=True)
