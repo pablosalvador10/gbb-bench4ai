@@ -36,7 +36,7 @@ Check out how our v0.01 prototype is shaping up.
 
 We're currently in full/fun development mode and adding features as we speak. Please look at the [CHANGELOG](./CHANGELOG.md) for a detailed overview. Here's what's coming next:
 
-> [!INFO]
+> [!IMPORTANT]
 > For the current version, our current focus is primarily on Azure OpenAI (AOAI) deployments
 
 - **Expanding Our MaaS Offerings**: Enhancing our Machine-as-a-Service (MaaS) portfolio, with a focus on the pay-as-you-go models available on Azure. This initiative aims to offer more flexible access to cutting-edge AI capabilities, such as SLMs, emphasizing performance optimization and scalability.
