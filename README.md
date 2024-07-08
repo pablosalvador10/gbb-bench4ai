@@ -65,8 +65,6 @@ To activate your Conda environment and run your Streamlit application, follow th
    ```bash
    conda activate <your_env_name>
    ```
-<br>
-
 ### Running the App 💻
 
 To deploy your Streamlit application locally, follow these steps:
@@ -83,7 +81,6 @@ The application should launch directly in your browser as a local host. Enjoy, b
 **Provide Feedback - Your Insights Fuel Our Growth**
 
 Encountered an issue or have suggestions for improvements? We want to hear from you! Please [submit an issue]() on our GitHub repository. Your feedback is vital to our development process.
-<br>
 
 ### Running the SDK 💡
 
