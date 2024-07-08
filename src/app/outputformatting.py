@@ -1,6 +1,13 @@
 import io
+import json
 
+import streamlit as st
 from docx import Document
+
+from utils.ml_logging import get_logger
+
+# Set up logger
+logger = get_logger()
 
 
 def markdown_to_docx(markdown_text: str) -> io.BytesIO:
@@ -57,3 +64,48 @@ def process_bold_text(text: str, paragraph) -> None:
         else:
             break
     paragraph.add_run(text)
+
+
+def download_chat_history() -> None:
+    """
+    Provide a button to download the chat history as a JSON file.
+    """
+    chat_history_json = json.dumps(st.session_state.messages, indent=2)
+    st.download_button(
+        label="📜 Download Chat",
+        data=chat_history_json,
+        file_name="chat_history.json",
+        mime="application/json",
+        key="download-chat-history",
+    )
+
+
+def download_ai_response_as_docx_or_pdf() -> None:
+    """
+    Provide options to download the AI response as a DOCX or PDF file.
+    """
+    try:
+        doc_io = markdown_to_docx(st.session_state.ai_response)
+        file_format = st.selectbox("Select file format", ["DOCX", "PDF"])
+
+        if file_format == "DOCX":
+            st.download_button(
+                label="📁 Download .docx",
+                data=doc_io,
+                file_name="AI_Generated_Guide.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="download-docx",
+            )
+        elif file_format == "PDF":
+            st.download_button(
+                label="📁 Download .pdf",
+                data=doc_io,
+                file_name="AI_Generated_Guide.pdf",
+                mime="application/pdf",
+                key="download-pdf",
+            )
+    except Exception as e:
+        logger.error(f"Error generating {file_format} file: {e}")
+        st.error(
+            f"❌ Error generating {file_format} file. Please check the logs for more details."
+        )

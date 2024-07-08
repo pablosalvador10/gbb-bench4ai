@@ -57,12 +57,15 @@ def get_main_content() -> str:
     <h1 style="text-align:center;">
         Welcome to the GBB MaaS Upgrade Hub!
         <br>
-        <span style="font-style:italic; font-size:0.4em;"> Your ultimate benchmarking destination </span> 
+        <span style="font-style:italic; font-size:0.4em;"> Your ultimate LLM/SLM benchmarking destination </span> 
         <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """
+
+
 import streamlit as st
+
 
 @st.cache_data()
 def create_support_center_content():
@@ -133,9 +136,10 @@ def create_support_center_content():
             Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://example.com/feedback-form) to fill out our form. 
 
             🙏 **Thank you for contributing!** Your insights are invaluable to us.
-        """
+        """,
     }
     return content
+
 
 def display_support_center():
     st.sidebar.markdown("## 🛠️ Support Center")
@@ -144,12 +148,13 @@ def display_support_center():
 
     with tab1:
         for title, markdown_content in content.items():
-            if title != "Feedback":  # Exclude Feedback section from tab1
+            if title != "Feedback":
                 with st.expander(title):
                     st.markdown(markdown_content)
 
     with tab2:
         st.markdown(content["Feedback"])
+
 
 @st.cache_data
 def get_markdown_content() -> str:
@@ -161,7 +166,7 @@ def get_markdown_content() -> str:
     :return: The markdown content.
     """
     return """
-    Our app focuses on dual intent and provides key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter, cost-effective decisions regarding the choice of foundation model for your AI projects. By leveraging the latest AI technology and solid data, specifically your OWN data, it enhances your capabilities.
+    Our app focuses on dual intent and provides key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter, cost-effective decisions regarding the choice of foundation model for your AI projects. By leveraging the latest AI technology and solid data, specifically your **own data**, it enhances your capabilities.
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
         <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
@@ -173,7 +178,7 @@ def get_markdown_content() -> str:
     </div>
 
     Our app features a user-friendly interface that streamlines the benchmarking process for your preferred MaaS (a.k.a Gpt-4o). 
-    It allows you to bring your own prompts (BYOP) for a personalized benchmarking experience with your data. Discover performance insights and benefit from an extensive quality evaluation for a comprehensive analysis of model performance.
+    It allows you to bring your own prompts **(BYOP)** for a personalized benchmarking experience with your data. Discover performance insights and benefit from an extensive quality evaluation for a comprehensive analysis of model performance.
 
     #### 🌟 Getting Started
     To kick things off, we recommend watching the above introductory video for a smooth start.. If you have any questions, the 'How-To Guide' in the sidebar offers a comprehensive step-by-step walkthrough.
@@ -190,6 +195,7 @@ def get_markdown_content() -> str:
         - **For Developers/Coders:** We encourage you to provide feedback directly through GitHub Actions. This method allows for a streamlined process to review and implement your valuable suggestions. For step-by-step, please refer to the 'Feedback' section in the sidebar.
         - **For Everyone:** If you don't have access to GitHub, no worries! Your insights are still incredibly important to us. Please share your thoughts by filling out our [feedback form](#). We're eager to hear from you and make improvements based on your feedback.
     """
+
 
 @st.cache_data
 def get_footer_content() -> str:
@@ -379,6 +385,30 @@ def display_deployments() -> None:
         st.error("No deployments found. Please add a deployment in the sidebar.")
 
 
+def create_benchmark_center() -> None:
+    """
+    Creates a benchmark center UI component in a Streamlit application.
+    This component allows users to add their MaaS Deployment for benchmarking
+    against different model families.
+
+    The function dynamically generates UI elements based on the user's selection
+    of model family from a dropdown menu. Currently, it supports the "AOAI" model
+    family and provides a placeholder for future expansion to other model families.
+    """
+    with st.expander("Add Your MaaS Deployment", expanded=False):
+        operation = st.selectbox(
+            "Choose Model Family:",
+            ("AOAI", "Other"),
+            index=0,
+            help="Select the benchmark you want to perform to evaluate AI model performance.",
+            placeholder="Select a Benchmark",
+        )
+        if operation == "AOAI":
+            add_deployment_form()  # This function needs to be defined elsewhere in your code.
+        else:
+            st.info("Other deployment options will be available soon.")
+
+
 def main() -> None:
     """
     Main function to run the Streamlit app.
@@ -401,20 +431,7 @@ def main() -> None:
         st.markdown("## 🤖 Deployment Center ")
 
         load_default_deployment()
-
-        with st.expander("Add Your MaaS Deployment", expanded=False):
-            operation = st.selectbox(
-                "Choose Model Family:",
-                ("AOAI", "Other"),
-                index=0,
-                help="Select the benchmark you want to perform to evaluate AI model performance.",
-                placeholder="Select a Benchmark",
-            )
-            if operation == "AOAI":
-                add_deployment_form()
-            else:
-                st.info("Other deployment options will be available soon.")
-
+        create_benchmark_center()
         display_deployments()
 
     st.sidebar.divider()

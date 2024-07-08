@@ -475,7 +475,14 @@ else:
 st.markdown("#### 📚 Resources and Information")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-    ["Benchmark Guide", "How to Add New Deployments", "Motivation?", "Learn More About Public Benchmarks", "Learn More About Metrics for Custom Eval", "What Else Can I do in this App?"]
+    [
+        "Benchmark Guide",
+        "How to Add New Deployments",
+        "Motivation?",
+        "Learn More About Public Benchmarks",
+        "Learn More About Metrics for Custom Eval",
+        "What Else Can I do in this App?",
+    ]
 )
 
 # Benchmark Guide
