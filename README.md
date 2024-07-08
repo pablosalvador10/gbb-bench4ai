@@ -17,7 +17,7 @@ Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on
 
 - **Accelerated Integration**: As the landscape of LLM/SLM technologies rapidly evolves, staying ahead becomes a challenge. Our project serves as an agile launchpad for benchmarking foundational models, significantly reducing the time-to-integration for the latest advancements. Equip your enterprise with the tools to swiftly adapt and implement cutting-edge AI technologies.
 
-- **Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
+- **Built from Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
 
 - **BYOP (Bring Your Own Prompt) for Custom Benchmarks**: This feature enables the application of the benchmarking suite to your  data, offering valuable insights into model performance on real-world problems as opposed to theoretical scenarios. It's an essential tool for enterprises and individuals aiming to assess the effectiveness of foundational models against their specific datasets and challenges.
 
@@ -36,8 +36,8 @@ Check out how our v0.01 prototype is shaping up.
 
 We're currently in full/fun development mode and adding features as we speak. Please look at the [CHANGELOG](./CHANGELOG.md) for a detailed overview. Here's what's coming next:
 
-> [!CAUTION]
-> For the current version, our current focus is primarily on Azure OpenAI (AOAI) deployments, aiming to streamline and optimize the process of bringing use cases into production environments at a larger scale.
+> [!INFO]
+> For the current version, our current focus is primarily on Azure OpenAI (AOAI) deployments
 
 - **Expanding Our MaaS Offerings**: Enhancing our Machine-as-a-Service (MaaS) portfolio, with a focus on the pay-as-you-go models available on Azure. This initiative aims to offer more flexible access to cutting-edge AI capabilities, such as SLMs, emphasizing performance optimization and scalability.
 
