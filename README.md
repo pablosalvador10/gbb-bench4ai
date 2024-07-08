@@ -48,10 +48,8 @@ We're currently in full/fun development mode and adding features as we speak. Pl
 - **Embedded Model Benchmarking**: Enhancing our benchmarking suite to include embedding models, focusing on performance metrics in constrained environments.
 
 - **State-of-the-Art Quality Metrics Suite**: We're developing a comprehensive suite of quality metrics, allowing you to rigorously evaluate changes and performance with your own data between different model "upgrades/versions" or models. This suite is intended to provide a deeper, more nuanced understanding of model capabilities and limitations.
-<br>
 
 ## How to Get Started 🔍
-
 First things first, let's get your development environment set up:
 
 1. **Create a Conda Environment**: First, you need to create a Conda environment using the `environment.yaml` file provided in the repository. Open your terminal and run:
