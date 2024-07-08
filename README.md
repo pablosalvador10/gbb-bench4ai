@@ -8,6 +8,7 @@
 ![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
 
 Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
+<br>
 
 ## What Makes This Project Different? 🚀
 
@@ -31,6 +32,7 @@ Check out how our v0.01 prototype is shaping up.
     allowfullscreen 
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
 </div>
+<br>
 
 ## What's Next? ✨
 
@@ -46,6 +48,7 @@ We're currently in full/fun development mode and adding features as we speak. Pl
 - **Embedded Model Benchmarking**: Enhancing our benchmarking suite to include embedding models, focusing on performance metrics in constrained environments.
 
 - **State-of-the-Art Quality Metrics Suite**: We're developing a comprehensive suite of quality metrics, allowing you to rigorously evaluate changes and performance with your own data between different model "upgrades/versions" or models. This suite is intended to provide a deeper, more nuanced understanding of model capabilities and limitations.
+<br>
 
 ## How to Get Started 🔍
 
@@ -62,6 +65,7 @@ To activate your Conda environment and run your Streamlit application, follow th
    ```bash
    conda activate <your_env_name>
    ```
+<br>
 
 ### Running the App 💻
 
@@ -69,8 +73,8 @@ To deploy your Streamlit application locally, follow these steps:
 
 - Ensure your development environment is set up and your Conda environment is activated.
 
-- 1. **Launch the Application**: To start your Streamlit app, navigate to the `src/app` directory in your terminal and execute:
-
+#### Step 1: Launch the Application: To start your Streamlit app, navigate to the `src/app` directory in your terminal and execute:
+    
     ```bash
     streamlit run src/app/Home.py
     ```
@@ -79,6 +83,7 @@ The application should launch directly in your browser as a local host. Enjoy, b
 **Provide Feedback - Your Insights Fuel Our Growth**
 
 Encountered an issue or have suggestions for improvements? We want to hear from you! Please [submit an issue]() on our GitHub repository. Your feedback is vital to our development process.
+<br>
 
 ### Running the SDK 💡
 
