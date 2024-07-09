@@ -7,47 +7,40 @@
 ![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-ai-upgrade-llm)
 ![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
 
-Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
+Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics regarding model latency/throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
 <br>
 
 ## What Makes This Project Different? 🚀
 
-- **Light Python SDK**:Tailored for performance-centric evaluations, our SDK facilitates extensive analysis across latency, throughput, and a suite of quality metrics. Designed for bulk processing, it streamlines the assessment of multiple models simultaneously, ensuring a thorough comparison.
-
-- **Intuitive User Interface**: Our user-centric app simplifies benchmarking processes. Engage with results for models like "GPT" and delve into intricate visualizations. These tools elucidate the dynamics between prompts and generations, latency implications, and more, offering a granular understanding of model performance.
+- **Intuitive User Interface**: Our user-centric app simplifies benchmarking processes. Engage with performance and quality test results for models like "GPT" and delve into intricate visualizations. Easily customize this tool to customize results that are most useful to your specific situation.
 
 - **Accelerated Integration**: As the landscape of LLM/SLM technologies rapidly evolves, staying ahead becomes a challenge. Our project serves as an agile launchpad for benchmarking foundational models, significantly reducing the time-to-integration for the latest advancements. Equip your enterprise with the tools to swiftly adapt and implement cutting-edge AI technologies.
 
+- **BYOP (Bring Your Own Prompt) for Custom Benchmarks**: This feature enables the application of the benchmarking suite to your data, offering valuable insights into model performance on real-world problems as opposed to theoretical scenarios. It's an essential tool for enterprises and individuals aiming to assess the effectiveness of foundational models against their specific datasets and challenges.
+
+- **Light Python SDK**: Tailored for performance-centric evaluations, our SDK facilitates extensive analysis across latency, throughput, and a suite of quality metrics. Designed for bulk processing, it streamlines the assessment of multiple models simultaneously, ensuring a thorough comparison.
+
 - **Built from Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
 
-- **BYOP (Bring Your Own Prompt) for Custom Benchmarks**: This feature enables the application of the benchmarking suite to your  data, offering valuable insights into model performance on real-world problems as opposed to theoretical scenarios. It's an essential tool for enterprises and individuals aiming to assess the effectiveness of foundational models against their specific datasets and challenges.
+Check out how our v0.01 prototype is shaping up:
 
-Check out how our v0.01 prototype is shaping up.
+![alt text](image.png)
 
-<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
-    <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
-    frameborder="0" 
-    webkitallowfullscreen 
-    mozallowfullscreen 
-    allowfullscreen 
-    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-</div>
-<br>
 
 ## What's Next? ✨
 
 We're currently in full/fun development mode and adding features as we speak. Please look at the [CHANGELOG](./CHANGELOG.md) for a detailed overview. Here's what's coming next:
 
-> [!IMPORTANT]
+> [IMPORTANT NOTE]
 > For the current version, our current focus is primarily on Azure OpenAI (AOAI) deployments
 
-- **Expanding Our MaaS Offerings**: Enhancing our Machine-as-a-Service (MaaS) portfolio, with a focus on the pay-as-you-go models available on Azure. This initiative aims to offer more flexible access to cutting-edge AI capabilities, such as SLMs, emphasizing performance optimization and scalability.
+- **Expanding Our MaaS Offerings**: Enhancing our Model-as-a-Service (MaaS) portfolio, with a focus on the pay-as-you-go models available on Azure. This initiative aims to offer more flexible access to cutting-edge AI capabilities, such as SLMs, emphasizing performance optimization and scalability.
 
-- **Adoption of PaaS Models**: We're working om expanding our scope to include Platform-as-a-Service (PaaS) models, with a special focus on SLMs (Specialized Language Models) like Phi-3 deployed on Azure infrastructure.
+- **Adoption of PaaS Models**: We're working om expanding our scope to include Platform-as-a-Service (PaaS) models, with a special focus on SLMs (Specialized Language Models) like Phi-3, and other open source options deployed on Azure infrastructure.
 
 - **Embedded Model Benchmarking**: Enhancing our benchmarking suite to include embedding models, focusing on performance metrics in constrained environments.
 
-- **State-of-the-Art Quality Metrics Suite**: We're developing a comprehensive suite of quality metrics, allowing you to rigorously evaluate changes and performance with your own data between different model "upgrades/versions" or models. This suite is intended to provide a deeper, more nuanced understanding of model capabilities and limitations.
+- **State-of-the-Art Quality Metrics Suite**: We're continuing to add different types of model evaluation metrics. The next additions will include OpenAI based metrics such as GPT4 evaluations and Ada3 embedding cosine similarity.
 
 ## How to Get Started 🔍
 First things first, let's get your development environment set up:
