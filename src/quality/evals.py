@@ -544,13 +544,14 @@ class CustomEval(Eval):
             self.logger.info(f"Evaluating row {index} of {data.shape[0]}")
             try:
                 output = self.__call_aoai(row)
-                output = self.__custom_score(output)
                 output_list.append(output)
             except Exception as e:
                 self.logger.warning(f"Skipping...error in row {index}: {e}")
 
         self.logger.info("Evaluation complete.")
         results = pd.DataFrame(output_list).reset_index()
+
+        results = results.apply(lambda x: self.__custom_score(x), axis=1)
 
         self.logger.info("Aggregating Results")
         results_dict = []
