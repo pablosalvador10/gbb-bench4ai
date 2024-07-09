@@ -15,7 +15,7 @@ fi
 export $(grep -v '^#' .env | xargs)
 
 # Define variables for Docker image name and tag
-imageName="indexingapp" # Assuming 'chunkingindexingskill' is your Docker image name
+imageName="benchmarkingapp" # Assuming 'chunkingindexingskill' is your Docker image name
 imageTag="latest" # Replace 'latest' with your specific tag if needed
 templateFile="deployment\\container-apps\\index-azure-ai-app.bicep" # Replace 'yourBicepFileName.bicep' with your Bicep file name
 
@@ -24,6 +24,15 @@ containerRegistryName="${ENVIRONMENT}containerregistryaigbb"
 
 # Check the command line argument
 case "$1" in
+
+    build_and_push_container)
+    echo "Using IMAGE NAME: ${IMAGENAME}"
+    echo "Using IMAGE TAG: ${IMAGETAG}"
+    echo "Using CONTAINER REGISTRY NAME: ${CONTAINER_REGISTRY_NAME}"
+    az acr build --image ${IMAGENAME}:${IMAGETAG} \
+        --registry ${CONTAINER_REGISTRY_NAME} \
+        --file $PWD\\devops\\cicd\\benchmarking_app\\Dockerfile .
+    ;;
     build_container)
         # Build the Docker image
         docker build -f app/Indexing/Dockerfile -t $imageName:$imageTag .
@@ -31,15 +40,10 @@ case "$1" in
     run_container)
         # Run the Docker container, mapping port 8000 to 8000 and setting environment variables
         docker run -p 8000:8000 \
-            -e AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=$AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT \
-            -e AZURE_DOCUMENT_INTELLIGENCE_KEY=$AZURE_DOCUMENT_INTELLIGENCE_KEY \
-            -e AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING \
-            -e AZURE_AOAI_API_KEY=$AZURE_AOAI_API_KEY \
-            -e AZURE_AOAI_API_ENDPOINT=$AZURE_AOAI_API_ENDPOINT \
-            -e AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID=$AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID \
-            -e AZURE_AOAI_API_VERSION=$AZURE_OPENAI_API_VERSION \
-            -e AZURE_AI_SEARCH_SERVICE_ENDPOINT=$AZURE_AI_SEARCH_SERVICE_ENDPOINT \
-            -e AZURE_SEARCH_ADMIN_KEY=$AZURE_SEARCH_ADMIN_KEY \
+            -e AZURE_OPENAI_KEY=$AZURE_OPENAI_KEY \
+            -e AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID=$AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID \
+            -e AZURE_OPENAI_API_VERSION=$AZURE_OPENAI_API_VERSION \
+            -e AZURE_OPENAI_API_ENDPOINT=$AZURE_OPENAI_API_ENDPOINT \
             $imageName
         ;;
     push_container)
@@ -73,15 +77,10 @@ case "$1" in
             --replica-timeout 1800 --replica-retry-limit 0 --replica-completion-count 1 --parallelism 1 \
             --image $containerRegistryName.azurecr.io/prepdocs:1.0 \
             --cpu "2" --memory "4Gi" \
-            --env-vars "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=$AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT" \
-                "AZURE_DOCUMENT_INTELLIGENCE_KEY=$AZURE_DOCUMENT_INTELLIGENCE_KEY" \
-                "AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING" \
-                "AZURE_AOAI_API_KEY=$AZURE_AOAI_API_KEY" \
-                "AZURE_AOAI_API_ENDPOINT=$AZURE_AOAI_API_ENDPOINT" \
-                "AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID=$AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID" \
-                "AZURE_AOAI_API_VERSION=$AZURE_OPENAI_API_VERSION" \
-                "AZURE_AI_SEARCH_SERVICE_ENDPOINT=$AZURE_AI_SEARCH_SERVICE_ENDPOINT" \
-                "AZURE_SEARCH_ADMIN_KEY=$AZURE_SEARCH_ADMIN_KEY" \
+            --env-vars "AZURE_OPENAI_KEY=$AZURE_OPENAI_KEY" \
+            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID=$AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID" \
+            "AZURE_OPENAI_API_VERSION=$AZURE_OPENAI_API_VERSION" \
+            "AZURE_OPENAI_API_ENDPOINT=$AZURE_OPENAI_API_ENDPOINT" \
             --registry-server $containerRegistryName.azurecr.io \
             --registry-identity system \
             --mi-system-assigned
@@ -96,24 +95,19 @@ case "$1" in
     up_app)
         # create the job
         az containerapp create -n doc-indexer -g $AZURE_RESOURCE_GROUP --environment $AZURE_CONTAINER_ENVIRONMENT_NAME \
-        --image $containerRegistryName.azurecr.io/$imageName:$imageTag \
+        --image $CONTAINER_REGISTRY_NAME.azurecr.io/$IMAGENAME:$IMAGETAG \
         --cpu "1" --memory "2Gi" \
-        --env-vars "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=$AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT" \
-            "AZURE_DOCUMENT_INTELLIGENCE_KEY=$AZURE_DOCUMENT_INTELLIGENCE_KEY" \
-            "AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING" \
-            "AZURE_AOAI_API_KEY=$AZURE_AOAI_API_KEY" \
-            "AZURE_AOAI_API_ENDPOINT=$AZURE_AOAI_API_ENDPOINT" \
-            "AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID=$AZURE_AOAI_EMBEDDING_DEPLOYMENT_ID" \
-            "AZURE_AOAI_API_VERSION=$AZURE_OPENAI_API_VERSION" \
-            "AZURE_AI_SEARCH_SERVICE_ENDPOINT=$AZURE_AI_SEARCH_SERVICE_ENDPOINT" \
-            "AZURE_SEARCH_ADMIN_KEY=$AZURE_SEARCH_ADMIN_KEY" \
-        --registry-server $containerRegistryName.azurecr.io \
+        --env-vars "AZURE_OPENAI_KEY=$AZURE_OPENAI_KEY" \
+            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID=$AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID" \
+            "AZURE_OPENAI_API_VERSION=$AZURE_OPENAI_API_VERSION" \
+            "AZURE_OPENAI_API_ENDPOINT=$AZURE_OPENAI_API_ENDPOINT" \
+        --registry-server $CONTAINER_REGISTRY_NAME.azurecr.io \
         --registry-identity system \
         --system-assigned \
         --min-replicas 1 --max-replicas 5 \
         --scale-rule-http-concurrency 4 \
         --ingress external \
-        --target-port 8000
+        --target-port $PORT
 
         az role assignment create --role "Contributor" --assignee `az containerapp show -n doc-indexer -g $AZURE_RESOURCE_GROUP -o tsv --query identity.principalId` --resource-group $AZURE_RESOURCE_GROUP
         az role assignment create --role "Storage Blob Data Contributor" --assignee `az containerapp show -n doc-indexer -g $AZURE_RESOURCE_GROUP -o tsv --query identity.principalId` --resource-group $AZURE_RESOURCE_GROUP

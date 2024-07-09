@@ -22,6 +22,7 @@ datasets
 markdown
 python-docx
 python-dotenv
+psutil
 transformers
 fuzzywuzzy[speedup]
 sentence_transformers

@@ -14,9 +14,10 @@ from src.app.latencydisplay import (create_latency_display_dataframe,
                                     display_latency_metrics,
                                     display_token_metrics)
 from src.app.latencysettings import configure_benchmark_settings
-from src.app.managers import (create_azure_openai_manager,
+from src.app.managers import (
                               create_benchmark_non_streaming_client,
                               create_benchmark_streaming_client)
+from src.app.benchmarkbuddy import configure_chatbot
 from src.app.outputformatting import (download_ai_response_as_docx_or_pdf,
                                       download_chat_history)
 from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
@@ -43,40 +44,6 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
         if var not in st.session_state:
             st.session_state[var] = initial_values.get(var, None)
 
-    # Add a dictionary named 'settings' to the session state if it doesn't exist
-    if "settings" not in st.session_state:
-        st.session_state["settings"] = {}
-    if "results" not in st.session_state:
-        st.session_state["results"] = {}
-
-    # Environment variables for Azure OpenAI and other services
-    env_vars = {
-        "AZURE_OPENAI_KEY": st.session_state.get(
-            "AZURE_OPENAI_KEY", os.getenv("AZURE_OPENAI_KEY")
-        ),
-        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": st.session_state.get(
-            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID",
-            os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"),
-        ),
-        "AZURE_OPENAI_API_ENDPOINT": st.session_state.get(
-            "AZURE_OPENAI_API_ENDPOINT", os.getenv("AZURE_OPENAI_API_ENDPOINT")
-        ),
-        "AZURE_OPENAI_API_VERSION": st.session_state.get(
-            "AZURE_OPENAI_API_VERSION", os.getenv("AZURE_OPENAI_API_VERSION")
-        ),
-    }
-    st.session_state.update(env_vars)
-
-    # Initialize Azure OpenAI Manager if it hasn't been initialized yet
-    if "azure_openai_manager" not in st.session_state:
-        st.session_state["azure_openai_manager"] = create_azure_openai_manager(
-            api_key=st.session_state["AZURE_OPENAI_KEY"],
-            azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT"],
-            api_version=st.session_state["AZURE_OPENAI_API_VERSION"],
-            deployment_id=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"],
-        )
-
-
 session_vars = [
     "conversation_history",
     "ai_response",
@@ -85,6 +52,9 @@ session_vars = [
     "log_messages",
     "benchmark_results",
     "deployments",
+    "settings",
+    "results",
+    "disable_chatbot",
 ]
 initial_values = {
     "conversation_history": [],
@@ -114,12 +84,14 @@ initial_values = {
     "log_messages": [],
     "benchmark_results": [],
     "deployments": {},
+    "settings": {},
+    "results": {},
+    "disable_chatbot": True,
 }
-
-initialize_session_state(session_vars, initial_values)
 
 st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="📊")
 
+initialize_session_state(session_vars, initial_values)
 
 def configure_sidebar() -> None:
     """
@@ -127,8 +99,8 @@ def configure_sidebar() -> None:
     """
     with st.sidebar:
         st.markdown("## 🤖 Deployment Center ")
-        # Display the Deployemnt Center and Deployment forms
-        load_default_deployment()
+        if st.session_state.deployments == {}:
+            load_default_deployment()
         create_benchmark_center()
         display_deployments()
 
@@ -143,22 +115,39 @@ def configure_sidebar() -> None:
         )
 
         if operation == "Latency":
-            tab1, tab2 = st.sidebar.tabs(["⚙️ Benchmark Settings", "📘 How-To Guide"])
+            tab1, tab2, tab3 = st.sidebar.tabs(["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"])
 
             with tab1:
                 configure_benchmark_settings()
             with tab2:
-                st.markdown(
-                    """
-                        **How to Run a Latency Benchmark:**
+                configure_chatbot()
+            with tab3:
+                with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
+                    st.markdown('''       
+                        To fully activate and utilize BenchmarkAI Buddy, 
+                        please go under benchmark center and buddy setting follow these simple steps:
+                    
+                        1. **Activate Your AOAI Model**:
+                            - Navigate to the "Add Your AOAI-model" section.
+                            - Fill in the "Deployment id" with your Azure OpenAI deployment ID.
+                            - Enter your "Azure OpenAI Key" for secure access.
+                            - Specify the "API Endpoint" where your Azure OpenAI is hosted.
+                            - Input the "API Version" to ensure compatibility.
 
-                        1. **Select model settings**: Choose models, max tokens, and iterations for your benchmark tests.
-                        2. **Run the benchmark**: Click 'Run Benchmark' to start and monitor progress in real-time.
-                        3. **Review results**: View detailed performance metrics after the benchmark completes.
+                        2. **Configure Chatbot Behavior**:
+                            - After adding your GPT model, go to "Benchmark Settings".
+                            - Adjust settings to fine-tune the chatbot's responses and behavior.
+                        ''')
+                with st.expander("⏱️ Latency Benchmark", expanded=False):
+                    st.markdown(
+                        """
+                            1. **Select model settings**: Choose models, max tokens, and iterations for your benchmark tests.
+                            2. **Run the benchmark**: Click 'Run Benchmark' to start and monitor progress in real-time.
+                            3. **Review results**: View detailed performance metrics after the benchmark completes.
 
-                        Optimize your LLM experience with precise performance insights!
-                    """
-                )
+                            Optimize your LLM experience with precise performance insights!
+                        """
+                    )
         elif operation == "Throughput":
             st.warning(
                 "Throughput benchmarking is not available yet. Please select 'Latency'."
@@ -480,7 +469,7 @@ def initialize_chatbot() -> None:
         "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
         unsafe_allow_html=True,
     )
-
+    
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "messages" not in st.session_state:
@@ -500,7 +489,11 @@ def initialize_chatbot() -> None:
                 )
 
     # User input for feedback or additional instructions
-    prompt = st.chat_input("Ask away!")
+    warning_issue = st.empty()
+    if "azure_openai_manager" not in st.session_state:
+        warning_issue.warning("Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️")   
+    
+    prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
     if prompt:
         prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
             st.session_state["results"], prompt
@@ -527,8 +520,10 @@ def initialize_chatbot() -> None:
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
                     ],
-                    temperature=0.3,
-                    max_tokens=1000,
+                    temperature=st.session_state["settings_buddy"]["temperature"],
+                    max_tokens=st.session_state["settings_buddy"]["max_tokens"],
+                    presence_penalty=st.session_state["settings_buddy"]["presence_penalty"],
+                    frequency_penalty=st.session_state["settings_buddy"]["frequency_penalty"],
                     seed=555,
                     stream=True,
                 )

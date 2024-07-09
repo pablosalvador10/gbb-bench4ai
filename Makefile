@@ -84,5 +84,49 @@ run_speed_test:
 evals_test:
 	$(PYTHON_INTERPRETER) src/quality/evals.py
 
+
+## Run App Locally
+
+# Target to run the Streamlit app locally
 run_streamlit:
 	streamlit run src/app/Home.py
+
+## Deployment App 
+
+# Use .ONESHELL to run all commands in a single shell instance
+.ONESHELL:
+
+.PHONY: all
+all: build run
+
+
+.PHONY: build
+# Build the Docker image for the app using Azure Container Registry
+build: 
+	@bash devops/cicd/benchmarking_app/deployapp.sh build_and_push_container
+	
+
+.PHONY: run
+# Run the Docker container locally, mapping port 8501
+run:
+	docker run -p 8501:8501 my_streamlit_app
+
+
+# Target to create a container app in Azure, depending on setup-env to load .env variables
+create-container-app: setup-env
+	az containerapp create -n doc-indexer -g $$(AZURE_RESOURCE_GROUP) --environment $$(AZURE_CONTAINER_ENVIRONMENT_NAME) \
+	--image $$(CONTAINER_REGISTRY_NAME).azurecr.io/$$(IMAGENAME):$$(IMAGETAG) \
+	--cpu $$(CPUs) --memory $$(RAM) \
+	--env-vars "AZURE_OPENAI_KEY=$$(AZURE_OPENAI_KEY)" \
+		"AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID=$$(AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID)" \
+		"AZURE_OPENAI_API_VERSION=$$(AZURE_OPENAI_API_VERSION)" \
+		"AZURE_OPENAI_API_ENDPOINT=$$(AZURE_OPENAI_API_ENDPOINT)" \
+	--registry-server $$(CONTAINER_REGISTRY_NAME).azurecr.io \
+	--registry-identity system \
+	--system-assigned \
+	--min-replicas $$(MIN_REPLICAS) --max-replicas $(MAX_REPLICAS) \
+	--scale-rule-http-concurrency $$(SCALE_CONCURRENCY) \
+	--ingress external \
+	--target-port $$(PORT); \
+	az role assignment create --role "Contributor" --assignee `az containerapp show -n doc-indexer -g $$(AZURE_RESOURCE_GROUP) -o tsv --query identity.principalId` --resource-group $$(AZURE_RESOURCE_GROUP); \
+	az role assignment create --role "Storage Blob Data Contributor" --assignee `az containerapp show -n doc-indexer -g $$(AZURE_RESOURCE_GROUP) -o tsv --query identity.principalId` --resource-group $$(AZURE_RESOURCE_GROUP)
