@@ -36,7 +36,6 @@ def initialize_session_state(defaults: Dict[str, Any]) -> None:
     Initialize Streamlit session state with default values if not already set.
 
     This function ensures that the Streamlit session state contains the specified default values if they are not already present.
-
     :param defaults: Dictionary of default values.
     """
     for var, value in defaults.items():
@@ -224,7 +223,6 @@ def get_footer_content() -> str:
     </div>
     """
 
-
 def load_default_deployment(
     name: Optional[str] = None,
     key: Optional[str] = None,
@@ -267,9 +265,9 @@ def load_default_deployment(
         value is not None for value in default_deployment.values() if value != False
     ):
         st.session_state.deployments[default_deployment["name"]] = default_deployment
-    else:
-        st.error("Default deployment settings are missing.")
 
+
+import streamlit as st
 
 def add_deployment_form() -> None:
     """
@@ -315,6 +313,9 @@ def add_deployment_form() -> None:
                 and deployment_endpoint
                 and deployment_version
             ):
+                if "deployments" not in st.session_state:
+                    st.session_state.deployments = {}
+
                 if deployment_name not in st.session_state.deployments:
                     st.session_state.deployments[deployment_name] = {
                         "key": deployment_key,
@@ -323,12 +324,14 @@ def add_deployment_form() -> None:
                         "stream": is_streaming,
                     }
                     st.success(f"Deployment '{deployment_name}' added successfully.")
+                    st.rerun()
                 else:
                     st.error(
                         f"A deployment with the name '{deployment_name}' already exists."
                     )
             else:
                 st.error("Please fill in all fields.")
+
 
 
 def display_deployments() -> None:
@@ -339,51 +342,53 @@ def display_deployments() -> None:
     """
     if "deployments" in st.session_state:
         st.markdown("##### Loaded Deployments")
-        for deployment_name, deployment in st.session_state.deployments.items():
-            with st.expander(deployment_name):
-                updated_name = st.text_input(
-                    "Name", value=deployment_name, key=f"name_{deployment_name}"
-                )
-                updated_key = st.text_input(
-                    "Key",
-                    value=deployment.get("key", ""),
-                    type="password",
-                    key=f"key_{deployment_name}",
-                )
-                updated_endpoint = st.text_input(
-                    "Endpoint",
-                    value=deployment.get("endpoint", ""),
-                    key=f"endpoint_{deployment_name}",
-                )
-                updated_version = st.text_input(
-                    "Version",
-                    value=deployment.get("version", ""),
-                    key=f"version_{deployment_name}",
-                )
-                updated_stream = st.radio(
-                    "Streaming",
-                    (True, False),
-                    format_func=lambda x: "Yes" if x else "No",
-                    index=0 if deployment.get("stream", False) else 1,
-                    key=f"stream_{deployment_name}",
-                    help="Select 'Yes' if the model will be tested with output in streaming mode.",
-                )
+        if st.session_state.deployments == {}:
+            st.sidebar.error("No deployments were found. Please add a deployment in the Deployment Center.")
+        else: 
+            for deployment_name, deployment in st.session_state.deployments.items():
+                    with st.expander(deployment_name):
+                        updated_name = st.text_input(
+                            "Name", value=deployment_name, key=f"name_{deployment_name}"
+                        )
+                        updated_key = st.text_input(
+                            "Key",
+                            value=deployment.get("key", ""),
+                            type="password",
+                            key=f"key_{deployment_name}",
+                        )
+                        updated_endpoint = st.text_input(
+                            "Endpoint",
+                            value=deployment.get("endpoint", ""),
+                            key=f"endpoint_{deployment_name}",
+                        )
+                        updated_version = st.text_input(
+                            "Version",
+                            value=deployment.get("version", ""),
+                            key=f"version_{deployment_name}",
+                        )
+                        updated_stream = st.radio(
+                            "Streaming",
+                            (True, False),
+                            format_func=lambda x: "Yes" if x else "No",
+                            index=0 if deployment.get("stream", False) else 1,
+                            key=f"stream_{deployment_name}",
+                            help="Select 'Yes' if the model will be tested with output in streaming mode.",
+                        )
 
-                if st.button("Update Deployment", key=f"update_{deployment_name}"):
-                    st.session_state.deployments[deployment_name] = {
-                        "key": updated_key,
-                        "endpoint": updated_endpoint,
-                        "version": updated_version,
-                        "stream": updated_stream,
-                    }
-                    st.experimental_rerun()
+                        if st.button("Update Deployment", key=f"update_{deployment_name}"):
+                            st.session_state.deployments[deployment_name] = {
+                                "key": updated_key,
+                                "endpoint": updated_endpoint,
+                                "version": updated_version,
+                                "stream": updated_stream,
+                            }
+                            st.rerun()
 
-                if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
-                    del st.session_state.deployments[deployment_name]
-                    st.experimental_rerun()
+                        if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
+                            del st.session_state.deployments[deployment_name]
+                            st.rerun()
     else:
-        st.error("No deployments found. Please add a deployment in the sidebar.")
-
+        st.sidebar.error("No deployments were found. Please add a deployment in the Deployment Center.")
 
 def create_benchmark_center() -> None:
     """
@@ -408,7 +413,6 @@ def create_benchmark_center() -> None:
         else:
             st.info("Other deployment options will be available soon.")
 
-
 def main() -> None:
     """
     Main function to run the Streamlit app.
@@ -429,8 +433,8 @@ def main() -> None:
 
     with st.sidebar:
         st.markdown("## 🤖 Deployment Center ")
-
-        load_default_deployment()
+        if st.session_state.deployments == {}:
+            load_default_deployment()
         create_benchmark_center()
         display_deployments()
 

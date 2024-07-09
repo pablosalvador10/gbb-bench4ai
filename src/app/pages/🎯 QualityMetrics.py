@@ -165,11 +165,11 @@ def display_deployments() -> None:
                             "version": updated_version,
                             "stream": updated_stream,
                         }
-                    st.experimental_rerun()
+                    st.rerun()
 
                 if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
                     del st.session_state.deployments[deployment_name]
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         st.error("No deployments found. Please add a deployment in the sidebar.")
 
