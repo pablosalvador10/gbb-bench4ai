@@ -91,6 +91,10 @@ evals_test:
 run_streamlit:
 	streamlit run src/app/Home.py
 
+streamlite_conf: 
+	streamlit config show
+
+
 ## Deployment App 
 
 # Use .ONESHELL to run all commands in a single shell instance
@@ -110,6 +114,14 @@ build:
 # Run the Docker container locally, mapping port 8501
 run:
 	docker run -p 8501:8501 my_streamlit_app
+
+.PHONY: login-acr
+
+login-acr:
+	@echo "Logging in to Azure..."
+	az login
+	@echo "Logging in to Azure Container Registry..."
+	az acr login --name devcontainergenai
 
 
 # Target to create a container app in Azure, depending on setup-env to load .env variables

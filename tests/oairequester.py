@@ -5,6 +5,7 @@ import time
 import unittest
 
 import httpretty
+
 from src.performanceoairequester import (RETRY_AFTER_MS_HEADER,
                                          UTILIZATION_HEADER, OAIRequester)
 

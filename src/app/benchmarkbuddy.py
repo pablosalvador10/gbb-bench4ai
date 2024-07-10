@@ -1,6 +1,8 @@
-from typing import Any, Dict
-import streamlit as st 
+
+import streamlit as st
+
 from src.app.managers import create_azure_openai_manager
+
 
 def configure_benchmarkbudyy_model_settings() -> dict:
     """
@@ -31,7 +33,7 @@ def configure_benchmarkbudyy_model_settings() -> dict:
         )
 
         st.session_state["settings_buddy"]["max_tokens"] = st.slider(
-        "Max Generation Tokens (Input)",
+            "Max Generation Tokens (Input)",
             min_value=100,
             max_value=3000,
             value=1000,
@@ -60,15 +62,20 @@ def configure_benchmarkbudyy_model_settings() -> dict:
 
 
 def configure_chatbot() -> None:
-
     error_client_buddy = st.empty()
     if "azure_openai_manager" not in st.session_state:
-        error_client_buddy.error("Chatbot capabilities are currently disabled. To activate and fully utilize BenchmarkAI buddy knowledge, please configure the AOAI model.")
+        error_client_buddy.error(
+            "Chatbot capabilities are currently disabled. To activate and fully utilize BenchmarkAI buddy knowledge, please configure the AOAI model."
+        )
 
     with st.expander("Configure Buddy's Brain (AOAI)", expanded=False):
-        st.write("Add the AOAI-model to empower Buddy with advanced cognitive capabilities.")
+        st.write(
+            "Add the AOAI-model to empower Buddy with advanced cognitive capabilities."
+        )
         with st.form("add_deployment_chatbot"):
-            st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"] = st.text_input(
+            st.session_state[
+                "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"
+            ] = st.text_input(
                 "Deployment id",
                 help="Enter the deployment ID for Azure OpenAI.",
                 placeholder="e.g., chat-gpt-1234abcd",
@@ -91,13 +98,15 @@ def configure_chatbot() -> None:
             )
             submitted_buddy = st.form_submit_button("Add Deployment")
 
-    if submitted_buddy: 
+    if submitted_buddy:
         try:
             st.session_state["azure_openai_manager"] = create_azure_openai_manager(
                 api_key=st.session_state["AZURE_OPENAI_KEY_CHATBOT"],
                 azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT_CHATBOT"],
                 api_version=st.session_state["AZURE_OPENAI_API_VERSION_CHATBOT"],
-                deployment_id=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"],
+                deployment_id=st.session_state[
+                    "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"
+                ],
             )
             stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
                 model=st.session_state.azure_openai_manager.chat_model_name,
@@ -106,9 +115,8 @@ def configure_chatbot() -> None:
                         "role": "system",
                         "content": "Test: Verify setup.",
                     }
-                ] + [
-                    {"role": "user", "content": "test"}
-                ],
+                ]
+                + [{"role": "user", "content": "test"}],
                 max_tokens=2,
                 seed=555,
                 stream=True,
@@ -117,6 +125,8 @@ def configure_chatbot() -> None:
             error_client_buddy.empty()
             st.session_state["disable_chatbot"] = False
         except Exception as e:
-            st.warning(f"An issue occurred while initializing the Azure OpenAI manager. {e} Please try again. If the issue persists, verify your configuration.")
+            st.warning(
+                f"An issue occurred while initializing the Azure OpenAI manager. {e} Please try again. If the issue persists, verify your configuration."
+            )
 
     configure_benchmarkbudyy_model_settings()
