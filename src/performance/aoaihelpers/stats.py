@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import pandas as pd
 import plotly.express as px
@@ -21,55 +21,22 @@ class ModelPerformanceVisualizer:
         self.data = data
         self.df = pd.DataFrame()
 
-    def transpose_data(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Parse the JSON data into a DataFrame, flattening the best_run and worst_run dictionaries.
-        Separate the best_run and worst_run into a different DataFrame.
-        Return the string representations of both DataFrames.
-        """
-        records = []
-        best_worst_records = []
-        for model, stats in self.data.items():
-            flattened_stats = {"model": model}
-            best_worst_stats = {"model": model}
-            for key, value in stats.items():
-                if isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        if key in ["best_run", "worst_run"]:
-                            best_worst_stats[f"{key}_{sub_key}"] = sub_value
-                        else:
-                            flattened_stats[f"{key}_{sub_key}"] = sub_value
-                else:
-                    flattened_stats[key] = value
-            records.append(flattened_stats)
-            best_worst_records.append(best_worst_stats)
-        df = pd.DataFrame.from_records(records)
-        df.rename(columns={"model": "ModelName_MaxTokens"}, inplace=True)
-        df.set_index("ModelName_MaxTokens", inplace=True)
-        df_best_and_worst = pd.DataFrame.from_records(best_worst_records)
-        df_best_and_worst.rename(columns={"model": "ModelName_MaxTokens"}, inplace=True)
-        df_best_and_worst.set_index("ModelName_MaxTokens", inplace=True)
-        return df, df_best_and_worst
-
     def parse_data(self) -> None:
         """
         Parse the JSON data into a DataFrame for easier manipulation.
         """
         records = []
         for model, stats in self.data.items():
-            record = {**{"model": model}, **stats}
-            # Flatten nested dictionaries like best_run and worst_run
-            for key in ["best_run", "worst_run"]:
-                if key in stats:
-                    for subkey, value in stats[key].items():
-                        record[f"{key}_{subkey}"] = value
-            # Flatten other nested dictionaries
+            record = {"model": model}
             for key, value in stats.items():
                 if isinstance(value, dict):
                     for subkey, subvalue in value.items():
                         record[f"{key}_{subkey}"] = subvalue
+                else:
+                    record[key] = value
             records.append(record)
         self.df = pd.DataFrame.from_records(records)
+        logger.info(f"DataFrame after parsing: {self.df.head()}")
 
     def plot_completion_tokens(self):
         """
@@ -82,33 +49,27 @@ class ModelPerformanceVisualizer:
             y="median_completion_tokens",
             title="Completion Tokens by Model",
             template="plotly_white",
-            notched=True,  # Adds a notch to indicate the confidence interval around the median
-            points="all",  # Shows all points to provide a fuller picture of the distribution
+            notched=True,
+            points="all",
         )
 
-        # Adjusted custom markers for median values with detailed hover information and robot emoji
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
                 y=self.df["median_completion_tokens"],
-                mode="markers+text",  # Combine markers and text for display
-                name="Median Tokens 🤖",  # Updated name with robot emoji
-                marker=dict(
-                    color="lightblue",  # Use light blue color for a lighter appearance
-                    size=10,  # Adjust size as needed
-                    symbol="circle",  # Use 'circle' symbol for a softer look
-                ),
-                text=["🤖" for _ in self.df["model"]],  # Use robot emoji for each point
-                textposition="bottom center",  # Position text below the marker
-                hoverinfo="text+name",  # Show custom text and name on hover
+                mode="markers+text",
+                name="Median Tokens 🤖",
+                marker=dict(color="lightblue", size=10, symbol="circle"),
+                text=["🤖" for _ in self.df["model"]],
+                textposition="bottom center",
+                hoverinfo="text+name",
                 hovertext=self.df.apply(
                     lambda row: f"Model: {row['model']}\nMedian Tokens: {row['median_completion_tokens']}",
                     axis=1,
-                ),  # Detailed hover text
+                ),
             )
         )
 
-        # Add average TTL as a separate trace with lightning emoji markers
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
@@ -128,6 +89,7 @@ class ModelPerformanceVisualizer:
 
         fig.update_xaxes(tickangle=45)
         fig.update_layout(autosize=False, width=fig_width, height=fig_height)
+        logger.info(f"Plot completion tokens figure: {fig}")
         return fig
 
     def plot_prompt_tokens(self):
@@ -143,7 +105,6 @@ class ModelPerformanceVisualizer:
             template="plotly_white",
         )
 
-        # Add average TTL as a separate trace with lightning emoji markers
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
@@ -161,30 +122,26 @@ class ModelPerformanceVisualizer:
             )
         )
 
-        # Adjusted custom markers for median values with detailed hover information and human emoji
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
                 y=self.df["median_prompt_tokens"],
-                mode="markers+text",  # Combine markers and text for display
-                name="Median Tokens 👤",  # Updated name with human emoji
-                marker=dict(
-                    color="lightblue",  # Use light blue color for a lighter appearance
-                    size=10,  # Adjust size as needed
-                    symbol="circle",  # Use 'circle' symbol for a softer look
-                ),
-                text=["👤" for _ in self.df["model"]],  # Use human emoji for each point
-                textposition="bottom center",  # Position text below the marker
-                hoverinfo="text+name",  # Show custom text and name on hover
+                mode="markers+text",
+                name="Median Tokens 👤",
+                marker=dict(color="lightblue", size=10, symbol="circle"),
+                text=["👤" for _ in self.df["model"]],
+                textposition="bottom center",
+                hoverinfo="text+name",
                 hovertext=self.df.apply(
                     lambda row: f"Model: {row['model']}\nMedian Prompt Tokens: {row['median_prompt_tokens']}",
                     axis=1,
-                ),  # Detailed hover text
+                ),
             )
         )
 
         fig.update_xaxes(tickangle=45)
         fig.update_layout(autosize=False, width=fig_width, height=fig_height)
+        logger.info(f"Plot prompt tokens figure: {fig}")
         return fig
 
     def plot_response_time_metrics_comparison(self):
@@ -195,9 +152,6 @@ class ModelPerformanceVisualizer:
         fig_width, fig_height = 1200, 600
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        models = self.df["model"].unique()
-
-        # Existing metrics (Time-based)
         for metric in [
             "median_ttlt",
             "average_ttlt",
@@ -205,13 +159,10 @@ class ModelPerformanceVisualizer:
             "percentile_99_ttlt",
         ]:
             fig.add_trace(
-                go.Bar(
-                    x=models, y=self.df.groupby("model")[metric].mean(), name=metric
-                ),
-                secondary_y=False,  # Use the primary y-axis for time-based metrics
+                go.Bar(x=self.df["model"], y=self.df[metric], name=metric),
+                secondary_y=False,
             )
 
-        # Median prompt tokens with human emoji (Token-based)
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
@@ -227,10 +178,9 @@ class ModelPerformanceVisualizer:
                     axis=1,
                 ),
             ),
-            secondary_y=True,  # Use the secondary y-axis for token metrics
+            secondary_y=True,
         )
 
-        # Median completion tokens with robot emoji (Token-based)
         fig.add_trace(
             go.Scatter(
                 x=self.df["model"],
@@ -246,10 +196,9 @@ class ModelPerformanceVisualizer:
                     axis=1,
                 ),
             ),
-            secondary_y=True,  # Use the secondary y-axis for token metrics
+            secondary_y=True,
         )
 
-        # Update layout to include a secondary y-axis
         fig.update_layout(
             barmode="group",
             title="Response Time Metrics by Model",
@@ -262,9 +211,8 @@ class ModelPerformanceVisualizer:
             title_font_size=20,
         )
 
-        # Configure the secondary y-axis
         fig.update_yaxes(title_text="Token Count", secondary_y=True)
-
+        logger.info(f"Plot response time metrics comparison figure: {fig}")
         return fig
 
     def plot_tokens(self):
@@ -283,6 +231,7 @@ class ModelPerformanceVisualizer:
             title="Token Metrics by Model",
         )
         fig.update_xaxes(tickangle=45)
+        logger.info(f"Plot tokens figure: {fig}")
         return fig
 
     def plot_errors(self):
@@ -292,30 +241,94 @@ class ModelPerformanceVisualizer:
         fig = px.bar(self.df, x="model", y="error_rate", title="Error Rate by Model")
         fig.update_traces(marker_color="indianred")
         fig.update_xaxes(tickangle=45)
+        logger.info(f"Plot errors figure: {fig}")
         return fig
 
     def plot_best_worst_runs(self):
         """
-        Compare the best and worst run times using Plotly and return the figure object.
+        Improved function to compare the best and worst run times using Plotly, including detailed traces for input and output tokens.
+        This version uses a dual-axis plot to handle the different scales between run times and token counts.
         """
-        if "best_run_time" in self.df.columns and "worst_run_time" in self.df.columns:
-            melted_df = self.df.melt(
-                id_vars=["model"], value_vars=["best_run_time", "worst_run_time"]
+        fig_width, fig_height = 1200, 600
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+        # Plotting best and worst run times on the primary y-axis
+        for run_type, color in zip(
+            ["best_run_ttlt", "worst_run_ttlt"], ["green", "red"]
+        ):
+            fig.add_trace(
+                go.Bar(
+                    x=self.df["model"],
+                    y=self.df[run_type],
+                    name=run_type,
+                    marker_color=color,
+                ),
+                secondary_y=False,
             )
-            fig = px.bar(
-                melted_df,
-                x="model",
-                y="value",
-                color="variable",
-                barmode="group",
-                title="Best vs Worst Run Times by Model",
+
+        # Adding scatter traces for prompt and completion tokens in the worst runs on the secondary y-axis
+        token_types = [
+            ("worst_run_prompt_tokens", "👤", "orange"),
+            ("worst_run_completion_tokens", "🤖", "blue"),
+        ]
+        for token_type, emoji, color in token_types:
+            fig.add_trace(
+                go.Scatter(
+                    x=self.df["model"],
+                    y=self.df[token_type],
+                    mode="markers+text",
+                    name=f"{token_type} {emoji}",
+                    marker=dict(color=color, size=10),
+                    text=[emoji for _ in self.df["model"]],
+                    textposition="bottom center",
+                    hoverinfo="text+name",
+                    hovertext=self.df.apply(
+                        lambda row: f"Model: {row['model']}\n{token_type}: {row[token_type]}",
+                        axis=1,
+                    ),
+                ),
+                secondary_y=True,
             )
-            fig.update_xaxes(tickangle=45)
-        else:
-            logger.debug(
-                "The columns 'best_run_time' and 'worst_run_time' are not present in the DataFrame"
+
+        token_types_best = [
+            ("best_run_prompt_tokens", "👤", "lightgreen"),
+            ("best_run_completion_tokens", "🤖", "cyan"),
+        ]
+        for token_type, emoji, color in token_types_best:
+            fig.add_trace(
+                go.Scatter(
+                    x=self.df["model"],
+                    y=self.df[token_type],
+                    mode="markers+text",
+                    name=f"{token_type} {emoji}",
+                    marker=dict(color=color, size=10),
+                    text=[emoji for _ in self.df["model"]],
+                    textposition="bottom center",
+                    hoverinfo="text+name",
+                    hovertext=self.df.apply(
+                        lambda row: f"Model: {row['model']}\n{token_type}: {row[token_type]}",
+                        axis=1,
+                    ),
+                ),
+                secondary_y=True,
             )
-            fig = None
+
+        # Update layout for clarity, readability, and aesthetics
+        fig.update_layout(
+            barmode="group",
+            title="Best vs Worst Run Times by Model with Token Details",
+            xaxis_title="Model",
+            yaxis_title="Run Time (seconds)",
+            autosize=False,
+            width=fig_width,
+            height=fig_height,
+            template="plotly_white",
+            title_font_size=20,
+        )
+
+        fig.update_yaxes(title_text="Token Count", secondary_y=True)
+
+        logger.info(f"Plot best vs worst runs with dual axis figure: {fig}")
         return fig
 
     def plot_heatmaps(self):
@@ -331,8 +344,9 @@ class ModelPerformanceVisualizer:
                 title="Performance Heatmap by Region and Model",
             )
         else:
-            logger.debug("No regional data available for heatmap.")
+            logger.info("No regional data available for heatmap.")
             fig = None
+        logger.info(f"Plot heatmaps figure: {fig}")
         return fig
 
     def plot_time_vs_tokens(self):
@@ -346,6 +360,7 @@ class ModelPerformanceVisualizer:
             color="model",
             title="Response Time vs. Prompt Tokens by Model",
         )
+        logger.info(f"Plot time vs tokens figure: {fig}")
         return fig
 
     def visualize_all(self):
@@ -354,7 +369,9 @@ class ModelPerformanceVisualizer:
         """
         self.parse_data()
 
-        fig1, fig2 = self.plot_times()
+        fig1 = self.plot_completion_tokens()
+        fig2 = self.plot_prompt_tokens()
+        fig3 = self.plot_response_time_metrics_comparison()
         fig_tokens = self.plot_tokens()
         fig_errors = self.plot_errors()
         fig_best_worst = self.plot_best_worst_runs()
@@ -363,6 +380,7 @@ class ModelPerformanceVisualizer:
 
         fig1.show()
         fig2.show()
+        fig3.show()
         fig_tokens.show()
         fig_errors.show()
         if fig_best_worst is not None:

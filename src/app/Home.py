@@ -10,6 +10,8 @@ from typing import Any, Dict, Optional
 import dotenv
 import streamlit as st
 
+from src.app.managers import create_azure_openai_manager
+
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
 
@@ -223,6 +225,7 @@ def get_footer_content() -> str:
     </div>
     """
 
+
 def load_default_deployment(
     name: Optional[str] = None,
     key: Optional[str] = None,
@@ -269,13 +272,14 @@ def load_default_deployment(
 
 import streamlit as st
 
-def add_deployment_form() -> None:
+
+def add_deployment_aoai_form() -> None:
     """
     Render the form to add a new Azure OpenAI deployment.
 
     This function provides a form in the Streamlit sidebar to add a new deployment, allowing users to specify deployment details.
     """
-    with st.form("add_deployment_form"):
+    with st.form("add_deployment_aoai_form"):
         deployment_name = st.text_input(
             "Deployment id",
             help="Enter the deployment ID for Azure OpenAI.",
@@ -316,6 +320,31 @@ def add_deployment_form() -> None:
                 if "deployments" not in st.session_state:
                     st.session_state.deployments = {}
 
+                try:
+                    test_client = create_azure_openai_manager(
+                        api_key=deployment_key,
+                        azure_endpoint=deployment_endpoint,
+                        api_version=deployment_version,
+                        deployment_id=deployment_name,
+                    )
+
+                    stream = test_client.openai_client.chat.completions.create(
+                        model=deployment_name,
+                        messages=[
+                            {"role": "system", "content": "Test: Verify setup."},
+                            {"role": "user", "content": "test"},
+                        ],
+                        max_tokens=2,
+                        seed=555,
+                        stream=is_streaming,
+                    )
+                except Exception as e:
+                    st.warning(
+                        f"""An issue occurred while initializing the Azure OpenAI manager. {e} Please try again. If the issue persists,
+                                    verify your configuration."""
+                    )
+                    return
+
                 if deployment_name not in st.session_state.deployments:
                     st.session_state.deployments[deployment_name] = {
                         "key": deployment_key,
@@ -323,15 +352,12 @@ def add_deployment_form() -> None:
                         "version": deployment_version,
                         "stream": is_streaming,
                     }
-                    st.success(f"Deployment '{deployment_name}' added successfully.")
+                    st.toast(f"Deployment '{deployment_name}' added successfully.")
                     st.rerun()
                 else:
                     st.error(
                         f"A deployment with the name '{deployment_name}' already exists."
                     )
-            else:
-                st.error("Please fill in all fields.")
-
 
 
 def display_deployments() -> None:
@@ -343,52 +369,57 @@ def display_deployments() -> None:
     if "deployments" in st.session_state:
         st.markdown("##### Loaded Deployments")
         if st.session_state.deployments == {}:
-            st.sidebar.error("No deployments were found. Please add a deployment in the Deployment Center.")
-        else: 
+            st.sidebar.error(
+                "No deployments were found. Please add a deployment in the Deployment Center."
+            )
+        else:
             for deployment_name, deployment in st.session_state.deployments.items():
-                    with st.expander(deployment_name):
-                        updated_name = st.text_input(
-                            "Name", value=deployment_name, key=f"name_{deployment_name}"
-                        )
-                        updated_key = st.text_input(
-                            "Key",
-                            value=deployment.get("key", ""),
-                            type="password",
-                            key=f"key_{deployment_name}",
-                        )
-                        updated_endpoint = st.text_input(
-                            "Endpoint",
-                            value=deployment.get("endpoint", ""),
-                            key=f"endpoint_{deployment_name}",
-                        )
-                        updated_version = st.text_input(
-                            "Version",
-                            value=deployment.get("version", ""),
-                            key=f"version_{deployment_name}",
-                        )
-                        updated_stream = st.radio(
-                            "Streaming",
-                            (True, False),
-                            format_func=lambda x: "Yes" if x else "No",
-                            index=0 if deployment.get("stream", False) else 1,
-                            key=f"stream_{deployment_name}",
-                            help="Select 'Yes' if the model will be tested with output in streaming mode.",
-                        )
+                with st.expander(deployment_name):
+                    updated_name = st.text_input(
+                        "Name", value=deployment_name, key=f"name_{deployment_name}"
+                    )
+                    updated_key = st.text_input(
+                        "Key",
+                        value=deployment.get("key", ""),
+                        type="password",
+                        key=f"key_{deployment_name}",
+                    )
+                    updated_endpoint = st.text_input(
+                        "Endpoint",
+                        value=deployment.get("endpoint", ""),
+                        key=f"endpoint_{deployment_name}",
+                    )
+                    updated_version = st.text_input(
+                        "Version",
+                        value=deployment.get("version", ""),
+                        key=f"version_{deployment_name}",
+                    )
+                    updated_stream = st.radio(
+                        "Streaming",
+                        (True, False),
+                        format_func=lambda x: "Yes" if x else "No",
+                        index=0 if deployment.get("stream", False) else 1,
+                        key=f"stream_{deployment_name}",
+                        help="Select 'Yes' if the model will be tested with output in streaming mode.",
+                    )
 
-                        if st.button("Update Deployment", key=f"update_{deployment_name}"):
-                            st.session_state.deployments[deployment_name] = {
-                                "key": updated_key,
-                                "endpoint": updated_endpoint,
-                                "version": updated_version,
-                                "stream": updated_stream,
-                            }
-                            st.rerun()
+                    if st.button("Update Deployment", key=f"update_{deployment_name}"):
+                        st.session_state.deployments[deployment_name] = {
+                            "key": updated_key,
+                            "endpoint": updated_endpoint,
+                            "version": updated_version,
+                            "stream": updated_stream,
+                        }
+                        st.rerun()
 
-                        if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
-                            del st.session_state.deployments[deployment_name]
-                            st.rerun()
+                    if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
+                        del st.session_state.deployments[deployment_name]
+                        st.rerun()
     else:
-        st.sidebar.error("No deployments were found. Please add a deployment in the Deployment Center.")
+        st.sidebar.error(
+            "No deployments were found. Please add a deployment in the Deployment Center."
+        )
+
 
 def create_benchmark_center() -> None:
     """
@@ -409,9 +440,10 @@ def create_benchmark_center() -> None:
             placeholder="Select a Benchmark",
         )
         if operation == "AOAI":
-            add_deployment_form()  # This function needs to be defined elsewhere in your code.
+            add_deployment_aoai_form()  # This function needs to be defined elsewhere in your code.
         else:
             st.info("Other deployment options will be available soon.")
+
 
 def main() -> None:
     """

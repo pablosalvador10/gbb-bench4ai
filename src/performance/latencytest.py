@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-import backoff
 from dotenv import load_dotenv
 from tabulate import tabulate
 from termcolor import colored
@@ -23,8 +22,7 @@ from src.performance.messagegeneration import (BYOPMessageGenerator,
                                                RandomMessagesGenerator)
 from src.performance.utils import (count_tokens, detect_model_encoding,
                                    get_encoding_from_model_name,
-                                   split_list_into_variable_parts,
-                                   terminal_http_code)
+                                   split_list_into_variable_parts)
 from utils.ml_logging import get_logger
 
 load_dotenv()
@@ -514,7 +512,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
             self._handle_error(deployment_name, max_tokens, None, "-99")
 
     def _handle_error(
-        self, deployment_name: str, max_tokens: int, time_taken: int, response
+        self, deployment_name: str, max_tokens: int, time_taken: int, code: str
     ):
         """
         Handles errors encountered during API calls and logs the details.
@@ -552,16 +550,16 @@ class AzureOpenAIBenchmarkLatency(ABC):
         self.results[key]["errors"]["count"] += 1
         self.results[key]["number_of_iterations"] += 1
         self.results[key]["ttlt_unsucessfull"].append(time_taken)
-        if response is not None:
-            if response == "-99":
-                logger.error(
-                    "Error during API call: No captured time, test client error"
-                )
-                self.results[key]["errors"]["codes"].append("-99")
-            self.results[key]["errors"]["codes"].append(response.status)
-            logger.error(f"Error during API call: {response.text}")
+        if code == "-99":
+            logger.error("Error during API call: No captured time, test client error")
+            self.results[key]["errors"]["codes"].append("-99")
+        elif code == "-100":
+            logger.error(
+                "Timeout error during API call: The request took too long to complete."
+            )
+            self.results[key]["errors"]["codes"].append("-100")
         else:
-            logger.error("Error during API call: Unknown error")
+            self.results[key]["errors"]["codes"].append(code)
 
     def _calculate_statistics(self, data: Dict) -> Dict:
         """
@@ -768,13 +766,6 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
         self.results = {}
         self.is_streaming = False
 
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientError,
-        jitter=backoff.full_jitter,
-        max_tries=MAX_RETRY_ATTEMPTS,
-        giveup=terminal_http_code,
-    )
     async def make_call(
         self,
         deployment_name: str,
@@ -837,38 +828,80 @@ class AzureOpenAIBenchmarkNonStreaming(AzureOpenAIBenchmarkLatency):
         )
         async with aiohttp.ClientSession() as session:
             start_time = time.perf_counter()
-            response = await session.post(
-                url, headers=headers, json=body, timeout=timeout
-            )
-            end_time = time.perf_counter()
-            time_taken = end_time - start_time
-            if response.status != 200:
-                if response.status == 429:
-                    if RETRY_AFTER_MS_HEADER in response.headers:
-                        retry_after_str = response.headers[RETRY_AFTER_MS_HEADER]
-                        retry_after_ms = float(retry_after_str)
-                        logger.debug(f"retry-after sleeping for {retry_after_ms}ms")
-                        await asyncio.sleep(retry_after_ms / 1000.0)
-                logger.error(f"Error during API call: {response.text}")
-                logger.error(f"Exception type: {response.status}")
+            try:
+                response = await session.post(
+                    url, headers=headers, json=body, timeout=timeout
+                )
+                end_time = time.perf_counter()
+                time_taken = end_time - start_time
+                if response.status != 200:
+                    if response.status == 429:
+                        if RETRY_AFTER_MS_HEADER in response.headers:
+                            retry_after_str = response.headers[RETRY_AFTER_MS_HEADER]
+                            retry_after_ms = float(retry_after_str)
+                            logger.info(f"retry-after sleeping for {retry_after_ms}ms")
+                            await asyncio.sleep(retry_after_ms / 1000.0)
+                    logger.error(
+                        f"Unsuccessful Run - Error {response.status}: {response.text} - Time taken: {time_taken:.2f} seconds. Traceback: {traceback.format_exc()}"
+                    )
+                    self._handle_error(
+                        deployment_name,
+                        max_tokens,
+                        round(time_taken, 2),
+                        response.status,
+                    )
+                else:
+                    response_headers = response.headers
+                    response_body = await response.json()
+                    headers = extract_rate_limit_and_usage_info_async(
+                        response_headers, response_body
+                    )
+                    headers["tbt"] = round(
+                        time_taken / headers.get("completion_tokens", 1), 2
+                    )
+                    headers["ttft"] = round(time_taken, 2)
+                    self._store_results(
+                        deployment_name, max_tokens, headers, time_taken
+                    )
+                    logger.info(
+                        f"Succesful Run - Time taken: {time_taken:.2f} seconds."
+                    )
+                    return response_body["choices"][0]["message"]["content"]
+            except aiohttp.ClientError as e:
+                end_time = time.perf_counter()
+                time_taken = end_time - start_time
+                logger.error(f"Error during API call: {str(e)}")
+                logger.error(f"Exception type: {type(e).__name__}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                # FIXME: This is a temporary fix to handle the case where the status code is not available in the exception object
+                status_code = getattr(e, "status", -99)
+                self._handle_error(
+                    deployment_name,
+                    max_tokens,
+                    round(time_taken, 2),
+                    type(e).__name__,
+                    status_code,
+                )
+                logger.error(
+                    f"Unsuccessful Run - Error {type(e).__name__}: {str(e)} - Time taken: {time_taken:.2f} seconds. Traceback: {traceback.format_exc()}"
+                )
+            except asyncio.TimeoutError:
+                end_time = time.perf_counter()
+                time_taken = end_time - start_time
+                logger.error(f"Timeout error after {time_taken:.2f} seconds.")
+                self._handle_error(deployment_name, max_tokens, time_taken, "-100")
+            except Exception as e:
+                end_time = time.perf_counter()
+                time_taken = end_time - start_time
+                logger.error(f"Unexpected error: {str(e)}")
+                logger.error(f"Exception type: {type(e).__name__}")
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 self._handle_error(
-                    deployment_name, max_tokens, round(time_taken, 2), response
+                    deployment_name, max_tokens, round(time_taken, 2), type(e).__name__
                 )
-                logger.info(f"Unsuccesful Run - Time taken: {time_taken:.2f} seconds.")
-            else:
-                response_headers = response.headers
-                response_body = await response.json()
-                headers = extract_rate_limit_and_usage_info_async(
-                    response_headers, response_body
+                logger.error(
+                    f"Unsuccessful Run - Error {type(e).__name__}: {str(e)} - Time taken: {time_taken:.2f} seconds. Traceback: {traceback.format_exc()}"
                 )
-                headers["tbt"] = round(
-                    time_taken / headers.get("completion_tokens", 1), 2
-                )
-                headers["ttft"] = round(time_taken, 2)
-                self._store_results(deployment_name, max_tokens, headers, time_taken)
-                logger.info(f"Succesful Run - Time taken: {time_taken:.2f} seconds.")
-                return response_body["choices"][0]["message"]["content"]
 
 
 class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
@@ -887,13 +920,6 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         super().__init__(api_key, azure_endpoint, api_version)
         self.is_streaming = True
 
-    @backoff.on_exception(
-        backoff.expo,
-        aiohttp.ClientError,
-        jitter=backoff.full_jitter,
-        max_tries=MAX_RETRY_ATTEMPTS,
-        giveup=terminal_http_code,
-    )
     async def make_call(
         self,
         deployment_name: str,
@@ -908,27 +934,8 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> Optional[str]:
-        """
-        Asynchronously makes a chat completion call to the Azure OpenAI API and logs the time taken for the call.
-
-        This method is designed to handle asynchronous API calls to the Azure OpenAI service, utilizing exponential backoff with full jitter for retry logic in case of client errors. It supports a wide range of parameters to customize the chat completion request, including the ability to prevent server caching, control diversity via nucleus sampling, and adjust the likelihood of new words based on their presence or frequency in the text so far.
-
-        :param deployment_name: Name of the model deployment to use for generating completions.
-        :param max_tokens: Maximum number of tokens to generate in the completion.
-        :param temperature: Controls randomness in generation, with 0 being deterministic. Defaults to 0.0.
-        :param timeout: Timeout for the API call in seconds. Defaults to 120 seconds to accommodate longer processing times.
-        :param prompt: Initial text to generate completions for. If None, an empty string is assumed.
-        :param context_tokens: Number of context tokens to consider for generating completions. If not provided, a default value is used.
-        :param prevent_server_caching: If True, modifies the prompt in a way to prevent server-side caching of the request. Defaults to True.
-        :param top_p: Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Defaults to 1.0.
-        :param n: Number of completions to generate for each prompt. Defaults to 1.
-        :param presence_penalty: Adjusts the likelihood of new words based on their presence in the text so far. Defaults to 0.0.
-        :param frequency_penalty: Adjusts the likelihood of new words based on their frequency in the text so far. Defaults to 0.0.
-        :param stop_sequences: A list of strings where the API should stop generating further tokens. Useful for defining natural endpoints in generated text.
-
-        The method handles client errors by retrying the request using an exponential backoff strategy with full jitter to mitigate the impact of retry storms. It gives up on retrying if the error code is terminal (400, 401, 403, 404, 429, 500), indicating that further attempts are unlikely to succeed.
-        """
         url = f"{self.azure_endpoint}/openai/deployments/{deployment_name}/chat/completions?api-version={self.api_version}"
+
         if context_tokens is None:
             logger.info(
                 "As no context was provided, 1000 tokens were added as average workloads."
@@ -944,7 +951,7 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         headers = {
             "Content-Type": "application/json",
             "api-key": self.api_key,
-            TELEMETRY_USER_AGENT_HEADER: USER_AGENT,
+            "x-ms-useragent": "latency-benchmark",
         }
 
         body = {
@@ -961,96 +968,190 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
         encoding = get_encoding_from_model_name(deployment_name)
         final_text_response = ""
         region = None
+
         logger.info(
             f"Starting call to model {deployment_name} with max tokens {max_tokens} at (Local time): {datetime.now()}, (GMT): {datetime.now(timezone.utc)}"
         )
+
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url, headers=headers, json=body, timeout=timeout
-            ) as response:
-                if region is None:
-                    region = response.headers.get("x-ms-region", "N/A")
-                start_time = time.perf_counter()
-                if response.status != 200:
-                    end_time = time.perf_counter()
-                    time_taken = end_time - start_time
-                    if response.status == 429:
-                        retry_after_str = response.headers.get(
-                            RETRY_AFTER_MS_HEADER, "6000"
-                        )  # Default to 1 second if header is missing
-                        retry_after_ms = float(retry_after_str)
-                        logger.debug(
-                            f"429 Too Many Requests: retry-after sleeping for {retry_after_ms}ms"
+            start_time = time.perf_counter()
+            try:
+                async with session.post(
+                    url, headers=headers, json=body, timeout=timeout
+                ) as response:
+                    if region is None:
+                        region = response.headers.get("x-ms-region", "N/A")
+                    if response.status != 200:
+                        await self.handle_error_response(
+                            response, deployment_name, max_tokens, start_time
                         )
-                        await asyncio.sleep(retry_after_ms / 1000.0)
-                    logger.error(f"Error during API call: {await response.text()}")
-                    logger.error(f"Exception type: {response.status}")
-                    logger.error(f"Traceback: {traceback.format_exc()}")
-                    logger.error(
-                        f"APIM Request ID: {response.headers.get('apim-request-id', 'N/A')}"
-                    )
-                    self._handle_error(
-                        deployment_name, max_tokens, time_taken, response
-                    )
-                    return None
-                else:
+                        return None
+
                     prev_end_time = start_time
-                    token_generation_count = 0
                     first_token_time = None
                     token_times = []
+
                     async for line in response.content:
                         chunk = line.decode("utf-8").rstrip()
-                        if chunk:
-                            if chunk.startswith("data: "):
-                                json_string = chunk[6:]
-                                if json_string:
-                                    try:
-                                        data = json.loads(json_string)
-                                        if "choices" in data and data["choices"]:
-                                            event_text = (
-                                                data["choices"][0]
-                                                .get("delta", {})
-                                                .get("content", "")
+                        if chunk and chunk.startswith("data: "):
+                            json_string = chunk[6:]
+                            if json_string:
+                                try:
+                                    data = json.loads(json_string)
+                                    if "choices" in data and data["choices"]:
+                                        event_text = (
+                                            data["choices"][0]
+                                            .get("delta", {})
+                                            .get("content", "")
+                                        )
+                                        if event_text:
+                                            end_time = time.perf_counter()
+                                            time_taken = end_time - prev_end_time
+                                            prev_end_time = end_time
+                                            if first_token_time is None:
+                                                first_token_time = time_taken
+                                            token_times.append(time_taken)
+                                            final_text_response += event_text
+                                            utilization = response.headers.get(
+                                                "azure-openai-deployment-utilization",
+                                                "N/A",
                                             )
-                                            if event_text:
-                                                end_time = time.perf_counter()
-                                                time_taken = end_time - prev_end_time
-                                                prev_end_time = end_time
-                                                if first_token_time is None:
-                                                    first_token_time = time_taken
-                                                token_times.append(time_taken)
-                                                final_text_response += event_text
-                                    except json.JSONDecodeError as e:
-                                        logger.error(f"Error decoding JSON: {e}")
+                                except json.JSONDecodeError as e:
+                                    logger.error(f"Error decoding JSON: {e}")
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                await self.handle_exception(e, deployment_name, max_tokens, start_time)
+                return None
+
         end_time = time.perf_counter()
+        await self.process_response(
+            end_time,
+            deployment_name,
+            max_tokens,
+            final_text_response,
+            token_times,
+            context_num_tokens,
+            start_time,
+            region,
+            encoding,
+            utilization,
+        )
+        return final_text_response
+
+    async def handle_error_response(
+        self,
+        response: aiohttp.ClientResponse,
+        deployment_name: str,
+        max_tokens: int,
+        start_time: float,
+    ):
+        """
+        Handles errors that occur during the API call.
+
+        :param response: The aiohttp ClientResponse object.
+        :param deployment_name: The name of the deployment.
+        :param max_tokens: The maximum number of tokens.
+        :param start_time: The start time of the API call.
+        """
+        end_time = time.perf_counter()
+        time_taken = end_time - start_time
+        if response.status == 429:
+            retry_after_str = response.headers.get(RETRY_AFTER_MS_HEADER, "6000")
+            retry_after_ms = float(retry_after_str)
+            logger.debug(
+                f"429 Too Many Requests: retry-after sleeping for {retry_after_ms}ms"
+            )
+            await asyncio.sleep(retry_after_ms / 1000.0)
+        logger.error(f"Error during API call: {await response.text()}")
+        logger.error(f"Exception type: {response.status}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        logger.error(
+            f"APIM Request ID: {response.headers.get('apim-request-id', 'N/A')}"
+        )
+        self._handle_error(deployment_name, max_tokens, time_taken, response)
+
+    async def handle_exception(
+        self,
+        exception: Exception,
+        deployment_name: str,
+        max_tokens: int,
+        start_time: float,
+    ):
+        """
+        Handles exceptions that occur during the API call.
+
+        :param exception: The exception that occurred.
+        :param deployment_name: The name of the deployment.
+        :param max_tokens: The maximum number of tokens.
+        :param start_time: The start time of the API call.
+        """
+        end_time = time.perf_counter()
+        time_taken = end_time - start_time
+        if isinstance(exception, asyncio.TimeoutError):
+            logger.error(f"Timeout error after {time_taken:.2f} seconds.")
+            self._handle_error(deployment_name, max_tokens, time_taken, "-100")
+        elif isinstance(exception, aiohttp.ClientError):
+            logger.error(f"Client error: {str(exception)}")
+            logger.error(f"Exception type: {type(exception).__name__}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            self._handle_error(
+                deployment_name, max_tokens, time_taken, type(exception).__name__
+            )
+        else:
+            logger.error(f"Unexpected error: {str(exception)}")
+            logger.error(f"Exception type: {type(exception).__name__}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            self._handle_error(
+                deployment_name, max_tokens, time_taken, type(exception).__name__
+            )
+
+    async def process_response(
+        self,
+        end_time: float,
+        deployment_name: str,
+        max_tokens: int,
+        final_text_response: str,
+        token_times: List[float],
+        context_num_tokens: int,
+        start_time: float,
+        region: Optional[str],
+        encoding: Any,
+        utilization: Optional[str],
+    ):
+        """
+        Processes the API response and logs the results.
+
+        :param deployment_name: The name of the deployment.
+        :param max_tokens: The maximum number of tokens.
+        :param final_text_response: The final text response from the API.
+        :param token_times: The list of token generation times.
+        :param context_num_tokens: The number of context tokens.
+        :param start_time: The start time of the API call.
+        :param region: The region of the API call.
+        :param encoding: The encoding used for the model.
+        """
         total_time_taken = end_time - start_time
         token_times = [
-            max(round(time_taken * 1000, 2), 1) for time_taken in token_times
-        ]
-        token_generation_count = token_generation_count + count_tokens(
-            encoding, final_text_response
-        )
+            max(round(time_taken * 1000, 2), 1) / 1000 for time_taken in token_times
+        ]  # Convert to seconds
+        token_generation_count = count_tokens(encoding, final_text_response)
         logger.info(
             f"Finished call to model {deployment_name}. Time taken for chat: {round(total_time_taken, 2)} seconds or {round(total_time_taken * 1000, 2)} milliseconds."
         )
 
         if token_times:
             TBT = token_times[1:]
-            TTFT = first_token_time
+            TTFT = token_times[0] if token_times else None
 
             headers_dict = {
                 "completion_tokens": token_generation_count,
                 "prompt_tokens": context_num_tokens,
                 "region": region,
-                "utilization": response.headers.get(
-                    "azure-openai-deployment-utilization", "N/A"
-                ),
+                "utilization": utilization,
                 "tbt": TBT,
-                "ttft": round(TTFT, 2),
+                "ttft": round(TTFT, 2) if TTFT else None,
             }
             self._store_results(
                 deployment_name, max_tokens, headers_dict, round(total_time_taken, 2)
             )
-            return final_text_response
         else:
             self._handle_error(deployment_name, max_tokens, None, "-99")

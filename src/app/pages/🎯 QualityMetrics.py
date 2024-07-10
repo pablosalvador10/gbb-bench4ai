@@ -55,11 +55,11 @@ def load_default_deployment(
     }
 
 
-def add_deployment_form() -> None:
+def add_deployment_aoai_form() -> None:
     """
     Render the form to add a new Azure OpenAI deployment.
     """
-    with st.form("add_deployment_form"):
+    with st.form("add_deployment_aoai_form"):
         deployment_name = st.text_input(
             "Deployment id",
             help="Enter the deployment ID for Azure OpenAI.",
@@ -357,7 +357,7 @@ with st.sidebar:
             placeholder="Select a Benchmark",
         )
         if operation == "AOAI":
-            add_deployment_form()
+            add_deployment_aoai_form()
         else:
             st.info("Other deployment options will be available soon.")
 

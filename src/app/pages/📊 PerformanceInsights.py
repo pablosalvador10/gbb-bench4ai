@@ -1,10 +1,11 @@
 import asyncio
-import os
+from functools import reduce
 from typing import Any, Dict, List
 
 import dotenv
 import streamlit as st
 
+from src.app.benchmarkbuddy import configure_chatbot
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
 from src.app.latencydisplay import (create_latency_display_dataframe,
@@ -14,10 +15,8 @@ from src.app.latencydisplay import (create_latency_display_dataframe,
                                     display_latency_metrics,
                                     display_token_metrics)
 from src.app.latencysettings import configure_benchmark_settings
-from src.app.managers import (
-                              create_benchmark_non_streaming_client,
+from src.app.managers import (create_benchmark_non_streaming_client,
                               create_benchmark_streaming_client)
-from src.app.benchmarkbuddy import configure_chatbot
 from src.app.outputformatting import (download_ai_response_as_docx_or_pdf,
                                       download_chat_history)
 from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
@@ -43,6 +42,7 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
     for var in vars:
         if var not in st.session_state:
             st.session_state[var] = initial_values.get(var, None)
+
 
 session_vars = [
     "conversation_history",
@@ -93,6 +93,7 @@ st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="�
 
 initialize_session_state(session_vars, initial_values)
 
+
 def configure_sidebar() -> None:
     """
     Configure the sidebar with benchmark Center and deployment forms.
@@ -115,7 +116,9 @@ def configure_sidebar() -> None:
         )
 
         if operation == "Latency":
-            tab1, tab2, tab3 = st.sidebar.tabs(["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"])
+            tab1, tab2, tab3 = st.sidebar.tabs(
+                ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
+            )
 
             with tab1:
                 configure_benchmark_settings()
@@ -123,7 +126,8 @@ def configure_sidebar() -> None:
                 configure_chatbot()
             with tab3:
                 with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
-                    st.markdown('''       
+                    st.markdown(
+                        """       
                         To fully activate and utilize BenchmarkAI Buddy, 
                         please go under benchmark center and buddy setting follow these simple steps:
                     
@@ -137,7 +141,8 @@ def configure_sidebar() -> None:
                         2. **Configure Chatbot Behavior**:
                             - After adding your GPT model, go to "Benchmark Settings".
                             - Adjust settings to fine-tune the chatbot's responses and behavior.
-                        ''')
+                        """
+                    )
                 with st.expander("⏱️ Latency Benchmark", expanded=False):
                     st.markdown(
                         """
@@ -158,9 +163,9 @@ def display_code_setting_sdk(deployment_names) -> None:
     code = f"""
     from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 
-    API_KEY = {st.session_state["deployments"][deployment_names[0]]["key"]}
-    ENDPOINT = {st.session_state["deployments"][deployment_names[0]]["endpoint"]}
-    API_VERSION = {st.session_state["deployments"][deployment_names[0]]["version"]}
+    API_KEY = "YOUR_API_KEY"
+    ENDPOINT = "YOUR_ENDPOINT"
+    API_VERSION = "YOUR_API_VERSION"
 
     # Create benchmark clients
     client_NonStreaming = AzureOpenAIBenchmarkNonStreaming(API_KEY,ENDPOINT,API_VERSION)
@@ -182,6 +187,9 @@ def display_code_setting_sdk(deployment_names) -> None:
 
     st.markdown("##### Test Settings")
     st.code(code, language="python")
+    st.markdown(
+        "More details on the SDK can be found [here](https://github.com/pablosalvador10/gbb-ai-upgrade-llm)."
+    )
 
 
 def display_human_readable_settings(deployment_names, results) -> None:
@@ -227,42 +235,29 @@ def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) 
             display_human_readable_settings(deployment_names, results)
 
 
-async def run_benchmark_tests(
-    test_status_placeholder: st.container,
-) -> None:
+async def run_benchmark_tests(test_status_placeholder: st.container) -> None:
     """
     Run the benchmark tests asynchronously, with detailed configuration for each test.
 
-    :param summary_placeholder: Streamlit placeholder for the summary information.
     :param test_status_placeholder: Streamlit placeholder for the test status.
-    :param max_tokens_list: List of maximum tokens to use in each request.
-    :param num_iterations: Number of iterations to run each benchmark test.
-    :param context_tokens: Number of tokens to use as context for each request.
-    :param temperature: Sampling temperature to use for each request.
-    :param prompts: List of prompts to use for BYOP (Bring Your Own Prompt) tests.
-    :param prevent_server_caching: Flag to prevent server-side caching of responses.
-    :param timeout: Timeout in seconds for each request.
-    :param top_p: Top-p sampling parameter to use for each request.
-    :param presence_penalty: Presence penalty parameter to use for each request.
-    :param frequency_penalty: Frequency penalty parameter to use for each request.
     """
-    try:
-        deployment_clients = [
-            (
-                create_benchmark_streaming_client(
-                    deployment["key"], deployment["endpoint"], deployment["version"]
-                )
-                if deployment["stream"]
-                else create_benchmark_non_streaming_client(
-                    deployment["key"], deployment["endpoint"], deployment["version"]
-                ),
-                deployment_name,
+    deployment_clients = [
+        (
+            create_benchmark_streaming_client(
+                deployment["key"], deployment["endpoint"], deployment["version"]
             )
-            for deployment_name, deployment in st.session_state.deployments.items()
-        ]
+            if deployment["stream"]
+            else create_benchmark_non_streaming_client(
+                deployment["key"], deployment["endpoint"], deployment["version"]
+            ),
+            deployment_name,
+        )
+        for deployment_name, deployment in st.session_state.deployments.items()
+    ]
 
-        tasks = [
-            client.run_latency_benchmark_bulk(
+    async def safe_run(client, deployment_name):
+        try:
+            await client.run_latency_benchmark_bulk(
                 deployment_names=[deployment_name],
                 max_tokens_list=st.session_state["settings"]["max_tokens_list"],
                 iterations=st.session_state["settings"]["num_iterations"],
@@ -278,11 +273,19 @@ async def run_benchmark_tests(
                 presence_penalty=st.session_state["settings"]["presence_penalty"],
                 frequency_penalty=st.session_state["settings"]["frequency_penalty"],
             )
-            for client, deployment_name in deployment_clients
-        ]
+        except Exception as e:
+            logger.error(
+                f"An error occurred with deployment '{deployment_name}': {str(e)}",
+                exc_info=True,
+            )
+            st.error(f"An error occurred with deployment '{deployment_name}': {str(e)}")
 
-        await asyncio.gather(*tasks)
+    logger.info(f"Total number of deployment clients: {len(deployment_clients)}")
 
+    for client, deployment_name in deployment_clients:
+        await safe_run(client, deployment_name)
+
+    try:
         stats = [
             client.calculate_and_show_statistics() for client, _ in deployment_clients
         ]
@@ -298,8 +301,10 @@ async def run_benchmark_tests(
             unsafe_allow_html=True,
         )
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        st.stop()
+        logger.error(
+            f"An error occurred while processing the results: {str(e)}", exc_info=True
+        )
+        st.error(f"An error occurred while processing the results: {str(e)}")
 
 
 def display_latency_results(
@@ -375,7 +380,7 @@ def display_latency_results(
         with tab5:
             display_best_and_worst_run_analysis(df)
 
-        combined_stats = {key: val for stat in stats for key, val in stat.items()}
+        combined_stats = reduce(lambda a, b: {**a, **b}, stats, {})
 
         # TIP: The following line is a dictionary comprehension that combines the stats from single runs into a single dictionary.
         # combined_stats_raw = {key: val for stat in stats_raw for key, val in stat.items()}
@@ -386,18 +391,24 @@ def display_latency_results(
         visualizer.parse_data()
 
         # Create tabs for each plot
-        tab1_viz, tab2_viz, tab3_viz = st.tabs(
-            ["Completion Tokens", "Prompt Tokens", "Response Time Metrics"]
+        tab1_viz, tab2_viz, tab3_viz, tab4_viz = st.tabs(
+            [
+                "Response Time Metrics",
+                "Prompt Tokens",
+                "Completion Tokens",
+                "Best Vs Worst Run",
+            ]
         )
 
         # Completion Tokens Plot
         with tab1_viz:
             try:
                 st.plotly_chart(
-                    visualizer.plot_completion_tokens(), use_container_width=True
+                    visualizer.plot_response_time_metrics_comparison(),
+                    use_container_width=True,
                 )
             except Exception as e:
-                st.error(f"Error generating Completion Tokens plot: {e}")
+                st.error(f"Error generating Response Time Metrics plot: {e}")
 
         # Prompt Tokens Plot
         with tab2_viz:
@@ -412,7 +423,15 @@ def display_latency_results(
         with tab3_viz:
             try:
                 st.plotly_chart(
-                    visualizer.plot_response_time_metrics_comparison(),
+                    visualizer.plot_completion_tokens(), use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Error generating Completion Tokens plot: {e}")
+
+        with tab4_viz:
+            try:
+                st.plotly_chart(
+                    visualizer.plot_best_worst_runs(),
                     use_container_width=True,
                 )
             except Exception as e:
@@ -469,7 +488,7 @@ def initialize_chatbot() -> None:
         "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
         unsafe_allow_html=True,
     )
-    
+
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "messages" not in st.session_state:
@@ -491,8 +510,10 @@ def initialize_chatbot() -> None:
     # User input for feedback or additional instructions
     warning_issue = st.empty()
     if "azure_openai_manager" not in st.session_state:
-        warning_issue.warning("Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️")   
-    
+        warning_issue.warning(
+            "Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️"
+        )
+
     prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
     if prompt:
         prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
@@ -522,8 +543,12 @@ def initialize_chatbot() -> None:
                     ],
                     temperature=st.session_state["settings_buddy"]["temperature"],
                     max_tokens=st.session_state["settings_buddy"]["max_tokens"],
-                    presence_penalty=st.session_state["settings_buddy"]["presence_penalty"],
-                    frequency_penalty=st.session_state["settings_buddy"]["frequency_penalty"],
+                    presence_penalty=st.session_state["settings_buddy"][
+                        "presence_penalty"
+                    ],
+                    frequency_penalty=st.session_state["settings_buddy"][
+                        "frequency_penalty"
+                    ],
                     seed=555,
                     stream=True,
                 )
