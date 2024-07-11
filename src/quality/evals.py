@@ -244,7 +244,7 @@ class MMLU(Eval):
 
         return output
 
-    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
+    def test(self, data: pd.DataFrame) -> pd.DataFrame:
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
@@ -343,7 +343,7 @@ class PubMedQA(Eval):
 
         return output
 
-    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
+    def test(self, data: pd.DataFrame) -> pd.DataFrame:
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
@@ -434,7 +434,7 @@ class TruthfulQA(Eval):
 
         return output
 
-    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
+    def test(self, data: pd.DataFrame) -> pd.DataFrame:
         output_list = []
         self.logger.info("Starting evaluation")
         for index, row in data.iterrows():
@@ -537,7 +537,7 @@ class CustomEval(Eval):
         logging.debug(f"custom score row: {row.keys()}")
         return row
 
-    async def test(self, data: pd.DataFrame) -> pd.DataFrame:
+    def test(self, data: pd.DataFrame) -> pd.DataFrame:
         output_list = []
         self.logger.info("Starting custom evaluation")
         for index, row in data.iterrows():

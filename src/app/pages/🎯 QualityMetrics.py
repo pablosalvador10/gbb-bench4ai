@@ -7,8 +7,10 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from multiprocessing import Pool, cpu_count
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 from utils.ml_logging import get_logger
+from functools import partial
 
 
 def initialize_session_state(defaults: Dict[str, Any]) -> None:
@@ -175,9 +177,61 @@ def display_deployments() -> None:
 
 
 # Function to get the task list for the selected benchmark
-def get_task_list(test: str = None):
-    objects = []
+def run_test_for_deployment(deployment_config: Dict, test: str = None):
 
+    if test == "mmlu":
+        obj = MMLU(
+            deployment_config=deployment_config,
+            sample_size=mmlu_subsample / 100,
+            log_level="INFO",
+            categories=mmlu_categories,
+        )
+        data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
+        data = obj.transform_data(df=data)
+        return obj.test(data)
+    if test == "medpub":
+        obj = PubMedQA(
+            deployment_config=deployment_config,
+            sample_size=medpub_subsample / 100,
+            log_level="ERROR",
+        )
+        data = obj.load_data(
+            dataset="qiaojin/PubMedQA",
+            subset="pqa_labeled",
+            split="train",
+            flatten=True,
+        )
+        data = obj.transform_data(df=data)
+        return obj.test(data)
+    if test == "truthfulqa":
+        obj = TruthfulQA(
+            deployment_config=deployment_config,
+            sample_size=truthful_subsample / 100,
+            log_level="ERROR",
+        )
+        data = obj.load_data(
+            dataset="truthful_qa", subset="multiple_choice", split="validation"
+        )
+        data = obj.transform_data(df=data)
+        return obj.test(data)
+    if test == "custom":
+        obj = CustomEval(
+            deployment_config=deployment_config,
+            metrics_list=custom_metrics,
+            sample_size=custom_subsample / 100,
+            log_level="ERROR",
+        )
+        data = obj.transform_data(df=custom_df)
+        return obj.test(data)
+
+
+    return None
+
+
+# Define an asynchronous function to run benchmark tests and log progress
+def run_benchmark_tests():
+
+    deployment_configs = []
     for deployment_name, deployment in st.session_state.deployments.items():
         deployment_config = {
             "key": deployment.get("key"),
@@ -185,127 +239,70 @@ def get_task_list(test: str = None):
             "model": deployment_name,
             "version": deployment.get("version"),
         }
-        if test == "mmlu":
-            obj = MMLU(
-                deployment_config=deployment_config,
-                sample_size=mmlu_subsample / 100,
-                log_level="INFO",
-                categories=mmlu_categories,
-            )
-            data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
-            data = obj.transform_data(df=data)
-        if test == "medpub":
-            obj = PubMedQA(
-                deployment_config=deployment_config,
-                sample_size=medpub_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="qiaojin/PubMedQA",
-                subset="pqa_labeled",
-                split="train",
-                flatten=True,
-            )
-            data = obj.transform_data(df=data)
-        if test == "truthfulqa":
-            obj = TruthfulQA(
-                deployment_config=deployment_config,
-                sample_size=truthful_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="truthful_qa", subset="multiple_choice", split="validation"
-            )
-            data = obj.transform_data(df=data)
-        if test == "custom":
-            obj = CustomEval(
-                deployment_config=deployment_config,
-                metrics_list=custom_metrics,
-                sample_size=custom_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.transform_data(df=custom_df)
+        deployment_configs.append(deployment_config)
+    
+    results = []
+    if mmlu_select:
+        pool = Pool(processes=cpu_count() - 1)
+        mmlu_stats = pool.map(partial(run_test_for_deployment, test="mmlu"), deployment_configs)
+        mmlu_results = pd.concat(mmlu_stats)
+        logger.debug(f"MMLU results: {mmlu_results}")
 
-        objects.append(obj)
+        batch_c.markdown("#### MMLU Results")
+        batch_c.write(f"Subsample: {mmlu_subsample}% of each category")
+        batch_c.write(f"Categories: {str(mmlu_categories)}")
+        batch_c.dataframe(mmlu_results.drop("test", axis=1), hide_index=True)
+        results.append(mmlu_results)
 
-    tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
-    return tasks
+    if medpub_select:
+        pool = Pool(processes=cpu_count() - 1)
+        medpub_stats = pool.map(partial(run_test_for_deployment, test="medpub"), deployment_configs)
+        medpub_results = pd.concat(medpub_stats)
+        logger.debug(f"MedPub results: {medpub_results}")
 
+        batch_c.markdown("#### MedPub QA Results")
+        batch_c.write(f"Subsample: {medpub_subsample}%")
+        batch_c.dataframe(medpub_results.drop("test", axis=1), hide_index=True)
+        results.append(medpub_results)
 
-# Define an asynchronous function to run benchmark tests and log progress
-async def run_benchmark_tests():
-    try:
-        results = []
+    if truthful_select:
+        pool = Pool(processes=cpu_count() - 1)
+        truthful_stats = pool.map(partial(run_test_for_deployment, test="truthfulqa"), deployment_configs)
+        truthful_results = pd.concat(truthful_stats)
+        logger.debug(f"Truthful QA results: {truthful_results}")
 
-        # TODO: Load and transoform data here. Pass data to the async test call.
+        batch_c.markdown("#### Truthful QA Results")
+        batch_c.write(f"Subsample: {truthful_subsample}%")
+        batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
+        results.append(truthful_results)
+        
+    if custom_select:
+        pool = Pool(processes=cpu_count() - 1)
+        custom_stats = pool.map(partial(run_test_for_deployment, test="custom"), deployment_configs)
+        custom_results = pd.concat(custom_stats)
 
-        if mmlu_select:
-            mmlu_tasks = get_task_list(test="mmlu")
-            mmlu_stats = await asyncio.gather(*mmlu_tasks)
-            mmlu_results = pd.concat(mmlu_stats)
-
-            batch_c.markdown("#### MMLU Results")
-            batch_c.write(f"Subsample: {mmlu_subsample}% of each category")
-            batch_c.write(f"Categories: {str(mmlu_categories)}")
-            batch_c.dataframe(mmlu_results.drop("test", axis=1), hide_index=True)
-            results.append(mmlu_results)
-
-        if medpub_select:
-            logger.info("Running MedPub QA benchmark")
-            medpub_tasks = get_task_list(test="medpub")
-            medpub_stats = await asyncio.gather(*medpub_tasks)
-            medpub_results = pd.concat(medpub_stats)
-
-            batch_c.markdown("#### MedPub QA Results")
-            batch_c.write(
-                f"Sample Size: {int((medpub_subsample/100)*1000)} ({medpub_subsample}% of 1,000 samples)"
-            )
-            batch_c.dataframe(medpub_results.drop("test", axis=1), hide_index=True)
-            results.append(medpub_results)
-
-        if truthful_select:
-            logger.info("Running Truthful QA benchmark")
-            truthful_tasks = get_task_list(test="truthfulqa")
-            truthful_stats = await asyncio.gather(*truthful_tasks)
-            truthful_results = pd.concat(truthful_stats)
-
-            batch_c.markdown("#### Truthful QA Results")
-            batch_c.write(
-                f"Sample Size: {int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)"
-            )
-            batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
-            results.append(truthful_results)
-
-        if custom_select:
-            logger.info("Running Custom Evaluation")
-            custom_tasks = get_task_list(test="custom")
-            custom_stats = await asyncio.gather(*custom_tasks)
-            custom_results = pd.concat(custom_stats)
-
-            batch_c.markdown("#### Custom Evaluation Results")
-            batch_c.write(
-                f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)"
-            )
-            batch_c.dataframe(custom_results, hide_index=True)
-            results.append(custom_results)
-
-        results_df = pd.concat(results)
-
-        results_c.markdown("## Benchmark Results")
-        fig = px.bar(
-            results_df,
-            x="overall_score",
-            y="test",
-            color="deployment",
-            barmode="group",
-            orientation="h",
+        batch_c.markdown("#### Custom Evaluation Results")
+        batch_c.write(
+            f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)"
         )
-        results_c.plotly_chart(fig)
-        top_bar.success("Benchmark tests completed successfully! 🎉")
-        # results_c.dataframe(results_df, hide_index=True)
+        batch_c.dataframe(custom_results, hide_index=True)
+        results.append(custom_results)
 
-    except Exception as e:
-        top_bar.error(f"An error occurred: {str(e)}")
+    results_df = pd.concat(results)
+
+    results_c.markdown("## Benchmark Results")
+    fig = px.bar(
+        results_df,
+        x="overall_score",
+        y="test",
+        color="deployment",
+        barmode="group",
+        orientation="h",
+    )
+    results_c.plotly_chart(fig)
+    top_bar.success("Benchmark tests completed successfully! 🎉")
+
+    return
 
 
 # Load environment variables
@@ -464,7 +461,7 @@ if run_benchmark:
         top_bar.warning(
             "Warning: Editing sidebar while benchmark is running will kill the job."
         )
-        asyncio.run(run_benchmark_tests())
+        run_benchmark_tests()
 
 else:
     top_bar.info("👈 Please configure the benchmark settings to begin.")
