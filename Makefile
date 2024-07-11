@@ -94,7 +94,6 @@ run_streamlit:
 streamlite_conf: 
 	streamlit config show
 
-
 ## Deployment App 
 
 # Use .ONESHELL to run all commands in a single shell instance
@@ -103,12 +102,10 @@ streamlite_conf:
 .PHONY: all
 all: build run
 
-
 .PHONY: build
 # Build the Docker image for the app using Azure Container Registry
 build: 
 	@bash devops/cicd/benchmarking_app/deployapp.sh build_and_push_container
-	
 
 .PHONY: run
 # Run the Docker container locally, mapping port 8501
@@ -122,7 +119,6 @@ login-acr:
 	az login
 	@echo "Logging in to Azure Container Registry..."
 	az acr login --name devcontainergenai
-
 
 # Target to create a container app in Azure, depending on setup-env to load .env variables
 create-container-app: setup-env
