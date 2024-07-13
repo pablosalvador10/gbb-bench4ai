@@ -8,20 +8,20 @@ import streamlit as st
 from src.app.benchmarkbuddy import configure_chatbot
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
-from src.app.latencydisplay import (create_latency_display_dataframe,
+from src.app.performance.latencydisplay import (create_latency_display_dataframe,
                                     display_best_and_worst_run_analysis,
                                     display_error_and_throttle_metrics,
                                     display_full_dataframe,
                                     display_latency_metrics,
                                     display_token_metrics)
-from src.app.latencysettings import configure_benchmark_settings
+from src.app.performance.latencysettings import configure_benchmark_settings
 from src.app.managers import (create_benchmark_non_streaming_client,
                               create_benchmark_streaming_client)
 from src.app.outputformatting import (download_ai_response_as_docx_or_pdf,
                                       download_chat_history)
 from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
                              prompt_message_ai_benchmarking_buddy_latency)
-from src.app.results import BenchmarkPerformanceResult
+from src.app.performance.results import BenchmarkPerformanceResult
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
 from utils.ml_logging import get_logger
 

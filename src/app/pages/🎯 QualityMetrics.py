@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import dotenv
 import pandas as pd
@@ -8,175 +8,157 @@ import plotly.express as px
 import streamlit as st
 
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
+from src.app.benchmarkbuddy import configure_chatbot
+from src.app.quality.llm_slm_settings import slm_llm_benchmark_configuration
 from utils.ml_logging import get_logger
+from src.app.Home import (create_benchmark_center, display_deployments,
+                          load_default_deployment)
+from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
+                             prompt_message_ai_benchmarking_buddy_latency)
 
+from src.app.quality.resources import display_resources
+from src.app.quality.displayquality import display_results
 
-def initialize_session_state(defaults: Dict[str, Any]) -> None:
+# Load environment variables
+dotenv.load_dotenv(".env")
+
+# Set up logger
+logger = get_logger()
+
+def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
     """
     Initialize Streamlit session state with default values if not already set.
 
-    Args:
-        defaults (Dict[str, Any]): Dictionary of default values.
+    :param vars: List of session state variable names.
+    :param initial_values: Dictionary of initial values for the session state variables.
     """
-    for var, value in defaults.items():
+    for var in vars:
         if var not in st.session_state:
-            st.session_state[var] = value
+            st.session_state[var] = initial_values.get(var, None)
 
 
-def load_default_deployment(
-    name: Optional[str] = None,
-    key: Optional[str] = None,
-    endpoint: Optional[str] = None,
-    version: Optional[str] = None,
-) -> None:
+session_vars = [
+    "conversation_history_quality",
+    "ai_response_quality",
+    "chat_history_quality",
+    "messages_quality",
+    "log_messages_quality",
+    "benchmark_results_quality",
+    "deployments",
+    "settings_quality",
+    "results_quality",
+    "disable_chatbot",
+]
+initial_values = {
+    "conversation_history_quality": [],
+    "ai_response_quality": "",
+    "chat_history_quality": [
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        }
+    ],
+    "messages_quality": [
+        {
+            "role": "system",
+            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        },
+    ],
+    "log_messages_quality": [],
+    "benchmark_results_quality": [],
+    "deployments": {},
+    "settings_quality": {},
+    "results_quality": {},
+    "disable_chatbot": True,
+}
+
+st.set_page_config(page_title="Quality Benchmarking", page_icon="🎯 ")
+
+initialize_session_state(session_vars, initial_values)
+
+# initialize metrics list
+metrics_list = ["Accuracy", "Answer Similarity"]
+context_metrics_list = ["Context Similarity"]
+
+def configure_sidebar() -> None:
     """
-    Load default deployment settings, optionally from provided parameters.
-    Ensures that a deployment with the same name does not already exist.
+    Configure the sidebar with benchmark Center and deployment forms, allowing users to choose between evaluating a Large Language Model (LLM) or a System based on LLM.
     """
-    # Ensure deployments is a dictionary
-    if "deployments" not in st.session_state or not isinstance(
-        st.session_state.deployments, dict
-    ):
-        st.session_state.deployments = {}
+    with st.sidebar:
+        st.markdown("## 🤖 Deployment Center ")
+        if st.session_state.deployments == {}:
+            load_default_deployment()
+        create_benchmark_center()
+        display_deployments()
 
-    # Check if the deployment name already exists
-    deployment_name = (
-        name if name else os.getenv("AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID")
-    )
-    if deployment_name in st.session_state.deployments:
-        return  # Exit the function if deployment already exists
+        st.sidebar.divider()
 
-    default_deployment = {
-        "name": deployment_name,
-        "key": key if key else os.getenv("AZURE_OPENAI_KEY"),
-        "endpoint": endpoint if endpoint else os.getenv("AZURE_OPENAI_API_ENDPOINT"),
-        "version": version if version else os.getenv("AZURE_OPENAI_API_VERSION"),
-        "stream": False,
-    }
+        st.markdown("## 🎛️ Benchmark Center")
+        operation = st.selectbox(
+            "Choose Your Evaluation Focus:",
+            ("LLM/SLM", "System"),
+            help="""Select the focus of your benchmark:
+                    - 'LLM' to evaluate the performance of a standalone Large Language Model. This includes metrics like accuracy, fluency, and coherence.
+                    - 'System' to assess an LLM-based system as a whole, considering aspects such as integration, latency, throughput, and user experience.""",
+            placeholder="Select a Focus",
+        )
 
+        if operation == "LLM/SLM":
+            tab1, tab2, tab3 = st.sidebar.tabs(
+                    ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
+                )
+            with tab1:
+                slm_llm_benchmark_configuration()
+            with tab2:
+                configure_chatbot()
+            with tab3:
+                with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
+                    st.markdown(
+                        """       
+                        To fully activate and utilize BenchmarkAI Buddy, 
+                        please go under benchmark center and buddy setting follow these simple steps:
+                    
+                        1. **Activate Your AOAI Model**:
+                            - Navigate to the "Add Your AOAI-model" section.
+                            - Fill in the "Deployment id" with your Azure OpenAI deployment ID.
+                            - Enter your "Azure OpenAI Key" for secure access.
+                            - Specify the "API Endpoint" where your Azure OpenAI is hosted.
+                            - Input the "API Version" to ensure compatibility.
 
-def add_deployment_aoai_form() -> None:
-    """
-    Render the form to add a new Azure OpenAI deployment.
-    """
-    with st.form("add_deployment_aoai_form"):
-        deployment_name = st.text_input(
-            "Deployment id",
-            help="Enter the deployment ID for Azure OpenAI.",
-            placeholder="e.g., chat-gpt-1234abcd",
-        )
-        deployment_key = st.text_input(
-            "Azure OpenAI Key",
-            help="Enter your Azure OpenAI key.",
-            type="password",
-            placeholder="e.g., sk-ab*****..",
-        )
-        deployment_endpoint = st.text_input(
-            "API Endpoint",
-            help="Enter the API endpoint for Azure OpenAI.",
-            placeholder="e.g., https://api.openai.com/v1",
-        )
-        deployment_version = st.text_input(
-            "API Version",
-            help="Enter the API version for Azure OpenAI.",
-            placeholder="e.g., 2024-02-15-preview",
-        )
-        is_streaming = st.radio(
-            "Streaming",
-            (True, False),
-            index=1,
-            format_func=lambda x: "Yes" if x else "No",
-            help="Select 'Yes' if the model will be tested with output in streaming mode.",
-        )
-        submitted = st.form_submit_button("Add Deployment")
-
-        if submitted:
-            if (
-                deployment_name
-                and deployment_key
-                and deployment_endpoint
-                and deployment_version
-            ):
-                if deployment_name not in st.session_state.deployments:
-                    st.session_state.deployments[deployment_name] = {
-                        "key": deployment_key,
-                        "endpoint": deployment_endpoint,
-                        "version": deployment_version,
-                        "stream": is_streaming,
-                    }
-                    st.success(f"Deployment '{deployment_name}' added successfully.")
-                else:
-                    st.error(
-                        f"A deployment with the name '{deployment_name}' already exists."
+                        2. **Configure Chatbot Behavior**:
+                            - After adding your GPT model, go to "Benchmark Settings".
+                            - Adjust settings to fine-tune the chatbot's responses and behavior.
+                        """
                     )
-            else:
-                st.error("Please fill in all fields.")
+                display_resources()
+        elif operation == "System":
+            st.warning(
+                "Throughput benchmarking is not available yet. Please select 'Latency'."
+            )
 
-
-def display_deployments() -> None:
-    """
-    Display and manage existing Azure OpenAI deployments.
-    """
-    if "deployments" in st.session_state:
-        st.markdown("#### Loaded AOAI Deployments")
-        for deployment_name, deployment in st.session_state.deployments.items():
-            with st.expander(deployment_name):
-                updated_name = st.text_input(
-                    "Name", value=deployment_name, key=f"name_{deployment_name}"
-                )
-                updated_key = st.text_input(
-                    "Key",
-                    value=deployment.get("key", ""),
-                    type="password",
-                    key=f"key_{deployment_name}",
-                )
-                updated_endpoint = st.text_input(
-                    "Endpoint",
-                    value=deployment.get("endpoint", ""),
-                    key=f"endpoint_{deployment_name}",
-                )
-                updated_version = st.text_input(
-                    "Version",
-                    value=deployment.get("version", ""),
-                    key=f"version_{deployment_name}",
-                )
-                updated_stream = st.radio(
-                    "Streaming",
-                    (True, False),
-                    format_func=lambda x: "Yes" if x else "No",
-                    index=0 if deployment.get("stream", False) else 1,
-                    key=f"stream_{deployment_name}",
-                    help="Select 'Yes' if the model will be tested with output in streaming mode.",
-                )
-
-                if st.button("Update Deployment", key=f"update_{deployment_name}"):
-                    if updated_name != deployment_name:
-                        st.session_state.deployments.pop(deployment_name)
-                        st.session_state.deployments[updated_name] = {
-                            "key": updated_key,
-                            "endpoint": updated_endpoint,
-                            "version": updated_version,
-                            "stream": updated_stream,
-                        }
-                    else:
-                        st.session_state.deployments[deployment_name] = {
-                            "key": updated_key,
-                            "endpoint": updated_endpoint,
-                            "version": updated_version,
-                            "stream": updated_stream,
-                        }
-                    st.rerun()
-
-                if st.button("Remove Deployment", key=f"remove_{deployment_name}"):
-                    del st.session_state.deployments[deployment_name]
-                    st.rerun()
-    else:
-        st.error("No deployments found. Please add a deployment in the sidebar.")
-
+top_bar = st.empty()
+results_c = st.container()
+batch_c = st.container()
 
 # Function to get the task list for the selected benchmark
 def get_task_list(test: str = None):
     objects = []
+
+        # Inside the get_task_list function, before creating objects
+    if "settings_quality" in st.session_state:
+        settings = st.session_state["settings_quality"]
+    else: 
+        st.error("No settings found in session state.")
 
     for deployment_name, deployment in st.session_state.deployments.items():
         deployment_config = {
@@ -186,6 +168,8 @@ def get_task_list(test: str = None):
             "version": deployment.get("version"),
         }
         if test == "mmlu":
+            mmlu_categories = settings.get("mmlu_categories", [])
+            mmlu_subsample = settings.get("mmlu_subsample", 100)
             obj = MMLU(
                 deployment_config=deployment_config,
                 sample_size=mmlu_subsample / 100,
@@ -195,6 +179,7 @@ def get_task_list(test: str = None):
             data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
             data = obj.transform_data(df=data)
         if test == "medpub":
+            medpub_subsample = settings.get("medpub_subsample", 100)
             obj = PubMedQA(
                 deployment_config=deployment_config,
                 sample_size=medpub_subsample / 100,
@@ -208,6 +193,7 @@ def get_task_list(test: str = None):
             )
             data = obj.transform_data(df=data)
         if test == "truthfulqa":
+            truthful_subsample = settings.get("truthful_subsample", 100)
             obj = TruthfulQA(
                 deployment_config=deployment_config,
                 sample_size=truthful_subsample / 100,
@@ -218,12 +204,16 @@ def get_task_list(test: str = None):
             )
             data = obj.transform_data(df=data)
         if test == "custom":
+            custom_metrics = settings.get("custom_benchmark", {}).get("metrics_list", [])
+            custom_subsample = settings.get("custom_subsample", 100)
+            custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
             obj = CustomEval(
                 deployment_config=deployment_config,
                 metrics_list=custom_metrics,
                 sample_size=custom_subsample / 100,
                 log_level="ERROR",
             )
+            custom_subsample = settings.get("custom_subsample", 100)
             data = obj.transform_data(df=custom_df)
 
         objects.append(obj)
@@ -236,367 +226,249 @@ def get_task_list(test: str = None):
 async def run_benchmark_tests():
     try:
         results = []
-
         # TODO: Load and transoform data here. Pass data to the async test call.
+        if "settings_quality" in st.session_state:
+            settings = st.session_state["settings_quality"]
+            if "benchmark_selection" in settings:
+                if "MMLU" in settings["benchmark_selection"]:
+                    mmlu_tasks = get_task_list(test="mmlu")
+                    mmlu_stats = await asyncio.gather(*mmlu_tasks)
+                    mmlu_results = pd.concat(mmlu_stats)
+                    mmlu_categories = settings.get("mmlu_categories", [])
+                    mmlu_subsample = settings.get("mmlu_subsample", 100)
+                    batch_c.markdown("#### MMLU Results")
+                    batch_c.write(f"Subsample: {mmlu_subsample}% of each category")
+                    batch_c.write(f"Categories: {str(mmlu_categories)}")
+                    batch_c.dataframe(mmlu_results.drop("test", axis=1), hide_index=True)
+                    results.append(mmlu_results)
 
-        if mmlu_select:
-            mmlu_tasks = get_task_list(test="mmlu")
-            mmlu_stats = await asyncio.gather(*mmlu_tasks)
-            mmlu_results = pd.concat(mmlu_stats)
+                if "MedPub QA" in settings["benchmark_selection"]:
+                    logger.info("Running MedPub QA benchmark")
+                    medpub_tasks = get_task_list(test="medpub")
+                    medpub_stats = await asyncio.gather(*medpub_tasks)
+                    medpub_results = pd.concat(medpub_stats)
+                    medpub_subsample = settings.get("medpub_subsample", 100)
+                    batch_c.markdown("#### MedPub QA Results")
+                    batch_c.write(
+                        f"Sample Size: {int((medpub_subsample/100)*1000)} ({medpub_subsample}% of 1,000 samples)"
+                    )
+                    batch_c.dataframe(medpub_results.drop("test", axis=1), hide_index=True)
+                    results.append(medpub_results)
 
-            batch_c.markdown("#### MMLU Results")
-            batch_c.write(f"Subsample: {mmlu_subsample}% of each category")
-            batch_c.write(f"Categories: {str(mmlu_categories)}")
-            batch_c.dataframe(mmlu_results.drop("test", axis=1), hide_index=True)
-            results.append(mmlu_results)
+                if "Truthful QA" in settings["benchmark_selection"]:
+                    logger.info("Running Truthful QA benchmark")
+                    truthful_tasks = get_task_list(test="truthfulqa")
+                    truthful_stats = await asyncio.gather(*truthful_tasks)
+                    truthful_results = pd.concat(truthful_stats)
+                    truthful_subsample = settings.get("truthful_subsample", 100)
+                    batch_c.markdown("#### Truthful QA Results")
+                    batch_c.write(
+                        f"Sample Size: {int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)"
+                    )
+                    batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
+                    results.append(truthful_results)
 
-        if medpub_select:
-            logger.info("Running MedPub QA benchmark")
-            medpub_tasks = get_task_list(test="medpub")
-            medpub_stats = await asyncio.gather(*medpub_tasks)
-            medpub_results = pd.concat(medpub_stats)
+                if "Custom Evaluation" in settings["benchmark_selection"]:
+                    logger.info("Running Custom Evaluation")
+                    custom_tasks = get_task_list(test="custom")
+                    custom_stats = await asyncio.gather(*custom_tasks)
+                    custom_results = pd.concat(custom_stats)
+                    custom_subsample = settings.get("custom_subsample", 100)
+                    custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
+                    batch_c.markdown("#### Custom Evaluation Results")
+                    batch_c.write(
+                        f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)"
+                    )
+                    batch_c.dataframe(custom_results, hide_index=True)
+                    results.append(custom_results)
 
-            batch_c.markdown("#### MedPub QA Results")
-            batch_c.write(
-                f"Sample Size: {int((medpub_subsample/100)*1000)} ({medpub_subsample}% of 1,000 samples)"
-            )
-            batch_c.dataframe(medpub_results.drop("test", axis=1), hide_index=True)
-            results.append(medpub_results)
-
-        if truthful_select:
-            logger.info("Running Truthful QA benchmark")
-            truthful_tasks = get_task_list(test="truthfulqa")
-            truthful_stats = await asyncio.gather(*truthful_tasks)
-            truthful_results = pd.concat(truthful_stats)
-
-            batch_c.markdown("#### Truthful QA Results")
-            batch_c.write(
-                f"Sample Size: {int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)"
-            )
-            batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
-            results.append(truthful_results)
-
-        if custom_select:
-            logger.info("Running Custom Evaluation")
-            custom_tasks = get_task_list(test="custom")
-            custom_stats = await asyncio.gather(*custom_tasks)
-            custom_results = pd.concat(custom_stats)
-
-            batch_c.markdown("#### Custom Evaluation Results")
-            batch_c.write(
-                f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)"
-            )
-            batch_c.dataframe(custom_results, hide_index=True)
-            results.append(custom_results)
-
-        results_df = pd.concat(results)
-
-        results_c.markdown("## Benchmark Results")
-        fig = px.bar(
-            results_df,
-            x="overall_score",
-            y="test",
-            color="deployment",
-            barmode="group",
-            orientation="h",
-        )
-        results_c.plotly_chart(fig)
-        top_bar.success("Benchmark tests completed successfully! 🎉")
-        # results_c.dataframe(results_df, hide_index=True)
+            results_df = pd.concat(results)
+            st.session_state["results_quality"] = results_df
 
     except Exception as e:
         top_bar.error(f"An error occurred: {str(e)}")
 
-
-# Load environment variables
-dotenv.load_dotenv(".env")
-
-# Set up logger
-logger = get_logger()
-
-
-st.set_page_config(
-    page_title="Quality Metrics AI Assistant",
-    page_icon="🎯",
-)
-
-# Check if environment variables have been loaded
-if not st.session_state.get("env_vars_loaded", False):
-    env_vars = {
-        "AZURE_OPENAI_KEY": os.getenv("AZURE_OPENAI_KEY"),
-        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID": os.getenv(
-            "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID"
-        ),
-        "AZURE_OPENAI_API_ENDPOINT": os.getenv("AZURE_OPENAI_API_ENDPOINT"),
-        "AZURE_OPENAI_API_VERSION": os.getenv("AZURE_OPENAI_API_VERSION"),
-    }
-    initialize_session_state(env_vars)
-
-# initialize metrics list
-metrics_list = ["Accuracy", "Answer Similarity"]
-context_metrics_list = ["Context Similarity"]
-
 # Main layout for initial submission
 
-top_bar = st.empty()
-results_c = st.container()
-batch_c = st.container()
-
-# Sidebar to setup model configuration settings
-with st.sidebar:
-    st.markdown("## 🤖 Deployment Center ")
-
-    load_default_deployment()
-
-    with st.expander("Add Your MaaS Deployment", expanded=False):
-        operation = st.selectbox(
-            "Choose Model Family:",
-            ("AOAI", "Other"),
-            index=0,
-            help="Select the benchmark you want to perform to evaluate AI model performance.",
-            placeholder="Select a Benchmark",
-        )
-        if operation == "AOAI":
-            add_deployment_aoai_form()
-        else:
-            st.info("Other deployment options will be available soon.")
-
-    display_deployments()
-
-    st.markdown("---")
-
-    st.markdown("## 🎯 Benchmark Configuration")
-
-    st.markdown("Select the benchmark(s) you'd like to run:")
-    mmlu_select = st.checkbox("MMLU")
-    medpub_select = st.checkbox("MedPub QA")
-    truthful_select = st.checkbox("Truthful QA")
-    custom_select = st.checkbox("Custom Evaluation")
-
-    if mmlu_select:
-        st.write("**MMLU Benchmark Settings**")
-
-        # Sample to categories
-        mmlu_categories = st.multiselect(
-            "Select MMLU subcategories to run",
-            ["STEM", "Medical", "Business", "Social Sciences", "Humanities", "Other"],
-            help="Select subcategories of the MMLU benchmark you'd like to run.",
-        )
-
-        # Subsample
-        mmlu_subsample = st.slider(
-            "Select MMLU benchmark subsample for each selected category %. (14,402 total samples)",
-            min_value=0,
-            max_value=100,
-        )
-
-    if medpub_select:
-        st.write("**MedPub QA Benchmark Settings**")
-        medpub_subsample = st.slider(
-            "Select MedPub QA benchmark subsample %. (1,000 total samples)",
-            min_value=0,
-            max_value=100,
-        )
-
-    if truthful_select:
-        st.write("**Truthful QA Benchmark Settings**")
-        truthful_subsample = st.slider(
-            "Select Truthful QA benchmark subsample %. (814 total samples)",
-            min_value=0,
-            max_value=100,
-        )
-
-    if custom_select:
-        st.write("**Custom Benchmark Settings**")
-        uploaded_file = st.file_uploader(
-            "Upload CSV data",
-            type=["csv"],
-            help="Upload a CSV file with custom data for evaluation. CSV columns should be 'prompt', 'ground_truth', and 'context'. Context is optional",
-        )
-        if uploaded_file is not None:
-            # To read file as df:
-            custom_df = pd.read_csv(uploaded_file)
-            cols = custom_df.columns.tolist()
-            cols.append("None")
-
-            prompt_col = st.selectbox(
-                label="Select 'prompt' column", options=cols, index=cols.index("None")
-            )
-            ground_truth_col = st.selectbox(
-                label="Select 'ground_truth' column",
-                options=cols,
-                index=cols.index("None"),
-            )
-            context_col = st.selectbox(
-                label="Select 'context' column (optional)",
-                options=cols,
-                index=cols.index("None"),
-                help="Select the context column if available. Otherwise leave as 'None'",
-            )
-
-            custom_df.rename(
-                columns={prompt_col: "prompt", ground_truth_col: "ground_truth"},
-                inplace=True,
-            )
-
-            if context_col != "None":
-                custom_df.rename(columns={context_col: "context"}, inplace=True)
-                metrics_list = metrics_list + context_metrics_list
-
-            custom_subsample = st.slider(
-                f"Select Custom benchmark subsample %. {custom_df.shape[0]} rows found",
-                min_value=0,
-                max_value=100,
-            )
-            custom_metrics = st.multiselect(
-                label="Select metrics:",
-                options=metrics_list,
-                help="Select metrics for your custom evaluation.",
-            )
-
-    run_benchmark = st.button("Run Benchmark 🚀")
-
-# Button to start the benchmark tests
-if run_benchmark:
-    with st.spinner(
-        "Running benchmark tests. Outputs will appear as benchmarks complete. This may take a while..."
-    ):
-        top_bar.warning(
-            "Warning: Editing sidebar while benchmark is running will kill the job."
-        )
-        asyncio.run(run_benchmark_tests())
-
-else:
-    top_bar.info("👈 Please configure the benchmark settings to begin.")
-
-
-# Footer Section
-
-st.markdown("#### 📚 Resources and Information")
-
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-    [
-        "Benchmark Guide",
-        "How to Add New Deployments",
-        "Motivation?",
-        "Learn More About Public Benchmarks",
-        "Learn More About Metrics for Custom Eval",
-        "What Else Can I do in this App?",
-    ]
-)
-
-# Benchmark Guide
-with tab1:
+def initialize_chatbot() -> None:
+    """
+    Initialize a chatbot interface for user interaction with enhanced features.
+    """
     st.markdown(
-        """
-        Ready to test the quality of your LLMs? Our benchmarking tool makes it easy! 📊✨
-
-        Here's how it works:
-        1. **Select your model settings**: Choose the tests to run, the models to evaluate, and other input parameters in the side bar.
-        2. **Run the benchmark**: Hit the 'Run Benchmark' to run your selected evaluations. Wait for tests to complete.
-        3. **Review the results**: Once the benchmark is complete, view detailed results on this page.
-
-        Let's get started and optimize your LLM experience!
-        """
-    )
-
-# How to Add New Deployments
-with tab2:
-    st.markdown(
-        """
-        Adding new deployments allows you to compare performance across multiple Azure OpenAI deployments in different regions. Here's a step-by-step guide on how to add and manage your deployments:
-
-        ### Step 1: Enable Multi-Deployment
-        - Check the **Add New Deployment** box at the top of the sidebar. This enables the option to add multiple deployments.
-
-        ### Step 2: Add Deployment Details
-        - Fill in the form with the following details:
-            - **Azure OpenAI Key**: Your Azure OpenAI key. This is sensitive information, so it's treated as a password.
-            - **API Endpoint**: The endpoint URL for Azure OpenAI.
-            - **API Version**: The version of the Azure OpenAI API you're using.
-            - **Chat Model Name Deployment ID**: The specific ID for your chat model deployment.
-            - **Streaming**: Choose 'Yes' if you want the model to output in streaming mode.
-        - Click **Add Deployment** to save your deployment to the session state.
-
-        ### Step 3: View and Manage Deployments
-        - Once added, your deployments are listed under **Loaded AOAI Deployments**.
-        - Click on a deployment to expand and view its details.
-        - You can update any of the deployment details here and click **Update Deployment** to save changes.
-
-        ### How Deployments are Managed
-        - Deployments are stored in the Streamlit `session_state`, allowing them to persist across page reloads and be accessible across different pages of the app.
-        - You can add multiple deployments and manage them individually from the sidebar.
-        - This flexibility allows you to easily compare the performance of different deployments and make adjustments as needed.
-
-        ### Updating Deployments Across Pages
-        - Since deployments are stored in the `session_state`, any updates made to a deployment from one page are reflected across the entire app.
-        - This means you can seamlessly switch between different deployments or update their configurations without losing context.
-
-        Follow these steps to efficiently manage your Azure OpenAI deployments and leverage the power of multi-deployment benchmarking.
-        """,
+        "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
         unsafe_allow_html=True,
     )
 
-# Motivation?
-with tab3:
-    st.markdown(
-        """
-        Public benchmarks are often used to assess foundation model performance across a wide variety of tasks. 
-        However, the fine print of many of these test reveals inconsistent prompting methodology which leads to confusing and unreliable results.   
-        
-        The goal of this repository is to provide a **transparent**, **flexible**, and **standadized** method to repeatably compare different foundation models or model versions. 
-        This repository is designed to be executed to uniquely compare _my_ existing model to _my_ challenger model(s) as opposed to relying on public benchmarks executed on a model instantiation managed by some other entity.
-        """
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    respond_conatiner = st.container(height=400)
+
+    with respond_conatiner:
+        for message in st.session_state.chat_history:
+            role = message["role"]
+            content = message["content"]
+            avatar_style = "🧑‍💻" if role == "user" else "🤖"
+            with st.chat_message(role, avatar=avatar_style):
+                st.markdown(
+                    f"<div style='padding: 10px; border-radius: 5px;'>{content}</div>",
+                    unsafe_allow_html=True,
+                )
+
+    # User input for feedback or additional instructions
+    warning_issue = st.empty()
+    if "azure_openai_manager" not in st.session_state:
+        warning_issue.warning(
+            "Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️"
+        )
+
+    prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
+    if prompt:
+        prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
+            st.session_state["results"], prompt
+        )
+        st.session_state.messages.append({"role": "user", "content": prompt_ai_ready})
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with respond_conatiner:
+            with st.chat_message("user", avatar="🧑‍💻"):
+                st.markdown(
+                    f"<div style='padding: 10px; border-radius: 5px;'>{prompt}</div>",
+                    unsafe_allow_html=True,
+                )
+            # Generate AI response (asynchronously)
+            with st.chat_message("assistant", avatar="🤖"):
+                stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
+                    model=st.session_state.azure_openai_manager.chat_model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (SYSTEM_MESSAGE_LATENCY),
+                        }
+                    ]
+                    + [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    temperature=st.session_state["settings_buddy"]["temperature"],
+                    max_tokens=st.session_state["settings_buddy"]["max_tokens"],
+                    presence_penalty=st.session_state["settings_buddy"][
+                        "presence_penalty"
+                    ],
+                    frequency_penalty=st.session_state["settings_buddy"][
+                        "frequency_penalty"
+                    ],
+                    seed=555,
+                    stream=True,
+                )
+                ai_response = st.write_stream(stream)
+                st.session_state.chat_history.append(
+                    {"role": "assistant", "content": ai_response}
+                )
+   
+def main():
+
+    configure_sidebar()
+
+    results_container = st.container()
+
+    st.sidebar.divider()
+
+    st.sidebar.markdown("## ⏱️ Runs Center")
+
+    tab1_runs, tab2_runs = st.sidebar.tabs(
+        ["🚀 Trigger Benchmark", "🗃️ Historical Benchmarks"]
     )
 
-# Learn More About Public Benchmarks
-with tab4:
-    st.markdown(
+    # Tab for triggering benchmarks
+    with tab1_runs:
+        summary_container = st.container()  # Create the container
+        button_label = (
+            "Start New Benchmark"
+            if "results_quality" in st.session_state and not st.session_state["results_quality"].empty
+            else "Start Benchmark"
+        )
+        run_benchmark = st.button(button_label)
+
+
+        if run_benchmark:
+            if run_benchmark:
+                with st.spinner(
+                    "Running benchmark tests. Outputs will appear as benchmarks complete. This may take a while..."
+                ):
+                    top_bar.warning(
+                        "Warning: Editing sidebar while benchmark is running will kill the job."
+                    )
+                    asyncio.run(run_benchmark_tests())
+                    display_results(results_c)
+                    
+        else:
+            deployment_names = list(st.session_state.deployments.keys())
+            summary_container.info(
+                f"""
+                #### Benchmark Configuration Summary
+                - **Benchmark Type:** Quality Benchmark
+                - **Deployments:** {', '.join(deployment_names)}
+                """
+            )
+
+    selected_run_key = None
+    # Tab for viewing historical benchmarks
+    with tab2_runs:
+        pass
+        # if "results_quality" in st.session_state and st.session_state["results_quality"]:
+        #     st.markdown(
+        #         "Please select a benchmark run from the list below to view its results:"
+        #     )
+
+        #     run_keys = [
+        #         key
+        #         for key in st.session_state.get("results_quality", {}).keys()
+        #         if st.session_state["results_quality"][key]["result"] is not None
+        #     ]
+
+        #     if run_keys:
+        #         default_index = len(run_keys) if run_keys else 0
+        #         selected_run_key = st.selectbox(
+        #             "Select a Run",
+        #             options=run_keys,
+        #             format_func=lambda x: f"Run {x}",
+        #             index=default_index - 1,  # Select the last run by default
+        #         )
+        #         st.markdown(
+        #             f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>",
+        #             unsafe_allow_html=True,
+        #         )
+        #     else:
+        #         st.info(
+        #             "There are no runs available at this moment. Please try again later."
+        #         )
+        # else:
+        #     st.warning(
+        #         "There are no runs available at this moment. Please try again later."
+        #     )
+        #     results_container.info(
+        #         "👈 Hey - you haven't fired any benchmarks yet. Please configure the benchmark settings and click 'Start Benchmark' to begin."
+        #     )
+
+    # if selected_run_key:
+    #     display_latency_results(
+    #         results_container=results_container, id=selected_run_key
+    #     )
+
+    st.write(
         """
-        **MMLU**  
-        
-        This is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57 tasks including elementary mathematics, US history, computer science, law, and more. To attain high accuracy on this test, models must possess extensive world knowledge and problem solving ability.  
-        
-        We have grouped some of the tasks into broader categories for easier targeted execution. These categories are: STEM, Medical, Business, Social Sciences, Humanities, and Other.
-        
-        [Paper](https://arxiv.org/pdf/2009.03300) | [HuggingFace Dataset](https://huggingface.co/datasets/cais/mmlu)
-        
-        **Truthful QA**
-        
-        TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance, and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.  
-        
-        [Paper](https://arxiv.org/pdf/2109.07958) | [HuggingFace Dataset](https://huggingface.co/datasets/truthfulqa/truthful_qa) | [GitHub](https://github.com/sylinrl/TruthfulQA)
-            
-        **PubMedQA**
-        
-        The task of PubMedQA is to answer research questions with yes/no/maybe _(e.g.: Do preoperative statins reduce atrial fibrillation after coronary artery bypass grafting?)_ using the corresponding abstracts. PubMedQA has 1k expert labeled instances. 
-        
-        [Paper](https://arxiv.org/pdf/1909.06146`) | [HuggingFace Dataset](https://huggingface.co/datasets/qiaojin/PubMedQA) | [Website](https://pubmedqa.github.io/) | [GitHub](https://github.com/pubmedqa/pubmedqa)
-        """
+        <div style="text-align:center; font-size:30px; margin-top:10px;">
+            ...
+        </div>""",
+        unsafe_allow_html=True,
     )
+    st.markdown("")
+    initialize_chatbot()
 
-# Learn More About Metrics for Custom Eval
-with tab5:
-    st.markdown(
-        """
-        **Accuracy**: Number of correct predictions divided by the total number of predictions. Model outputs must be exact matches to ground truth.
-          
-        **Answer Similarity**: The similarity between the generated answer and the ground truth answer. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
-          
-        **Context Similarity**: The similarity between the generated answer and the context. This metric is calculated using the Sentence Transformers library, which provides a pre-trained model for computing sentence embeddings and calculating the cosine similarity.
-        """
-    )
 
-# What Else Can I do in this App?
-with tab6:
-    st.markdown(
-        """
-        Dive into the capabilities of our application:
 
-        - **Multi-Region Latency Benchmark**: Test the response time of various models across different regions. This feature helps you identify the fastest model for your needs, ensuring efficient performance no matter where you are.
-        - **Throughput Test by Model**: Evaluate how many requests a model can handle over a set period. This is crucial for understanding a model's capacity and ensuring it can handle your workload without slowing down.
-        - **Quality Benchmarks**: Run quality tests on your models to assess their performance in a way that YOU control.
 
-        Our tool is designed to give you a comprehensive understanding of model performance, helping you make informed decisions. To begin, simply select an option from the sidebar. Let's optimize your AI model selection together! 👍
-        """
-    )
+if __name__ == "__main__":
+    main()
