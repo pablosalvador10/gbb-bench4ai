@@ -1,0 +1,11 @@
+{"question": "What is the capital of France?", "answer": "Paris.", "context": "France is a country in Europe. Its capital is Paris.", "relevance": "high"}
+{"question": "Who developed the theory of relativity?", "answer": "Albert Einstein.", "context": "The theory of relativity was developed by Albert Einstein.", "relevance": "high"}
+{"question": "What is the speed of light?", "answer": "299,792,458 meters per second.", "context": "Light travels at a constant speed in a vacuum, which is 299,792,458 meters per second.", "relevance": "high"}
+{"question": "Who is the author of '1984'?", "answer": "George Orwell.", "context": "The author of '1984' is George Orwell.", "relevance": "high"}
+{"question": "Who painted the Mona Lisa?", "answer": "Leonardo da Vinci.", "context": "The Mona Lisa was painted by Leonardo da Vinci.", "relevance": "high"}
+{"question": "What is the tallest mountain in the world?", "answer": "Mount Everest.", "context": "The fastest land animal is the cheetah, which can run at speeds of up to 75 miles per hour.", "relevance": "low"}
+{"question": "What is the capital of Japan?", "answer": "Tokyo.", "context": "Sushi is a traditional Japanese dish made with vinegared rice and various ingredients, including seafood and vegetables.", "relevance": "low"}
+{"question": "What is the largest planet in our solar system?", "answer": "Jupiter.", "context": "The Great Wall of China is the longest wall in the world, stretching over 13,000 miles.", "relevance": "low"}
+{"question": "What is the chemical symbol for water?", "answer": "H2O.", "context": "The Eiffel Tower is a famous landmark in Paris, France, standing at a height of 324 meters.", "relevance": "low"}
+{"question": "What is the largest ocean on Earth?", "answer": "The Pacific Ocean.", "context": "The Sahara Desert is the largest hot desert in the world, covering parts of 11 countries in North Africa.", "relevance": "low"}
+

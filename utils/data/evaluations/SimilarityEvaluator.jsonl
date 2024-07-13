@@ -1,0 +1,10 @@
+{"question": "What is the capital of France?", "answer": "Paris is the capital of France.", "ground_truth": "The capital of France is Paris."}
+{"question": "Who developed the theory of relativity?", "answer": "Albert Einstein developed the theory of relativity.", "ground_truth": "The theory of relativity was developed by Albert Einstein."}
+{"question": "What is the speed of light?", "answer": "The speed of light is approximately 299,792,458 meters per second.", "ground_truth": "Light travels at a speed of 299,792,458 meters per second."}
+{"question": "What is the tallest mountain in the world?", "answer": "Mount Everest is the tallest mountain in the world.", "ground_truth": "The world's tallest mountain is Mount Everest."}
+{"question": "Who is the author of '1984'?", "answer": "George Orwell is the author of '1984'.", "ground_truth": "The author of '1984' is George Orwell."}
+{"question": "What is the capital of Japan?", "answer": "Tokyo is the capital of Japan.", "ground_truth": "Japan's capital is Tokyo."}
+{"question": "Who painted the Mona Lisa?", "answer": "Leonardo da Vinci painted the Mona Lisa.", "ground_truth": "The Mona Lisa was painted by Leonardo da Vinci."}
+{"question": "What is the largest planet in our solar system?", "answer": "Jupiter is the largest planet in our solar system.", "ground_truth": "The largest planet in our solar system is Jupiter."}
+{"question": "What is the chemical symbol for water?", "answer": "H2O is the chemical symbol for water.", "ground_truth": "The chemical symbol for water is H2O."}
+{"question": "What is the largest ocean on Earth?", "answer": "The Pacific Ocean is the largest ocean on Earth.", "ground_truth": "The largest ocean on Earth is the Pacific Ocean."}
