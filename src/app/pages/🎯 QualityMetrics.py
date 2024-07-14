@@ -1,11 +1,10 @@
 import asyncio
-import os
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List
 
 import dotenv
 import pandas as pd
-import plotly.express as px
 import streamlit as st
+from src.app.quality.results import BenchmarkQualityResult
 
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 from src.app.benchmarkbuddy import configure_chatbot
@@ -17,7 +16,7 @@ from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
                              prompt_message_ai_benchmarking_buddy_latency)
 
 from src.app.quality.resources import display_resources
-from src.app.quality.displayquality import display_results
+from src.app.quality.displayquality import display_quality_results
 
 # Load environment variables
 dotenv.load_dotenv(".env")
@@ -43,11 +42,11 @@ session_vars = [
     "chat_history_quality",
     "messages_quality",
     "log_messages_quality",
-    "benchmark_results_quality",
     "deployments",
     "settings_quality",
     "results_quality",
     "disable_chatbot",
+    "azure_openai_manager"
 ]
 initial_values = {
     "conversation_history_quality": [],
@@ -75,14 +74,12 @@ initial_values = {
         },
     ],
     "log_messages_quality": [],
-    "benchmark_results_quality": [],
     "deployments": {},
     "settings_quality": {},
     "results_quality": {},
     "disable_chatbot": True,
+    "azure_openai_manager": None,
 }
-
-st.set_page_config(page_title="Quality Benchmarking", page_icon="🎯 ")
 
 initialize_session_state(session_vars, initial_values)
 
@@ -154,7 +151,7 @@ batch_c = st.container()
 def get_task_list(test: str = None):
     objects = []
 
-        # Inside the get_task_list function, before creating objects
+    # Inside the get_task_list function, before creating objects
     if "settings_quality" in st.session_state:
         settings = st.session_state["settings_quality"]
     else: 
@@ -178,7 +175,7 @@ def get_task_list(test: str = None):
             )
             data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
             data = obj.transform_data(df=data)
-        if test == "medpub":
+        elif test == "medpub":
             medpub_subsample = settings.get("medpub_subsample", 100)
             obj = PubMedQA(
                 deployment_config=deployment_config,
@@ -192,7 +189,7 @@ def get_task_list(test: str = None):
                 flatten=True,
             )
             data = obj.transform_data(df=data)
-        if test == "truthfulqa":
+        elif test == "truthfulqa":
             truthful_subsample = settings.get("truthful_subsample", 100)
             obj = TruthfulQA(
                 deployment_config=deployment_config,
@@ -203,7 +200,7 @@ def get_task_list(test: str = None):
                 dataset="truthful_qa", subset="multiple_choice", split="validation"
             )
             data = obj.transform_data(df=data)
-        if test == "custom":
+        elif test == "custom":
             custom_metrics = settings.get("custom_benchmark", {}).get("metrics_list", [])
             custom_subsample = settings.get("custom_subsample", 100)
             custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
@@ -213,7 +210,6 @@ def get_task_list(test: str = None):
                 sample_size=custom_subsample / 100,
                 log_level="ERROR",
             )
-            custom_subsample = settings.get("custom_subsample", 100)
             data = obj.transform_data(df=custom_df)
 
         objects.append(obj)
@@ -221,12 +217,20 @@ def get_task_list(test: str = None):
     tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
     return tasks
 
-
 # Define an asynchronous function to run benchmark tests and log progress
 async def run_benchmark_tests():
     try:
         results = []
-        # TODO: Load and transoform data here. Pass data to the async test call.
+        if "results_quality" not in st.session_state:
+            st.session_state["results_quality"] = {}
+        
+        #FIXME: decouple
+        results_df = pd.DataFrame()
+        results_df = pd.DataFrame()
+        truthful_results = pd.DataFrame()
+        mmlu_results = pd.DataFrame()
+        medpub_results = pd.DataFrame()
+
         if "settings_quality" in st.session_state:
             settings = st.session_state["settings_quality"]
             if "benchmark_selection" in settings:
@@ -267,6 +271,7 @@ async def run_benchmark_tests():
                     )
                     batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
                     results.append(truthful_results)
+                    
 
                 if "Custom Evaluation" in settings["benchmark_selection"]:
                     logger.info("Running Custom Evaluation")
@@ -283,7 +288,18 @@ async def run_benchmark_tests():
                     results.append(custom_results)
 
             results_df = pd.concat(results)
-            st.session_state["results_quality"] = results_df
+            results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
+            truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
+            mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
+            medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
+            results = {
+                "all_results": results_df,
+                "truthful_results": truthful_results,
+                "mmlu_results": mmlu_results,
+                "medpub_results": medpub_results,
+            }
+            results_quality = BenchmarkQualityResult(result=results, settings=settings)
+            st.session_state["results_quality"][results_quality.id] = results_quality.result
 
     except Exception as e:
         top_bar.error(f"An error occurred: {str(e)}")
@@ -327,7 +343,7 @@ def initialize_chatbot() -> None:
     prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
     if prompt:
         prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
-            st.session_state["results"], prompt
+            st.session_state["results_quality"], prompt
         )
         st.session_state.messages.append({"role": "user", "content": prompt_ai_ready})
         st.session_state.chat_history.append({"role": "user", "content": prompt})
@@ -368,6 +384,9 @@ def initialize_chatbot() -> None:
                 )
    
 def main():
+    
+    #FIXME: Add page title and icon
+    #st.set_page_config(page_title="Quality Benchmarking", page_icon="🎯 ")
 
     configure_sidebar()
 
@@ -381,17 +400,13 @@ def main():
         ["🚀 Trigger Benchmark", "🗃️ Historical Benchmarks"]
     )
 
-    # Tab for triggering benchmarks
     with tab1_runs:
         summary_container = st.container()  # Create the container
-        button_label = (
-            "Start New Benchmark"
-            if "results_quality" in st.session_state and not st.session_state["results_quality"].empty
-            else "Start Benchmark"
-        )
+        if "results_quality" in st.session_state and st.session_state["results_quality"]:
+            button_label = "Start New Benchmark"
+        else:
+            button_label = "Start Benchmark"
         run_benchmark = st.button(button_label)
-
-
         if run_benchmark:
             if run_benchmark:
                 with st.spinner(
@@ -401,8 +416,6 @@ def main():
                         "Warning: Editing sidebar while benchmark is running will kill the job."
                     )
                     asyncio.run(run_benchmark_tests())
-                    display_results(results_c)
-                    
         else:
             deployment_names = list(st.session_state.deployments.keys())
             summary_container.info(
@@ -416,46 +429,45 @@ def main():
     selected_run_key = None
     # Tab for viewing historical benchmarks
     with tab2_runs:
-        pass
-        # if "results_quality" in st.session_state and st.session_state["results_quality"]:
-        #     st.markdown(
-        #         "Please select a benchmark run from the list below to view its results:"
-        #     )
+        if "results_quality" in st.session_state and st.session_state["results_quality"]:
+            st.markdown(
+                "Please select a benchmark run from the list below to view its results:"
+            )
 
-        #     run_keys = [
-        #         key
-        #         for key in st.session_state.get("results_quality", {}).keys()
-        #         if st.session_state["results_quality"][key]["result"] is not None
-        #     ]
+            run_keys = [
+                key
+                for key in st.session_state.get("results_quality", {}).keys()
+                if st.session_state["results_quality"][key] is not None
+            ]
 
-        #     if run_keys:
-        #         default_index = len(run_keys) if run_keys else 0
-        #         selected_run_key = st.selectbox(
-        #             "Select a Run",
-        #             options=run_keys,
-        #             format_func=lambda x: f"Run {x}",
-        #             index=default_index - 1,  # Select the last run by default
-        #         )
-        #         st.markdown(
-        #             f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>",
-        #             unsafe_allow_html=True,
-        #         )
-        #     else:
-        #         st.info(
-        #             "There are no runs available at this moment. Please try again later."
-        #         )
-        # else:
-        #     st.warning(
-        #         "There are no runs available at this moment. Please try again later."
-        #     )
-        #     results_container.info(
-        #         "👈 Hey - you haven't fired any benchmarks yet. Please configure the benchmark settings and click 'Start Benchmark' to begin."
-        #     )
+            if run_keys:
+                default_index = len(run_keys) if run_keys else 0
+                selected_run_key = st.selectbox(
+                    "Select a Run",
+                    options=run_keys,
+                    format_func=lambda x: f"Run {x}",
+                    index=default_index - 1,  # Select the last run by default
+                )
+                st.markdown(
+                    f"You are currently viewing run: <span style='color: grey;'>**{selected_run_key}**</span>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info(
+                    "There are no runs available at this moment. Please try again later."
+                )
+        else:
+            st.warning(
+                "There are no runs available at this moment. Please try again later."
+            )
+            results_container.info(
+                "👈 Hey - you haven't fired any benchmarks yet. Please configure the benchmark settings and click 'Start Benchmark' to begin."
+            )
 
-    # if selected_run_key:
-    #     display_latency_results(
-    #         results_container=results_container, id=selected_run_key
-    #     )
+    if selected_run_key:
+        display_quality_results(
+            results_container=results_container, id=selected_run_key
+        )
 
     st.write(
         """

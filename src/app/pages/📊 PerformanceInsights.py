@@ -31,6 +31,7 @@ dotenv.load_dotenv(".env")
 # Set up logger
 logger = get_logger()
 
+st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="📊")
 
 def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
     """
@@ -88,8 +89,6 @@ initial_values = {
     "results": {},
     "disable_chatbot": True,
 }
-
-st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="📊")
 
 initialize_session_state(session_vars, initial_values)
 
