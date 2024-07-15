@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, Dict, List
 
 import dotenv
+import copy
 import pandas as pd
 import streamlit as st
 from src.app.quality.results import BenchmarkQualityResult
@@ -271,8 +272,12 @@ async def run_benchmark_tests():
                     "mmlu_results": mmlu_results,
                     "medpub_results": medpub_results,
                 }
-                results_quality = BenchmarkQualityResult(result=results, settings=settings)
-                st.session_state["results_quality"][results_quality.id] = results_quality.to_dict
+                # Create a deep copy of the settings to ensure it remains unchanged
+                settings_snapshot = copy.deepcopy(settings)
+
+                # Use the deep copied settings when creating the BenchmarkQualityResult instance
+                results_quality = BenchmarkQualityResult(result=results, settings=settings_snapshot)
+                st.session_state["results_quality"][results_quality.id] = results_quality.to_dict()
 
     except Exception as e:
         top_bar.error(f"An error occurred: {str(e)}")
@@ -507,7 +512,7 @@ def main():
             ...
         </div>
         <div style="text-align:center; margin-top:20px;">
-            <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
+            <a href="https://github.com/pablosalvador10" target="_blank" style="text-decoration:none; margin: 0 10px;">
                 <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
             </a>
             <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">

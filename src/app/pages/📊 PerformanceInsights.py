@@ -1,7 +1,7 @@
 import asyncio
 from functools import reduce
 from typing import Any, Dict, List
-
+import copy
 import dotenv
 import streamlit as st
 
@@ -160,7 +160,8 @@ def configure_sidebar() -> None:
             )
 
 
-def display_code_setting_sdk(deployment_names) -> None:
+def display_code_setting_sdk(deployment_names, results) -> None:
+    settings = results["settings"]
     code = f"""
     from src.performance.latencytest import AzureOpenAIBenchmarkNonStreaming, AzureOpenAIBenchmarkStreaming
 
@@ -174,17 +175,17 @@ def display_code_setting_sdk(deployment_names) -> None:
     
     client_NonStreaming.run_latency_benchmark_bulk(
         deployment_names = [{deployment_names}],
-        max_tokens_list = [{', '.join(map(str, st.session_state['settings']["max_tokens_list"]))}],
-        iterations = {st.session_state['settings']["num_iterations"]},
-        temperature = {st.session_state['settings']['temperature']},
-        context_tokens = {st.session_state['settings']['context_tokens']},
-        byop = {st.session_state['settings']['prompts']},
-        prevent_server_caching = {st.session_state['settings']['prevent_server_caching']},
-        timeout: {st.session_state['settings']['timeout']},
-        top_p: {st.session_state['settings']['top_p']},
+        max_tokens_list = [{', '.join(map(str, settings["max_tokens_list"]))}],
+        iterations = {settings["num_iterations"]},
+        temperature = {settings['temperature']},
+        context_tokens = {settings['context_tokens']},
+        byop = {settings['prompts']},
+        prevent_server_caching = {settings['prevent_server_caching']},
+        timeout: {settings['timeout']},
+        top_p: {settings['top_p']},
         n= 1,
-        presence_penalty={st.session_state['settings']['presence_penalty']},
-        frequency_penalty={st.session_state['settings']['frequency_penalty']}"""
+        presence_penalty={settings['presence_penalty']},
+        frequency_penalty={settings['frequency_penalty']}"""
 
     st.markdown("##### Test Settings")
     st.code(code, language="python")
@@ -200,22 +201,23 @@ def display_human_readable_settings(deployment_names, results) -> None:
     - **ID:** `{results["id"]}`
     - **Timestamp:** `{results["timestamp"]}`
     """
-
+    
+    settings = results["settings"]
     # Benchmark Configuration Summary
     benchmark_configuration_summary = f"""
     #### Benchmark Configuration Summary
     - **Benchmark Type:** Latency Benchmark
-    - **Max Tokens:** {', '.join(map(str, st.session_state['settings']["max_tokens_list"]))}
-    - **Number of Iterations:** {st.session_state['settings']["num_iterations"]}
-    - **Context Tokens:** {st.session_state['settings']['context_tokens']}
+    - **Max Tokens:** {', '.join(map(str, settings["max_tokens_list"]))}
+    - **Number of Iterations:** {settings["num_iterations"]}
+    - **Context Tokens:** {settings['context_tokens']}
     - **Deployments:** {', '.join(deployment_names)}
     - **AOAI Model Settings:**
-        - **Temperature:** {st.session_state['settings']['temperature']}
-        - **Prevent Server Caching:** {'Yes' if st.session_state['settings']['prevent_server_caching'] else 'No'} (Option to prevent server caching for fresh request processing.)
-        - **Timeout:** {st.session_state['settings']['timeout']} seconds
-        - **Top P:** {st.session_state['settings']['top_p']}
-        - **Presence Penalty:** {st.session_state['settings']['presence_penalty']}
-        - **Frequency Penalty:** {st.session_state['settings']['frequency_penalty']}
+        - **Temperature:** {settings['temperature']}
+        - **Prevent Server Caching:** {'Yes' if settings['prevent_server_caching'] else 'No'} (Option to prevent server caching for fresh request processing.)
+        - **Timeout:** {settings['timeout']} seconds
+        - **Top P:** {settings['top_p']}
+        - **Presence Penalty:** {settings['presence_penalty']}
+        - **Frequency Penalty:** {settings['frequency_penalty']}
     """
 
     # Display using st.markdown
@@ -229,7 +231,7 @@ def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) 
 
     with col1:
         with st.expander("👨‍💻 Reproduce Run Using SDK", expanded=False):
-            display_code_setting_sdk(deployment_names)
+            display_code_setting_sdk(deployment_names, results)
 
     with col2:
         with st.expander("👥 Run Configuration Details", expanded=False):
@@ -293,8 +295,9 @@ async def run_benchmark_tests(test_status_placeholder: st.container) -> None:
         stats_raw = [client.results for client, _ in deployment_clients]
         st.session_state["benchmark_results"] = stats
         st.session_state["benchmark_results_raw"] = stats_raw
+        settings_snapshot = copy.deepcopy(st.session_state["settings"])
         results = BenchmarkPerformanceResult(
-            result=stats, settings=st.session_state["settings"]
+            result=stats, settings=settings_snapshot
         )
         st.session_state["results"][results.id] = results.to_dict()
         test_status_placeholder.markdown(
@@ -703,7 +706,7 @@ def main() -> None:
             ...
         </div>
         <div style="text-align:center; margin-top:20px;">
-            <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
+            <a href="https://github.com/pablosalvador10" target="_blank" style="text-decoration:none; margin: 0 10px;">
                 <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
             </a>
             <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">

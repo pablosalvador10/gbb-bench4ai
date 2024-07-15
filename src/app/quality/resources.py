@@ -12,7 +12,7 @@ def display_resources():
     - Learn More About Metrics for Custom Eval: Describes the metrics used for custom evaluations.
     """
     # Learn More About Public Benchmarks
-    with st.expander("Learn More About Public Benchmarks"):
+    with st.expander("Learn More about LLM Benchmarks"):
         st.markdown(
             """
             - **MMLU (Massive Multitask Language Understanding)**
@@ -33,7 +33,7 @@ def display_resources():
         )
 
     # Learn More About Metrics for Custom Eval
-    with st.expander("Learn More About Metrics for Custom Eval"):
+    with st.expander("Learn More About Systems Benchmarks"):
         st.markdown("""
             - **Accuracy**
                 - Defined as the ratio of correct predictions to total predictions.

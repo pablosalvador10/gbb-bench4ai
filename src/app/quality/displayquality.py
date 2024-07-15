@@ -3,6 +3,7 @@ import streamlit as st
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 import pandas as pd
 import asyncio
+import copy
 import plotly.express as px
 from utils.ml_logging import get_logger
 from src.app.quality.results import BenchmarkQualityResult
@@ -133,8 +134,9 @@ async def run_benchmark_tests():
                     "mmlu_results": mmlu_results,
                     "medpub_results": medpub_results,
                 }
-                results_quality = BenchmarkQualityResult(result=results, settings=settings)
-                st.session_state["results_quality"][results_quality.id] = results_quality.results
+                settings_snapshot = copy.deepcopy(settings)
+                results_quality = BenchmarkQualityResult(result=results, settings=settings_snapshot)
+                st.session_state["results_quality"][results_quality.id] = results_quality.result
 
     except Exception as e:
         top_bar.error(f"An error occurred: {str(e)}")
@@ -148,13 +150,19 @@ def create_tabs_for_non_empty_dataframes(results, results_container: st.containe
                       and values are the DataFrame objects.
 
     Each non-empty DataFrame is displayed in its own tab, labeled with the key from the results dictionary.
+    If the key is "all_results", the 'test' column from the DataFrame is added to the index,
+    so each row reflects one test in the index.
     """
     non_empty_dataframes = {key: value for key, value in results.items() if not value.empty}
 
     tabs = results_container.tabs(list(non_empty_dataframes.keys()))
     for tab, (key, df) in zip(tabs, non_empty_dataframes.items()):
         with tab:
-            tab.dataframe(df.drop("test", axis=1), hide_index=True)
+            if key == "all_results":
+                df_with_test_index = df.set_index('test', append=True)
+                tab.dataframe(df_with_test_index, hide_index=False)
+            else:
+                tab.dataframe(df.drop("test", axis=1), hide_index=True)
 
 
 def display_code_setting_sdk() -> None:
@@ -199,7 +207,7 @@ def display_human_readable_settings(id: str, timestamp: str, settings: dict) -> 
     benchmark_selection = settings.get("benchmark_selection", [])
 
     summary_lines = [
-        "#### Benchmark Configuration Summary",
+        "**Benchmark Configuration:**",
         f"- **Benchmark Type:** Quality Benchmark",
         f"- **Tests:** {', '.join(benchmark_selection)}",
     ]
@@ -227,11 +235,14 @@ def display_human_readable_settings(id: str, timestamp: str, settings: dict) -> 
         summary_lines.append(f"  - **Custom Ground Truth Column:** {ground_truth_col}")
         summary_lines.append(f"  - **Custom Context Column:** {context_col}")
 
+    # Convert summary_lines to a markdown string
+    summary_markdown = "\n".join(summary_lines)
+
     # Display using st.markdown
     st.markdown(benchmark_details, unsafe_allow_html=True)
-    st.markdown(summary_lines, unsafe_allow_html=True)
+    st.markdown(summary_markdown, unsafe_allow_html=True)
 
-def ask_user_for_result_display_preference(id: str) -> None:
+def ask_user_for_result_display_preference(id: str, settings: dict, results_container:st.container) -> None:
     """
     Asks the user for their preference on how to display the results of a specific run.
 
@@ -248,16 +259,15 @@ def ask_user_for_result_display_preference(id: str) -> None:
     """
     results_id = st.session_state["results_quality"][id]
     timestamp = results_id["timestamp"]
-    settings = results_id["settings"]
+    with results_container: 
+        col1, col2 = st.columns(2)
+        with col1:
+            with st.expander("👨‍💻 Reproduce Run Using SDK", expanded=False):
+                display_code_setting_sdk()
 
-    col1, col2 = st.columns(2)
-    with col1:
-        with st.expander("👨‍💻 Reproduce Run Using SDK", expanded=False):
-            display_code_setting_sdk()
-
-    with col2:
-        with st.expander("👥 Run Configuration Details", expanded=False):
-            display_human_readable_settings(id, timestamp, settings)
+        with col2:
+            with st.expander("👥 Run Configuration Details", expanded=False):
+                display_human_readable_settings(id, timestamp, settings)
    
 def display_quality_results(results_container: st.container, id: str):
     """
@@ -268,15 +278,26 @@ def display_quality_results(results_container: st.container, id: str):
     """
 
     try:
-        results_id = st.session_state["results_quality"][id]
-        if results_id["result"] is None:
+        if not isinstance(st.session_state["results_quality"], dict):
+            raise TypeError("Expected 'results_quality' to be a dictionary.")
+        
+        results_id = st.session_state["results_quality"].get(id)
+        
+        # Check if results_id is correctly retrieved and is a dictionary
+        if not isinstance(results_id, dict):
+            raise TypeError(f"Expected 'results_id' to be a dictionary, got {type(results_id)} instead.")
+        
+        if results_id is None or "result" not in results_id or results_id["result"] is None:
             raise ValueError("Results are not available for the given ID.")
+        
         results = results_id["result"]
+        settings = results_id["settings"]
     except ValueError as e:
         st.warning(
             f"⚠️ Oops! We couldn't retrieve the data for ID: {id}. Error: {e}. Sorry for the inconvenience! 😓 Please try another ID. 🔄"
         )
         return
+
 
     results_container.markdown("## 📈 Quality Benchmark Results")
     st.toast(f"You are viewing results from Run ID: {id}", icon="ℹ️")
@@ -287,10 +308,11 @@ def display_quality_results(results_container: st.container, id: str):
         - **Visual Insights Section**: Use this section to draw conclusions by run with complex interactions.
         - **Benchmark Buddy**: Utilize this tool for an interactive, engaging "GPT" like analysis experience.
 
-        💡 **Tip**: To enhance your performance strategies, delve into optimizing and troubleshooting latency systems and metrics. [Discover more in the full article.](#)
+      💡 **Tip**: For a deeper understanding of Language Model (LM) evaluations, including both Large Language Models (LLMs) and Smaller Language Models (SLMs), as 
+                               well as system-wide assessments, explore the article [Read the detailed exploration here.](#)
     """)
 
-    ask_user_for_result_display_preference(id)
+    ask_user_for_result_display_preference(id, settings, results_container)
 
     results_container.write("### 🔍 Data Analysis")
 
@@ -328,10 +350,10 @@ def display_quality_results(results_container: st.container, id: str):
             if not results_all.empty:
                 fig2 = px.line(
                     results_all,
-                    x="test",  # Test names on the x-axis
-                    y="overall_score",  # Scores on the y-axis
-                    color="deployment",  # Different lines for each deployment
-                    markers=True,  # Show markers at each data point
+                    x="test", 
+                    y="overall_score",
+                    color="deployment", 
+                    markers=True,
                     title="Score Distribution by Test Across Deployments",
                     labels={'test': 'Test', 'overall_score': 'Score'}
                 )
