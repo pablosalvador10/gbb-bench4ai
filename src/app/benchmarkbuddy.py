@@ -180,6 +180,7 @@ def configure_chatbot() -> None:
 
             if submitted_buddy:
                 init_brain_chatbot(error_client_buddy)
+                
     configure_benchmarkbudyy_model_settings()
 
     if st.session_state["azure_openai_manager"]:

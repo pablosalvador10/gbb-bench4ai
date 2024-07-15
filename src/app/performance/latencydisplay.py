@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 import pandas as pd
 import streamlit as st
 
-
 def create_latency_display_dataframe(stats: List[Dict[str, Any]]) -> pd.DataFrame:
     """
     Creates a DataFrame for displaying latency statistics from a list of statistics dictionaries.

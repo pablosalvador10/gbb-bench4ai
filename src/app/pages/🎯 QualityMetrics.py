@@ -144,8 +144,6 @@ def configure_sidebar() -> None:
             )
 
 top_bar = st.empty()
-results_c = st.container()
-batch_c = st.container()
 
 # Function to get the task list for the selected benchmark
 def get_task_list(test: str = None):
@@ -238,12 +236,6 @@ async def run_benchmark_tests():
                     mmlu_tasks = get_task_list(test="mmlu")
                     mmlu_stats = await asyncio.gather(*mmlu_tasks)
                     mmlu_results = pd.concat(mmlu_stats)
-                    mmlu_categories = settings.get("mmlu_categories", [])
-                    mmlu_subsample = settings.get("mmlu_subsample", 100)
-                    batch_c.markdown("#### MMLU Results")
-                    batch_c.write(f"Subsample: {mmlu_subsample}% of each category")
-                    batch_c.write(f"Categories: {str(mmlu_categories)}")
-                    batch_c.dataframe(mmlu_results.drop("test", axis=1), hide_index=True)
                     results.append(mmlu_results)
 
                 if "MedPub QA" in settings["benchmark_selection"]:
@@ -251,12 +243,6 @@ async def run_benchmark_tests():
                     medpub_tasks = get_task_list(test="medpub")
                     medpub_stats = await asyncio.gather(*medpub_tasks)
                     medpub_results = pd.concat(medpub_stats)
-                    medpub_subsample = settings.get("medpub_subsample", 100)
-                    batch_c.markdown("#### MedPub QA Results")
-                    batch_c.write(
-                        f"Sample Size: {int((medpub_subsample/100)*1000)} ({medpub_subsample}% of 1,000 samples)"
-                    )
-                    batch_c.dataframe(medpub_results.drop("test", axis=1), hide_index=True)
                     results.append(medpub_results)
 
                 if "Truthful QA" in settings["benchmark_selection"]:
@@ -264,12 +250,6 @@ async def run_benchmark_tests():
                     truthful_tasks = get_task_list(test="truthfulqa")
                     truthful_stats = await asyncio.gather(*truthful_tasks)
                     truthful_results = pd.concat(truthful_stats)
-                    truthful_subsample = settings.get("truthful_subsample", 100)
-                    batch_c.markdown("#### Truthful QA Results")
-                    batch_c.write(
-                        f"Sample Size: {int((truthful_subsample/100)*814)} ({truthful_subsample}% of 814 samples)"
-                    )
-                    batch_c.dataframe(truthful_results.drop("test", axis=1), hide_index=True)
                     results.append(truthful_results)
                     
 
@@ -278,52 +258,63 @@ async def run_benchmark_tests():
                     custom_tasks = get_task_list(test="custom")
                     custom_stats = await asyncio.gather(*custom_tasks)
                     custom_results = pd.concat(custom_stats)
-                    custom_subsample = settings.get("custom_subsample", 100)
-                    custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
-                    batch_c.markdown("#### Custom Evaluation Results")
-                    batch_c.write(
-                        f"Sample Size: {int((custom_subsample/100)*custom_df.shape[0])} ({custom_subsample}% of {custom_df.shape[0]} samples)"
-                    )
-                    batch_c.dataframe(custom_results, hide_index=True)
                     results.append(custom_results)
 
-            results_df = pd.concat(results)
-            results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
-            truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
-            mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
-            medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
-            results = {
-                "all_results": results_df,
-                "truthful_results": truthful_results,
-                "mmlu_results": mmlu_results,
-                "medpub_results": medpub_results,
-            }
-            results_quality = BenchmarkQualityResult(result=results, settings=settings)
-            st.session_state["results_quality"][results_quality.id] = results_quality.result
+                results_df = pd.concat(results)
+                results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
+                truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
+                mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
+                medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
+                results = {
+                    "all_results": results_df,
+                    "truthful_results": truthful_results,
+                    "mmlu_results": mmlu_results,
+                    "medpub_results": medpub_results,
+                }
+                results_quality = BenchmarkQualityResult(result=results, settings=settings)
+                st.session_state["results_quality"][results_quality.id] = results_quality.to_dict
 
     except Exception as e:
         top_bar.error(f"An error occurred: {str(e)}")
-
-# Main layout for initial submission
 
 def initialize_chatbot() -> None:
     """
     Initialize a chatbot interface for user interaction with enhanced features.
     """
+    #FIXME: adapt me to QualityMetrics
     st.markdown(
         "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
         unsafe_allow_html=True,
     )
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
+    if "chat_history_quality" not in st.session_state:
+        st.session_state.chat_history_quality = [
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        }
+    ]
+    if "messages_quality" not in st.session_state:
+        st.session_state.messages_quality = [
+        {
+            "role": "system",
+            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        },
+    ]
     respond_conatiner = st.container(height=400)
 
     with respond_conatiner:
-        for message in st.session_state.chat_history:
+        for message in st.session_state.chat_history_quality:
             role = message["role"]
             content = message["content"]
             avatar_style = "🧑‍💻" if role == "user" else "🤖"
@@ -333,11 +324,11 @@ def initialize_chatbot() -> None:
                     unsafe_allow_html=True,
                 )
 
-    # User input for feedback or additional instructions
-    warning_issue = st.empty()
-    if "azure_openai_manager" not in st.session_state:
-        warning_issue.warning(
-            "Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️"
+
+    warning_issue_quality = st.empty()
+    if st.session_state.get("azure_openai_manager") is None:
+        warning_issue_quality.warning(
+            "Oops! It seems I'm currently unavailable. 😴 Please ensure the LLM is configured correctly in the Benchmark Center and Buddy settings. Need help? Refer to the 'How To' guide for detailed instructions! 🧙"
         )
 
     prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
@@ -345,8 +336,8 @@ def initialize_chatbot() -> None:
         prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
             st.session_state["results_quality"], prompt
         )
-        st.session_state.messages.append({"role": "user", "content": prompt_ai_ready})
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        st.session_state.messages_quality.append({"role": "user", "content": prompt_ai_ready})
+        st.session_state.chat_history_quality.append({"role": "user", "content": prompt})
         with respond_conatiner:
             with st.chat_message("user", avatar="🧑‍💻"):
                 st.markdown(
@@ -365,7 +356,7 @@ def initialize_chatbot() -> None:
                     ]
                     + [
                         {"role": m["role"], "content": m["content"]}
-                        for m in st.session_state.messages
+                        for m in st.session_state.messages_quality
                     ],
                     temperature=st.session_state["settings_buddy"]["temperature"],
                     max_tokens=st.session_state["settings_buddy"]["max_tokens"],
@@ -379,10 +370,49 @@ def initialize_chatbot() -> None:
                     stream=True,
                 )
                 ai_response = st.write_stream(stream)
-                st.session_state.chat_history.append(
+                st.session_state.chat_history_quality.append(
                     {"role": "assistant", "content": ai_response}
                 )
-   
+
+def display_configuration_summary(summary_container:st.container):
+    """
+    Display the current benchmark configuration summary.
+    """
+    settings = st.session_state.get("settings_quality", {})
+    benchmark_selection = settings.get("benchmark_selection", [])
+    
+    summary_lines = [
+        "#### Benchmark Configuration Summary",
+        f"- **Benchmark Type:** Quality Benchmark",
+        f"- **Tests:** {', '.join(benchmark_selection)}",
+    ]
+
+    if "MMLU" in benchmark_selection:
+        mmlu_categories = settings.get("mmlu_categories", [])
+        mmlu_subsample = settings.get("mmlu_subsample", 0)
+        summary_lines.append(f"  - **MMLU Categories:** {', '.join(mmlu_categories)}")
+        summary_lines.append(f"  - **MMLU Subsample:** {mmlu_subsample}%")
+
+    if "MedPub QA" in benchmark_selection:
+        medpub_subsample = settings.get("medpub_subsample", 0)
+        summary_lines.append(f"  - **MedPub QA Subsample:** {medpub_subsample}%")
+
+    if "Truthful QA" in benchmark_selection:
+        truthful_subsample = settings.get("truthful_subsample", 0)
+        summary_lines.append(f"  - **Truthful QA Subsample:** {truthful_subsample}%")
+
+    if "Custom Evaluation" in benchmark_selection:
+        custom_settings = settings.get("custom_benchmark", {})
+        prompt_col = custom_settings.get("prompt_col", "None")
+        ground_truth_col = custom_settings.get("ground_truth_col", "None")
+        context_col = custom_settings.get("context_col", "None")
+        summary_lines.append(f"  - **Custom Prompt Column:** {prompt_col}")
+        summary_lines.append(f"  - **Custom Ground Truth Column:** {ground_truth_col}")
+        summary_lines.append(f"  - **Custom Context Column:** {context_col}")
+
+    summary_container.info("\n".join(summary_lines))
+
+
 def main():
     
     #FIXME: Add page title and icon
@@ -410,21 +440,14 @@ def main():
         if run_benchmark:
             if run_benchmark:
                 with st.spinner(
-                    "Running benchmark tests. Outputs will appear as benchmarks complete. This may take a while..."
+                    "🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"
                 ):
                     top_bar.warning(
                         "Warning: Editing sidebar while benchmark is running will kill the job."
                     )
                     asyncio.run(run_benchmark_tests())
         else:
-            deployment_names = list(st.session_state.deployments.keys())
-            summary_container.info(
-                f"""
-                #### Benchmark Configuration Summary
-                - **Benchmark Type:** Quality Benchmark
-                - **Deployments:** {', '.join(deployment_names)}
-                """
-            )
+            display_configuration_summary(summary_container)
 
     selected_run_key = None
     # Tab for viewing historical benchmarks
@@ -478,8 +501,25 @@ def main():
     )
     st.markdown("")
     initialize_chatbot()
-
-
+    st.sidebar.write(
+        """
+        <div style="text-align:center; font-size:30px; margin-top:10px;">
+            ...
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+            <a href="https://github.com/pablosalvador10/gbb-ai-upgrade-llm" target="_blank" style="text-decoration:none; margin: 0 10px;">
+                <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="GitHub" style="width:40px; height:40px;">
+            </a>
+            <a href="https://www.linkedin.com/in/pablosalvadorlopez/?locale=en_US" target="_blank" style="text-decoration:none; margin: 0 10px;">
+                <img src="https://img.icons8.com/fluent/48/000000/linkedin.png" alt="LinkedIn" style="width:40px; height:40px;">
+            </a>
+            <a href="#" target="_blank" style="text-decoration:none; margin: 0 10px;">
+                <img src="https://img.icons8.com/?size=100&id=23438&format=png&color=000000" alt="Blog" style="width:40px; height:40px;">
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":

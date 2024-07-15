@@ -431,7 +431,7 @@ def create_benchmark_center() -> None:
     of model family from a dropdown menu. Currently, it supports the "AOAI" model
     family and provides a placeholder for future expansion to other model families.
     """
-    with st.expander("Add Your MaaS Deployment", expanded=False):
+    with st.expander("➕ Add Your MaaS Deployment", expanded=False):
         operation = st.selectbox(
             "Choose Model Family:",
             ("AOAI", "Other"),

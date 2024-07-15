@@ -56,6 +56,7 @@ session_vars = [
     "settings",
     "results",
     "disable_chatbot",
+    "azure_openai_manager"
 ]
 initial_values = {
     "conversation_history": [],
@@ -88,6 +89,7 @@ initial_values = {
     "settings": {},
     "results": {},
     "disable_chatbot": True,
+    "azure_openai_manager": None,
 }
 
 initialize_session_state(session_vars, initial_values)
@@ -489,9 +491,29 @@ def initialize_chatbot() -> None:
     )
 
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+        st.session_state.chat_history = [
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        }
+    ]
     if "messages" not in st.session_state:
-        st.session_state.messages = []
+        st.session_state.messages = [
+        {
+            "role": "system",
+            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "🚀 Ask away! I am all ears and ready to dive into your queries. "
+                "I'm here to make sense of the numbers from your benchmarks and support you during your analysis! 😄📊"
+            ),
+        },
+    ]
 
     respond_conatiner = st.container(height=400)
 
@@ -505,14 +527,12 @@ def initialize_chatbot() -> None:
                     f"<div style='padding: 10px; border-radius: 5px;'>{content}</div>",
                     unsafe_allow_html=True,
                 )
-
-    # User input for feedback or additional instructions
-    warning_issue = st.empty()
-    if "azure_openai_manager" not in st.session_state:
-        warning_issue.warning(
-            "Oops! I'm taking a nap right now. 😴 To wake me up, please set up the LLM in the Benchmark center and Buddy settings. Stuck? The 'How To' guide has all the secret wake-up spells! 🧙‍♂️"
+    
+    warning_issue_performance = st.empty()
+    if st.session_state.get("azure_openai_manager") is None:
+        warning_issue_performance.warning(
+            "Oops! It seems I'm currently unavailable. 😴 Please ensure the LLM is configured correctly in the Benchmark Center and Buddy settings. Need help? Refer to the 'How To' guide for detailed instructions! 🧙"
         )
-
     prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
     if prompt:
         prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
