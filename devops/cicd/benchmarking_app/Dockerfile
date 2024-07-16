@@ -7,7 +7,7 @@ WORKDIR /app
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
 COPY src /app/src
-COPY utils /app/utils
+COPY my_utils /app/my_utils
 COPY requirements.txt /app/requirements.txt
 
 RUN mkdir -p /app/.streamlit

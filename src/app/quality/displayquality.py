@@ -5,7 +5,7 @@ import pandas as pd
 import asyncio
 import copy
 import plotly.express as px
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 from src.app.quality.results import BenchmarkQualityResult
 
 # Set up logger
@@ -14,132 +14,6 @@ logger = get_logger()
 top_bar = st.empty()
 results_c = st.container()
 batch_c = st.container()
-
-# Function to get the task list for the selected benchmark
-def get_task_list(test: str = None):
-    objects = []
-
-    # Inside the get_task_list function, before creating objects
-    if "settings_quality" in st.session_state:
-        settings = st.session_state["settings_quality"]
-    else: 
-        st.error("No settings found in session state.")
-
-    for deployment_name, deployment in st.session_state.deployments.items():
-        deployment_config = {
-            "key": deployment.get("key"),
-            "endpoint": deployment.get("endpoint"),
-            "model": deployment_name,
-            "version": deployment.get("version"),
-        }
-        if test == "mmlu":
-            mmlu_categories = settings.get("mmlu_categories", [])
-            mmlu_subsample = settings.get("mmlu_subsample", 100)
-            obj = MMLU(
-                deployment_config=deployment_config,
-                sample_size=mmlu_subsample / 100,
-                log_level="INFO",
-                categories=mmlu_categories,
-            )
-            data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
-            data = obj.transform_data(df=data)
-        elif test == "medpub":
-            medpub_subsample = settings.get("medpub_subsample", 100)
-            obj = PubMedQA(
-                deployment_config=deployment_config,
-                sample_size=medpub_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="qiaojin/PubMedQA",
-                subset="pqa_labeled",
-                split="train",
-                flatten=True,
-            )
-            data = obj.transform_data(df=data)
-        elif test == "truthfulqa":
-            truthful_subsample = settings.get("truthful_subsample", 100)
-            obj = TruthfulQA(
-                deployment_config=deployment_config,
-                sample_size=truthful_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="truthful_qa", subset="multiple_choice", split="validation"
-            )
-            data = obj.transform_data(df=data)
-        elif test == "custom":
-            custom_metrics = settings.get("custom_benchmark", {}).get("metrics_list", [])
-            custom_subsample = settings.get("custom_subsample", 100)
-            custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
-            obj = CustomEval(
-                deployment_config=deployment_config,
-                metrics_list=custom_metrics,
-                sample_size=custom_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.transform_data(df=custom_df)
-
-        objects.append(obj)
-
-    tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
-    return tasks
-
-# Define an asynchronous function to run benchmark tests and log progress
-async def run_benchmark_tests():
-    try:
-        results = []
-        if "results_quality" not in st.session_state:
-            st.session_state["results_quality"] = {}
-
-        if "settings_quality" in st.session_state:
-            settings = st.session_state["settings_quality"]
-            if "benchmark_selection" in settings:
-                if "MMLU" in settings["benchmark_selection"]:
-                    mmlu_tasks = get_task_list(test="mmlu")
-                    mmlu_stats = await asyncio.gather(*mmlu_tasks)
-                    mmlu_results = pd.concat(mmlu_stats)
-                    results.append(mmlu_results)
-
-                if "MedPub QA" in settings["benchmark_selection"]:
-                    logger.info("Running MedPub QA benchmark")
-                    medpub_tasks = get_task_list(test="medpub")
-                    medpub_stats = await asyncio.gather(*medpub_tasks)
-                    medpub_results = pd.concat(medpub_stats)
-                    results.append(medpub_results)
-
-                if "Truthful QA" in settings["benchmark_selection"]:
-                    logger.info("Running Truthful QA benchmark")
-                    truthful_tasks = get_task_list(test="truthfulqa")
-                    truthful_stats = await asyncio.gather(*truthful_tasks)
-                    truthful_results = pd.concat(truthful_stats)
-                    results.append(truthful_results)
-                    
-
-                if "Custom Evaluation" in settings["benchmark_selection"]:
-                    logger.info("Running Custom Evaluation")
-                    custom_tasks = get_task_list(test="custom")
-                    custom_stats = await asyncio.gather(*custom_tasks)
-                    custom_results = pd.concat(custom_stats)
-                    results.append(custom_results)
-
-                results_df = pd.concat(results)
-                results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
-                truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
-                mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
-                medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
-                results = {
-                    "all_results": results_df,
-                    "truthful_results": truthful_results,
-                    "mmlu_results": mmlu_results,
-                    "medpub_results": medpub_results,
-                }
-                settings_snapshot = copy.deepcopy(settings)
-                results_quality = BenchmarkQualityResult(result=results, settings=settings_snapshot)
-                st.session_state["results_quality"][results_quality.id] = results_quality.result
-
-    except Exception as e:
-        top_bar.error(f"An error occurred: {str(e)}")
 
 def create_tabs_for_non_empty_dataframes(results, results_container: st.container):
     """
@@ -152,6 +26,7 @@ def create_tabs_for_non_empty_dataframes(results, results_container: st.containe
     Each non-empty DataFrame is displayed in its own tab, labeled with the key from the results dictionary.
     If the key is "all_results", the 'test' column from the DataFrame is added to the index,
     so each row reflects one test in the index.
+    If the key is "retrieval_results" or "rai_results", the DataFrame is displayed as it is.
     """
     non_empty_dataframes = {key: value for key, value in results.items() if not value.empty}
 
@@ -161,9 +36,20 @@ def create_tabs_for_non_empty_dataframes(results, results_container: st.containe
             if key == "all_results":
                 df_with_test_index = df.set_index('test', append=True)
                 tab.dataframe(df_with_test_index, hide_index=False)
+            elif key in ["retrieval_results", "rai_results"]:
+                if 'studio_url' in df.columns:
+                    display_df = df.drop(columns=['studio_url'], errors='ignore')
+                    studio_urls = df['studio_url']
+                    tab.dataframe(display_df, hide_index=False)
+                    
+                    # Generate markdown links for non-empty studio_urls
+                    for model, studio_url in zip(df.index, studio_urls):
+                        if studio_url:  
+                            tab.markdown(f"- Look at the result for the model {model} in [Azure AI studio]({studio_url})")
+                else:
+                    tab.dataframe(df, hide_index=False)
             else:
-                tab.dataframe(df.drop("test", axis=1), hide_index=True)
-
+                tab.dataframe(df.drop("test", axis=1, errors='ignore'), hide_index=True)
 
 def display_code_setting_sdk() -> None:
     """
@@ -207,7 +93,7 @@ def display_human_readable_settings(id: str, timestamp: str, settings: dict) -> 
     benchmark_selection = settings.get("benchmark_selection", [])
 
     summary_lines = [
-        "**Benchmark Configuration:**",
+        "#### Benchmark Configuration Summary",
         f"- **Benchmark Type:** Quality Benchmark",
         f"- **Tests:** {', '.join(benchmark_selection)}",
     ]
@@ -216,25 +102,48 @@ def display_human_readable_settings(id: str, timestamp: str, settings: dict) -> 
         mmlu_categories = settings.get("mmlu_categories", [])
         mmlu_subsample = settings.get("mmlu_subsample", 0)
         summary_lines.append(f"  - **MMLU Categories:** {', '.join(mmlu_categories)}")
-        summary_lines.append(f"  - **MMLU Subsample:** {mmlu_subsample}%")
+        summary_lines.append(f"  - **MMLU Subsample Percentage:** {mmlu_subsample}%")
 
     if "MedPub QA" in benchmark_selection:
         medpub_subsample = settings.get("medpub_subsample", 0)
-        summary_lines.append(f"  - **MedPub QA Subsample:** {medpub_subsample}%")
+        summary_lines.append(f"  - **MedPub QA Subsample Percentage:** {medpub_subsample}%")
 
     if "Truthful QA" in benchmark_selection:
         truthful_subsample = settings.get("truthful_subsample", 0)
-        summary_lines.append(f"  - **Truthful QA Subsample:** {truthful_subsample}%")
+        summary_lines.append(f"  - **Truthful QA Subsample Percentage:** {truthful_subsample}%")
 
     if "Custom Evaluation" in benchmark_selection:
         custom_settings = settings.get("custom_benchmark", {})
         prompt_col = custom_settings.get("prompt_col", "None")
         ground_truth_col = custom_settings.get("ground_truth_col", "None")
         context_col = custom_settings.get("context_col", "None")
-        summary_lines.append(f"  - **Custom Prompt Column:** {prompt_col}")
-        summary_lines.append(f"  - **Custom Ground Truth Column:** {ground_truth_col}")
-        summary_lines.append(f"  - **Custom Context Column:** {context_col}")
+        summary_lines.append(f"  - **Custom Evaluation Prompt Column:** {prompt_col}")
+        summary_lines.append(f"  - **Custom Evaluation Ground Truth Column:** {ground_truth_col}")
+        summary_lines.append(f"  - **Custom Evaluation Context Column:** {context_col}")
 
+    if "Retrieval" in benchmark_selection:
+        retrieval_setting = st.session_state["settings_quality"][f"evaluation_clients_retrieval_df_BYOP"]
+        summary_lines.append(f"  - Retrieval BYOP Selected: {retrieval_setting}")
+
+    if "RAI" in benchmark_selection:
+        rai_setting = st.session_state["settings_quality"][f"evaluation_clients_rai_df_BYOP"]
+        summary_lines.append(f"  - RAI BYOP Selected: {rai_setting}")
+
+    summary_lines.append("")
+    summary_lines.append(f"- **Azure AI Studio Connection Details**")
+    markdown_summary = """
+    - **Azure AI Studio Subscription ID**: {}
+    - **Azure AI Studio Resource Group Name**: {}
+    - **Azure AI Studio Project Name**: {}
+    """.format(
+        st.session_state.get('azure_ai_studio_subscription_id', 'Not set'),
+        st.session_state.get('azure_ai_studio_resource_group_name', 'Not set'),
+        st.session_state.get('azure_ai_studio_project_name', 'Not set')
+    )
+    
+    # Append the Markdown-formatted string to summary_lines
+    summary_lines.append(markdown_summary)
+    
     # Convert summary_lines to a markdown string
     summary_markdown = "\n".join(summary_lines)
 
@@ -321,7 +230,10 @@ def display_quality_results(results_container: st.container, id: str):
     with results_container:
         st.write("### 🤔 Visual Insights")
 
-        tab1, tab2 = st.tabs(["📊 Benchmark Results Overview", "🔍 Detailed Scatter Analysis"])
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Understanding Results Overview", 
+                                          "🔍 Detailed Scatter Analysis", 
+                                          "⚙️ Retrieval System/QA", 
+                                          "🛡️ RAI"])
 
         with tab1:
             results_all = results["all_results"]
@@ -365,3 +277,55 @@ def display_quality_results(results_container: st.container, id: str):
                 st.plotly_chart(fig2, use_container_width=True)
             else:
                 st.info("👈 No data available for scatter plot analysis. Please ensure benchmarks have been run.")
+
+        with tab3:
+            results_retrievals = results["retrieval_results"].drop(columns=['studio_url'], errors='ignore')
+            if not results_retrievals.empty:
+                df_reset = results_retrievals.reset_index()
+                df_reset.rename(columns={df_reset.columns[0]: 'model'}, inplace=True)
+                
+                df_long = df_reset.melt(id_vars=['model'], var_name='Metric', value_name='Value')
+                
+                fig2 = px.line(
+                    df_long,
+                    x="Metric", 
+                    y="Value",
+                    color="model", 
+                    markers=True,
+                    title="Metric Values Across Models",
+                    labels={'model': 'Model', 'Value': 'Metric Value', 'Metric': 'Metric'}
+                )
+                fig2.update_layout(
+                    xaxis_title="Metric",
+                    yaxis_title="Metric Value",
+                    legend_title="Model"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+            else:
+                st.info("No data available for plot analysis. Please ensure runs settings is loaded correctly.")
+
+        with tab4:
+            results_rai = results["rai_results"].drop(columns=['studio_url'], errors='ignore')
+            if not results_rai.empty:
+                df_reset = results_rai.reset_index()
+                df_reset.rename(columns={df_reset.columns[0]: 'model'}, inplace=True)
+                
+                df_long = df_reset.melt(id_vars=['model'], var_name='Metric', value_name='Value')
+                
+                fig2 = px.line(
+                    df_long,
+                    x="Metric", 
+                    y="Value",
+                    color="model", 
+                    markers=True,
+                    title="Metric Values Across Models",
+                    labels={'model': 'Model', 'Value': 'Metric Value', 'Metric': 'Metric'}
+                )
+                fig2.update_layout(
+                    xaxis_title="Metric",
+                    yaxis_title="Metric Value",
+                    legend_title="Model"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+            else:
+                st.info("No data available for plot analysis. Please ensure runs settings is loaded correctly.")

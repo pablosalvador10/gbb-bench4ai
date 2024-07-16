@@ -23,7 +23,7 @@ from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
                              prompt_message_ai_benchmarking_buddy_latency)
 from src.app.performance.results import BenchmarkPerformanceResult
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")

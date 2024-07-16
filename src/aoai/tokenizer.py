@@ -8,7 +8,7 @@ import tiktoken
 # Load environment variables from .env file
 from dotenv import load_dotenv
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()

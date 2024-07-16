@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()

@@ -8,7 +8,7 @@ from datasets import load_dataset
 from openai import AzureOpenAI
 
 from src.quality.metrics import accuracy, sentence_transformer_similarity
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 
 class Eval:

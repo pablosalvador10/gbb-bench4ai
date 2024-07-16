@@ -10,7 +10,7 @@ from promptflow.evals.evaluators import (
 )
 from promptflow.evals.evaluate import evaluate
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 logger = get_logger()
 
 class RiskAndSafetyEvaluators:

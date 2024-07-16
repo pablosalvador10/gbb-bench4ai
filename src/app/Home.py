@@ -59,7 +59,7 @@ def get_main_content() -> str:
         Welcome to the GBB MaaS Upgrade Hub!
         <br>
         <span style="font-style:italic; font-size:0.4em;"> Your ultimate LLM/SLM benchmarking destination </span> 
-        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
+        <img src="data:image/png;base64,{get_image_base64('./my_utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """

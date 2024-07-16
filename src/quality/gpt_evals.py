@@ -1,15 +1,18 @@
 import pandas as pd
 import json
 import tempfile
-from typing import Any, Optional, Dict
+from azure.core.exceptions import ServiceResponseError
+from typing import Any, Optional, Dict, Tuple
 import os
-import logging
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from promptflow.evals.evaluate import evaluate
 from promptflow.core import AzureOpenAIModelConfiguration
 from promptflow.evals.evaluators import QAEvaluator, ContentSafetyEvaluator
 
 # Set up logging
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 logger = get_logger()
 
@@ -114,11 +117,16 @@ class AzureAIQualityEvaluator:
                 azure_ai_project=azure_ai_project or self.azure_ai_project
             )
             logger.info("Quality evaluation completed successfully.")
-            return result
-
+            metrics, studio_url = self.extract_chat_quality_results(result)
+            if studio_url is not None:
+                logger.info(f"See your results in the studio for more detailed information: {studio_url}")
+            return metrics, studio_url
+        except ServiceResponseError as e:
+            logger.error(f"ServiceResponseError: {e}")
+        except ConnectionResetError as e:
+            logger.error(f"ConnectionResetError: {e}. The connection was forcibly closed by the remote host.")
         except Exception as e:
-            logger.error(f"Error during quality evaluation: {e}")
-            raise
+            logger.error(f"Error during content safety evaluation: {e}")
         finally:
             try:
                 if temp_file:
@@ -161,11 +169,16 @@ class AzureAIQualityEvaluator:
                 azure_ai_project=azure_ai_project or self.azure_ai_project
             )
             logger.info("Content safety evaluation completed successfully.")
-            return result
-
+            metrics, studio_url = self.extract_chat_content_safety_results(result)
+            if studio_url is not None:
+                logger.info(f"See your results in the studio for more detailed information: {studio_url}")
+            return metrics, studio_url
+        except ServiceResponseError as e:
+            logger.error(f"ServiceResponseError: {e}")
+        except ConnectionResetError as e:
+            logger.error(f"ConnectionResetError: {e}. The connection was forcibly closed by the remote host.")
         except Exception as e:
             logger.error(f"Error during content safety evaluation: {e}")
-            raise
         finally:
             try:
                 if temp_file:
@@ -173,3 +186,82 @@ class AzureAIQualityEvaluator:
                     logger.info(f"Temporary file {temp_file.name} removed.")
             except Exception as e:
                 logger.error(f"Error removing temporary file: {e}")
+
+    @staticmethod
+    def extract_chat_quality_results(result: Dict) -> Tuple[Dict, Optional[str]]:
+        """
+        Extract metrics and studio URL from chat quality evaluation results.
+
+        :param result: The evaluation result dictionary.
+        :return: A tuple containing the extracted metrics and the studio URL.
+        """
+        try:
+            metrics = {key.replace('qa_evaluator.', ''): value for key, value in result.get('metrics', {}).items()}
+            studio_url = result.get('studio_url', None)
+            return metrics, studio_url
+        except Exception as e:
+            logger.error(f"Error extracting chat quality results: {e}")
+            return {}, None
+        
+
+    @staticmethod
+    def extract_chat_content_safety_results(result: Dict) -> Tuple[Dict, Optional[str]]:
+        """
+        Extract metrics and studio URL from chat content safety evaluation results.
+
+        :param result: The evaluation result dictionary.
+        :return: A tuple containing the extracted metrics and the studio URL.
+        """
+        try:
+            metrics = {key.replace('content_safety_evaluator.', ''): value for key, value in result.get('metrics', {}).items()}
+            studio_url = result.get('studio_url', None)
+            return metrics, studio_url
+        except Exception as e:
+            logger.error(f"Error extracting chat content safety results: {e}")
+            return {}, None
+
+
+    def plot_metrics(self, metrics: Dict[str, float]):
+        """
+        Create an combined bar and line plot for the given metrics, with state-of-the-art visualization.
+
+        :param metrics: Dictionary containing metric names and their values.
+        """
+        # Automatically create title based on deployment
+        title = f"Metrics Overview for {self.model_config.azure_deployment}"
+
+        # Convert metrics to DataFrame for easier manipulation
+        metrics_df = pd.DataFrame(list(metrics.items()), columns=["Metric", "Score"])
+
+        # Create a subplot that allows for a bar and line plot in the same figure
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+        # Add bar plot
+        fig.add_trace(
+            go.Bar(x=metrics_df["Metric"], y=metrics_df["Score"], name="Score (Bar)"),
+            secondary_y=False,
+        )
+
+        # Add line plot
+        fig.add_trace(
+            go.Scatter(x=metrics_df["Metric"], y=metrics_df["Score"], name="Score (Line)", mode="lines+markers"),
+            secondary_y=True,
+        )
+
+        # Add titles and labels
+        fig.update_layout(
+            title=title,
+            xaxis_title="Metric",
+            yaxis_title="Score",
+            legend_title="Metric Type",
+            template="plotly_white",
+        )
+        # Ensure y-axis starts at 0 and extends slightly above the maximum score to provide visual buffer
+        max_score = metrics_df["Score"].max()
+        y_axis_max = max_score + (max_score * 0.1) if max_score > 0 else 1  # Ensure there's always a range above 0
+
+        fig.update_yaxes(title_text="Bar Score", secondary_y=False, range=[0, y_axis_max])
+        fig.update_yaxes(title_text="Line Score", secondary_y=True, range=[0, y_axis_max])
+
+        # Show the figure
+        fig.show()

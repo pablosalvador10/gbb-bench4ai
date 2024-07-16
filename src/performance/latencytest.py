@@ -23,7 +23,7 @@ from src.performance.messagegeneration import (BYOPMessageGenerator,
 from src.performance.utils import (count_tokens, detect_model_encoding,
                                    get_encoding_from_model_name,
                                    split_list_into_variable_parts)
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 load_dotenv()
 

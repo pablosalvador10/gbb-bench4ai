@@ -2,17 +2,15 @@ import asyncio
 from typing import Any, Dict, List
 
 import dotenv
-import copy
-import pandas as pd
 import streamlit as st
-from src.app.quality.results import BenchmarkQualityResult
 
-from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
+from src.app.quality.runs import run_benchmark_tests
+
 from src.app.benchmarkbuddy import configure_chatbot
 from src.app.quality.llm_slm_settings import (understanding_configuration, 
                                               configure_retrieval_settings,
                                               configure_rai_settings)
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
 from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
@@ -122,16 +120,17 @@ def configure_sidebar() -> None:
             tab1_inner, tab2_inner, tab3_inner = st.tabs(["🧠 Understanding", "⚙️ Retrieval System/QA", "🛡️ RAI"])
 
             with tab1_inner:
-                with st.expander("📊 Metrics", expanded=False): 
+                with st.expander("📊 What metrics are we evaluating?", expanded=False): 
                     st.markdown("""
-                    - **Datasets**: MMLU, MedPub, TruthfulQA
+                        - **MMLU**: Measures domain knowledge across multiple fields.
+                        - **MedPub**: Evaluates understanding of medical literature.
+                        - **TruthfulQA**: Tests for truthfulness in responses.
                     """)
-                # Call the function for LLM/SLM benchmark configuration
                 understanding_configuration()
 
             with tab2_inner:
                 # Add any additional configuration or content for System
-                with st.expander("📊 Metrics", expanded=False): 
+                with st.expander("📊 What metrics are we evaluating?", expanded=False): 
                     st.markdown("""
                     - `f1_score`: Range [0, 1]
                     - `gpt_groundedness`: Range [0, 5]
@@ -143,7 +142,7 @@ def configure_sidebar() -> None:
                 configure_retrieval_settings()
 
             with tab3_inner:
-                with st.expander("📊 Metrics", expanded=False): 
+                with st.expander("📊 What metrics are we evaluating?", expanded=False):
                     st.markdown("""
                     - `self_harm_defect_rate`: Range [0, 1]
                     - `sexual_defect_rate`: Range [0, 1]
@@ -177,172 +176,6 @@ def configure_sidebar() -> None:
 
 top_bar = st.empty()
 
-# Function to get the task list for the selected benchmark
-def get_task_list(test: str = None):
-    objects = []
-
-    # Inside the get_task_list function, before creating objects
-    if "settings_quality" in st.session_state:
-        settings = st.session_state["settings_quality"]
-    else: 
-        st.error("No settings found in session state.")
-
-    for deployment_name, deployment in st.session_state.deployments.items():
-        deployment_config = {
-            "key": deployment.get("key"),
-            "endpoint": deployment.get("endpoint"),
-            "model": deployment_name,
-            "version": deployment.get("version"),
-        }
-        if test == "mmlu":
-            mmlu_categories = settings.get("mmlu_categories", [])
-            mmlu_subsample = settings.get("mmlu_subsample", 100)
-            obj = MMLU(
-                deployment_config=deployment_config,
-                sample_size=mmlu_subsample / 100,
-                log_level="INFO",
-                categories=mmlu_categories,
-            )
-            data = obj.load_data(dataset="cais/mmlu", subset="all", split="test")
-            data = obj.transform_data(df=data)
-        elif test == "medpub":
-            medpub_subsample = settings.get("medpub_subsample", 100)
-            obj = PubMedQA(
-                deployment_config=deployment_config,
-                sample_size=medpub_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="qiaojin/PubMedQA",
-                subset="pqa_labeled",
-                split="train",
-                flatten=True,
-            )
-            data = obj.transform_data(df=data)
-        elif test == "truthfulqa":
-            truthful_subsample = settings.get("truthful_subsample", 100)
-            obj = TruthfulQA(
-                deployment_config=deployment_config,
-                sample_size=truthful_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.load_data(
-                dataset="truthful_qa", subset="multiple_choice", split="validation"
-            )
-            data = obj.transform_data(df=data)
-        elif test == "custom":
-            custom_metrics = settings.get("custom_benchmark", {}).get("metrics_list", [])
-            custom_subsample = settings.get("custom_subsample", 100)
-            custom_df = settings.get("custom_benchmark", {}).get("custom_df", pd.DataFrame())
-            obj = CustomEval(
-                deployment_config=deployment_config,
-                metrics_list=custom_metrics,
-                sample_size=custom_subsample / 100,
-                log_level="ERROR",
-            )
-            data = obj.transform_data(df=custom_df)
-
-        objects.append(obj)
-
-    tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
-    return tasks
-
-import concurrent.futures
-
-def run_retrieval_quality_for_client(client):
-    try:
-        results_retrieval = client.run_retrieval_quality(data_input=st.session_state["evaluation_clients_retrieval_df"])
-        # Assuming client.model_config.azure_deployment exists and is unique for each client
-        deployment_name = client.model_config.azure_deployment
-        return (deployment_name, results_retrieval)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return (client.model_config.azure_deployment, None)
-
-def run_retrieval_quality_in_parallel():
-    clients = st.session_state["evaluation_clients_retrieval"]
-    results_gpt_evals = {}
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(executor.map(run_retrieval_quality_for_client, clients))
-    
-    for deployment_name, result in results:
-        if result is not None:
-            results_gpt_evals[deployment_name] = result["metrics"]
-    
-    return results_gpt_evals
-
-# Define an asynchronous function to run benchmark tests and log progress
-async def run_benchmark_tests():
-    try:
-        results = []
-        if "results_quality" not in st.session_state:
-            st.session_state["results_quality"] = {}
-        
-        #FIXME: decouple
-        results_df = pd.DataFrame()
-        results_df = pd.DataFrame()
-        truthful_results = pd.DataFrame()
-        mmlu_results = pd.DataFrame()
-        medpub_results = pd.DataFrame()
-
-        if "settings_quality" in st.session_state:
-            settings = st.session_state["settings_quality"]
-            if "benchmark_selection" in settings:
-                if "MMLU" in settings["benchmark_selection"]:
-                    mmlu_tasks = get_task_list(test="mmlu")
-                    mmlu_stats = await asyncio.gather(*mmlu_tasks)
-                    mmlu_results = pd.concat(mmlu_stats)
-                    results.append(mmlu_results)
-
-                if "MedPub QA" in settings["benchmark_selection"]:
-                    logger.info("Running MedPub QA benchmark")
-                    medpub_tasks = get_task_list(test="medpub")
-                    medpub_stats = await asyncio.gather(*medpub_tasks)
-                    medpub_results = pd.concat(medpub_stats)
-                    results.append(medpub_results)
-
-                if "Truthful QA" in settings["benchmark_selection"]:
-                    logger.info("Running Truthful QA benchmark")
-                    truthful_tasks = get_task_list(test="truthfulqa")
-                    truthful_stats = await asyncio.gather(*truthful_tasks)
-                    truthful_results = pd.concat(truthful_stats)
-                    results.append(truthful_results)
-                    
-
-                if "Custom Evaluation" in settings["benchmark_selection"]:
-                    logger.info("Running Custom Evaluation")
-                    custom_tasks = get_task_list(test="custom")
-                    custom_stats = await asyncio.gather(*custom_tasks)
-                    custom_results = pd.concat(custom_stats)
-                    results.append(custom_results)
-
-                if "retrieval" in settings["benchmark_selection"]:
-                    logger.info("Running Retrieval System benchmark")
-                    # Execute the function and store results in a dictionary
-                    results_gpt_evals_dict = run_retrieval_quality_in_parallel()
-                    #results_gpt_evals_dict = st.session_state[].run_retrieval_quality(data_input=st.session_state["evaluation_clients_retrieval_df"])
-                    st.info(results_gpt_evals_dict)
-
-                results_df = pd.concat(results)
-                results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
-                truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
-                mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
-                medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
-                results = {
-                    "all_results": results_df,
-                    "truthful_results": truthful_results,
-                    "mmlu_results": mmlu_results,
-                    "medpub_results": medpub_results,
-                }
-                # Create a deep copy of the settings to ensure it remains unchanged
-                settings_snapshot = copy.deepcopy(settings)
-
-                # Use the deep copied settings when creating the BenchmarkQualityResult instance
-                results_quality = BenchmarkQualityResult(result=results, settings=settings_snapshot)
-                st.session_state["results_quality"][results_quality.id] = results_quality.to_dict()
-
-    except Exception as e:
-        top_bar.error(f"An error occurred: {str(e)}")
 
 def initialize_chatbot() -> None:
     """
@@ -458,25 +291,55 @@ def display_configuration_summary(summary_container:st.container):
         mmlu_categories = settings.get("mmlu_categories", [])
         mmlu_subsample = settings.get("mmlu_subsample", 0)
         summary_lines.append(f"  - **MMLU Categories:** {', '.join(mmlu_categories)}")
-        summary_lines.append(f"  - **MMLU Subsample:** {mmlu_subsample}%")
+        summary_lines.append(f"  - **MMLU Subsample Percentage:** {mmlu_subsample}%")
 
     if "MedPub QA" in benchmark_selection:
         medpub_subsample = settings.get("medpub_subsample", 0)
-        summary_lines.append(f"  - **MedPub QA Subsample:** {medpub_subsample}%")
+        summary_lines.append(f"  - **MedPub QA Subsample Percentage:** {medpub_subsample}%")
 
     if "Truthful QA" in benchmark_selection:
         truthful_subsample = settings.get("truthful_subsample", 0)
-        summary_lines.append(f"  - **Truthful QA Subsample:** {truthful_subsample}%")
+        summary_lines.append(f"  - **Truthful QA Subsample Percentage:** {truthful_subsample}%")
 
     if "Custom Evaluation" in benchmark_selection:
         custom_settings = settings.get("custom_benchmark", {})
         prompt_col = custom_settings.get("prompt_col", "None")
         ground_truth_col = custom_settings.get("ground_truth_col", "None")
         context_col = custom_settings.get("context_col", "None")
-        summary_lines.append(f"  - **Custom Prompt Column:** {prompt_col}")
-        summary_lines.append(f"  - **Custom Ground Truth Column:** {ground_truth_col}")
-        summary_lines.append(f"  - **Custom Context Column:** {context_col}")
+        summary_lines.append(f"  - **Custom Evaluation Prompt Column:** {prompt_col}")
+        summary_lines.append(f"  - **Custom Evaluation Ground Truth Column:** {ground_truth_col}")
+        summary_lines.append(f"  - **Custom Evaluation Context Column:** {context_col}")
 
+    if "Retrieval" in benchmark_selection:
+        if f"evaluation_clients_retrieval_BYOP" not in st.session_state["settings_quality"]:
+            st.session_state["settings_quality"][f"evaluation_clients_retrieval_df_BYOP"] = False
+        
+        retrieval_setting = st.session_state["settings_quality"][f"evaluation_clients_retrieval_df_BYOP"]
+        summary_lines.append(f"  - Retrieval BYOP Selected: {retrieval_setting}")
+
+    if "RAI" in benchmark_selection:
+        if f"evaluation_clients_rai_BYOP" not in st.session_state["settings_quality"]:
+            st.session_state["settings_quality"][f"evaluation_clients_rai_df_BYOP"] = False
+        
+        rai_setting = st.session_state["settings_quality"][f"evaluation_clients_rai_df_BYOP"]
+        summary_lines.append(f"  - RAI BYOP Selected: {rai_setting}")
+
+    summary_lines.append("")
+    summary_lines.append(f"- **Azure AI Studio Connection Details**")
+    markdown_summary = """
+    - **Azure AI Studio Subscription ID**: {}
+    - **Azure AI Studio Resource Group Name**: {}
+    - **Azure AI Studio Project Name**: {}
+    """.format(
+        st.session_state.get('azure_ai_studio_subscription_id', 'Not set'),
+        st.session_state.get('azure_ai_studio_resource_group_name', 'Not set'),
+        st.session_state.get('azure_ai_studio_project_name', 'Not set')
+    )
+    
+    # Append the Markdown-formatted string to summary_lines
+    summary_lines.append(markdown_summary)
+    
+    # Display the updated summary
     summary_container.info("\n".join(summary_lines))
 
 
@@ -513,6 +376,7 @@ def main():
                         "Warning: Editing sidebar while benchmark is running will kill the job."
                     )
                     asyncio.run(run_benchmark_tests())
+                    top_bar.empty()
         else:
             display_configuration_summary(summary_container)
 

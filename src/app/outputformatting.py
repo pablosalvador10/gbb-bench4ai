@@ -4,7 +4,7 @@ import json
 import streamlit as st
 from docx import Document
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()

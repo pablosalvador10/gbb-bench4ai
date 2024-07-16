@@ -6,7 +6,7 @@ from typing import Literal, Optional, Tuple
 
 from dotenv import load_dotenv
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Load environment variables from .env file
 load_dotenv()
