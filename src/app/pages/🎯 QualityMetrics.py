@@ -9,7 +9,9 @@ from src.app.quality.results import BenchmarkQualityResult
 
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 from src.app.benchmarkbuddy import configure_chatbot
-from src.app.quality.llm_slm_settings import understanding_configuration
+from src.app.quality.llm_slm_settings import (understanding_configuration, 
+                                              configure_retrieval_settings,
+                                              configure_rai_settings)
 from utils.ml_logging import get_logger
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
@@ -128,30 +130,27 @@ def configure_sidebar() -> None:
                 understanding_configuration()
 
             with tab2_inner:
-                st.write("Configure your Retrieval System/QA benchmark here.")
                 # Add any additional configuration or content for System
                 with st.expander("📊 Metrics", expanded=False): 
                     st.markdown("""
-                    - `qa_evaluator.f1_score`: Range [0, 1]
-                    - `qa_evaluator.gpt_groundedness`: Range [0, 5]
-                    - `qa_evaluator.gpt_relevance`: Range [0, 5]
-                    - `qa_evaluator.gpt_coherence`: Range [0, 5]
-                    - `qa_evaluator.gpt_fluency`: Range [0, 5]
-                    - `qa_evaluator.gpt_similarity`: Range [0, 5]
+                    - `f1_score`: Range [0, 1]
+                    - `gpt_groundedness`: Range [0, 5]
+                    - `gpt_relevance`: Range [0, 5]
+                    - `gpt_coherence`: Range [0, 5]
+                    - `gpt_fluency`: Range [0, 5]
+                    - `gpt_similarity`: Range [0, 5]
                     """)
-                    # Call the function for system benchmark configuration
-                    # slm_llm_benchmark_configuration()
+                configure_retrieval_settings()
 
             with tab3_inner:
-                st.write("Configure your Responsible AI benchmark here.")
-                # Add any additional configuration or content for RAI
                 with st.expander("📊 Metrics", expanded=False): 
                     st.markdown("""
-                    - `content_safety_evaluator.self_harm_defect_rate`: Range [0, 1]
-                    - `content_safety_evaluator.sexual_defect_rate`: Range [0, 1]
-                    - `content_safety_evaluator.hate_unfairness_defect_rate`: Range [0, 1]
-                    - `content_safety_evaluator.violence_defect_rate`: Range [0, 1]
+                    - `self_harm_defect_rate`: Range [0, 1]
+                    - `sexual_defect_rate`: Range [0, 1]
+                    - `hate_unfairness_defect_rate`: Range [0, 1]
+                    - `violence_defect_rate`: Range [0, 1]
                     """)
+                configure_rai_settings()
                           
         with tab2:
             configure_chatbot()
@@ -248,6 +247,30 @@ def get_task_list(test: str = None):
     tasks = [asyncio.create_task(obj.test(data=data)) for obj in objects]
     return tasks
 
+import concurrent.futures
+
+def run_retrieval_quality_for_client(client):
+    try:
+        results_retrieval = client.run_retrieval_quality(data_input=st.session_state["evaluation_clients_retrieval_df"])
+        # Assuming client.model_config.azure_deployment exists and is unique for each client
+        deployment_name = client.model_config.azure_deployment
+        return (deployment_name, results_retrieval)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return (client.model_config.azure_deployment, None)
+
+def run_retrieval_quality_in_parallel():
+    clients = st.session_state["evaluation_clients_retrieval"]
+    results_gpt_evals = {}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(executor.map(run_retrieval_quality_for_client, clients))
+    
+    for deployment_name, result in results:
+        if result is not None:
+            results_gpt_evals[deployment_name] = result["metrics"]
+    
+    return results_gpt_evals
+
 # Define an asynchronous function to run benchmark tests and log progress
 async def run_benchmark_tests():
     try:
@@ -292,6 +315,13 @@ async def run_benchmark_tests():
                     custom_stats = await asyncio.gather(*custom_tasks)
                     custom_results = pd.concat(custom_stats)
                     results.append(custom_results)
+
+                if "retrieval" in settings["benchmark_selection"]:
+                    logger.info("Running Retrieval System benchmark")
+                    # Execute the function and store results in a dictionary
+                    results_gpt_evals_dict = run_retrieval_quality_in_parallel()
+                    #results_gpt_evals_dict = st.session_state[].run_retrieval_quality(data_input=st.session_state["evaluation_clients_retrieval_df"])
+                    st.info(results_gpt_evals_dict)
 
                 results_df = pd.concat(results)
                 results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
