@@ -9,7 +9,7 @@ from src.app.quality.results import BenchmarkQualityResult
 
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 from src.app.benchmarkbuddy import configure_chatbot
-from src.app.quality.llm_slm_settings import slm_llm_benchmark_configuration
+from src.app.quality.llm_slm_settings import understanding_configuration
 from utils.ml_logging import get_logger
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
@@ -92,6 +92,7 @@ def configure_sidebar() -> None:
     """
     Configure the sidebar with benchmark Center and deployment forms, allowing users to choose between evaluating a Large Language Model (LLM) or a System based on LLM.
     """
+
     with st.sidebar:
         st.markdown("## 🤖 Deployment Center ")
         if st.session_state.deployments == {}:
@@ -102,47 +103,78 @@ def configure_sidebar() -> None:
         st.sidebar.divider()
 
         st.markdown("## 🎛️ Benchmark Center")
-        operation = st.selectbox(
-            "Choose Your Evaluation Focus:",
-            ("LLM/SLM", "System"),
-            help="""Select the focus of your benchmark:
-                    - 'LLM' to evaluate the performance of a standalone Large Language Model. This includes metrics like accuracy, fluency, and coherence.
-                    - 'System' to assess an LLM-based system as a whole, considering aspects such as integration, latency, throughput, and user experience.""",
-            placeholder="Select a Focus",
-        )
-
-        if operation == "LLM/SLM":
-            tab1, tab2, tab3 = st.sidebar.tabs(
-                    ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
-                )
-            with tab1:
-                slm_llm_benchmark_configuration()
-            with tab2:
-                configure_chatbot()
-            with tab3:
-                with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
-                    st.markdown(
-                        """       
-                        To fully activate and utilize BenchmarkAI Buddy, 
-                        please go under benchmark center and buddy setting follow these simple steps:
-                    
-                        1. **Activate Your AOAI Model**:
-                            - Navigate to the "Add Your AOAI-model" section.
-                            - Fill in the "Deployment id" with your Azure OpenAI deployment ID.
-                            - Enter your "Azure OpenAI Key" for secure access.
-                            - Specify the "API Endpoint" where your Azure OpenAI is hosted.
-                            - Input the "API Version" to ensure compatibility.
-
-                        2. **Configure Chatbot Behavior**:
-                            - After adding your GPT model, go to "Benchmark Settings".
-                            - Adjust settings to fine-tune the chatbot's responses and behavior.
-                        """
-                    )
-                display_resources()
-        elif operation == "System":
-            st.warning(
-                "Throughput benchmarking is not available yet. Please select 'Latency'."
+       
+        tab1, tab2, tab3 = st.sidebar.tabs(
+                ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
             )
+        with tab1:
+            st.markdown("""
+            ## Focus your LLM/SLM benchmark
+
+            - **🧠 Understanding**: Evaluate the reasoning and overall performance using well-known datasets like MMLU, MedPub, and TruthfulQA.
+            - **⚙️ Retrieval System/QA**: Assess an LLM-based system as a whole, considering context and understand domani-specific accuracy.
+            - **🛡️ RAI (Responsible AI)**: Ensure the model meets responsible AI standards.
+            """)
+
+            # Create inner tabs for detailed configuration
+            tab1_inner, tab2_inner, tab3_inner = st.tabs(["🧠 Understanding", "⚙️ Retrieval System/QA", "🛡️ RAI"])
+
+            with tab1_inner:
+                with st.expander("📊 Metrics", expanded=False): 
+                    st.markdown("""
+                    - **Datasets**: MMLU, MedPub, TruthfulQA
+                    """)
+                # Call the function for LLM/SLM benchmark configuration
+                understanding_configuration()
+
+            with tab2_inner:
+                st.write("Configure your Retrieval System/QA benchmark here.")
+                # Add any additional configuration or content for System
+                with st.expander("📊 Metrics", expanded=False): 
+                    st.markdown("""
+                    - `qa_evaluator.f1_score`: Range [0, 1]
+                    - `qa_evaluator.gpt_groundedness`: Range [0, 5]
+                    - `qa_evaluator.gpt_relevance`: Range [0, 5]
+                    - `qa_evaluator.gpt_coherence`: Range [0, 5]
+                    - `qa_evaluator.gpt_fluency`: Range [0, 5]
+                    - `qa_evaluator.gpt_similarity`: Range [0, 5]
+                    """)
+                    # Call the function for system benchmark configuration
+                    # slm_llm_benchmark_configuration()
+
+            with tab3_inner:
+                st.write("Configure your Responsible AI benchmark here.")
+                # Add any additional configuration or content for RAI
+                with st.expander("📊 Metrics", expanded=False): 
+                    st.markdown("""
+                    - `content_safety_evaluator.self_harm_defect_rate`: Range [0, 1]
+                    - `content_safety_evaluator.sexual_defect_rate`: Range [0, 1]
+                    - `content_safety_evaluator.hate_unfairness_defect_rate`: Range [0, 1]
+                    - `content_safety_evaluator.violence_defect_rate`: Range [0, 1]
+                    """)
+                          
+        with tab2:
+            configure_chatbot()
+        with tab3:
+            with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
+                st.markdown(
+                    """       
+                    To fully activate and utilize BenchmarkAI Buddy, 
+                    please go under benchmark center and buddy setting follow these simple steps:
+                
+                    1. **Activate Your AOAI Model**:
+                        - Navigate to the "Add Your AOAI-model" section.
+                        - Fill in the "Deployment id" with your Azure OpenAI deployment ID.
+                        - Enter your "Azure OpenAI Key" for secure access.
+                        - Specify the "API Endpoint" where your Azure OpenAI is hosted.
+                        - Input the "API Version" to ensure compatibility.
+
+                    2. **Configure Chatbot Behavior**:
+                        - After adding your GPT model, go to "Benchmark Settings".
+                        - Adjust settings to fine-tune the chatbot's responses and behavior.
+                    """
+                )
+            display_resources()
 
 top_bar = st.empty()
 

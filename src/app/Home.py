@@ -65,9 +65,6 @@ def get_main_content() -> str:
     """
 
 
-import streamlit as st
-
-
 @st.cache_data()
 def create_support_center_content():
     content = {
@@ -269,8 +266,6 @@ def load_default_deployment(
     ):
         st.session_state.deployments[default_deployment["name"]] = default_deployment
 
-
-import streamlit as st
 
 
 def add_deployment_aoai_form() -> None:

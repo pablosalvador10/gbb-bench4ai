@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-def slm_llm_benchmark_configuration():
+def understanding_configuration():
     """
     Improved display of the benchmark configuration section in the UI.
     This function uses a multiselect widget for a clearer and more flexible selection process, allowing multiple choices.
@@ -135,3 +135,5 @@ def configure_custom_benchmark_columns(custom_df):
         "context_col": context_col,
         "custom_df": custom_df
     }
+
+

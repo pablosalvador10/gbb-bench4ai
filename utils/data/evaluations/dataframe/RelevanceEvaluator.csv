@@ -1,0 +1,11 @@
+question,answer,context,relevance
+What is the capital of France?,Paris.,France is a country in Europe. Its capital is Paris.,high
+Who developed the theory of relativity?,Albert Einstein.,The theory of relativity was developed by Albert Einstein.,high
+What is the speed of light?,"299,792,458 meters per second.","Light travels at a constant speed in a vacuum, which is 299,792,458 meters per second.",high
+Who is the author of '1984'?,George Orwell.,The author of '1984' is George Orwell.,high
+Who painted the Mona Lisa?,Leonardo da Vinci.,The Mona Lisa was painted by Leonardo da Vinci.,high
+What is the tallest mountain in the world?,Mount Everest.,"The fastest land animal is the cheetah, which can run at speeds of up to 75 miles per hour.",low
+What is the capital of Japan?,Tokyo.,"Sushi is a traditional Japanese dish made with vinegared rice and various ingredients, including seafood and vegetables.",low
+What is the largest planet in our solar system?,Jupiter.,"The Great Wall of China is the longest wall in the world, stretching over 13,000 miles.",low
+What is the chemical symbol for water?,H2O.,"The Eiffel Tower is a famous landmark in Paris, France, standing at a height of 324 meters.",low
+What is the largest ocean on Earth?,The Pacific Ocean.,"The Sahara Desert is the largest hot desert in the world, covering parts of 11 countries in North Africa.",low

@@ -1,104 +1,175 @@
-import os
 import pandas as pd
-from typing import List, Optional, Dict, Any
+import json
+import tempfile
+from typing import Any, Optional, Dict
+import os
+import logging
+from promptflow.evals.evaluate import evaluate
 from promptflow.core import AzureOpenAIModelConfiguration
-from promptflow.evals.evaluators import (
-    RelevanceEvaluator,
-    F1ScoreEvaluator,
-    GroundednessEvaluator,
-    ViolenceEvaluator,
-    SexualEvaluator,
-    SelfHarmEvaluator,
-    HateUnfairnessEvaluator,
-    CoherenceEvaluator,
-    FluencyEvaluator,
-    SimilarityEvaluator,
-    QAEvaluator,
-    ChatEvaluator,
-    ContentSafetyEvaluator,
-    ContentSafetyChatEvaluator
-)
+from promptflow.evals.evaluators import QAEvaluator, ContentSafetyEvaluator
 
-class GPTEvals:
-    def __init__(self, azure_endpoint: Optional[str] = None, 
+# Set up logging
+from utils.ml_logging import get_logger
+
+logger = get_logger()
+
+class AzureAIQualityEvaluator:
+    def __init__(self,
+                 azure_endpoint: Optional[str] = None,
                  api_key: Optional[str] = None,
-                 azure_deployment: Optional[str] = None, 
-                 api_version: Optional[str] = None):
+                 azure_deployment: Optional[str] = None,
+                 api_version: Optional[str] = None,
+                 subscription_id: Optional[str] = None,
+                 resource_group_name: Optional[str] = None,
+                 project_name: Optional[str] = None):
         """
-        Initializes a comprehensive evaluation framework for Azure OpenAI model responses. 
-        This class configures the model and sets up various evaluators to assess different aspects of AI-generated text, 
-        including relevance, coherence, fluency, content safety, and more. Evaluators can be customized or extended based on specific needs.
+        Initialize the AzureAIQualityEvaluator with model configuration and evaluators.
 
-        Parameters can be passed directly or sourced from environment variables.
+        :param azure_endpoint: Azure OpenAI endpoint.
+        :param api_key: API key for Azure OpenAI.
+        :param azure_deployment: Azure OpenAI deployment ID.
+        :param api_version: API version for Azure OpenAI.
+        :param subscription_id: Azure subscription ID.
+        :param resource_group_name: Azure resource group name.
+        :param project_name: Azure project name.
         """
-        self.model_config = AzureOpenAIModelConfiguration(
-            azure_endpoint=azure_endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT"),
-            api_key=api_key or os.environ.get("OPENAI_API_KEY"),
-            azure_deployment=azure_deployment or os.environ.get("AZURE_AOAI_COMPLETION_MODEL_DEPLOYMENT_ID"),
-            api_version=api_version or os.environ.get("DEPLOYMENT_VERSION"),
-        )
-        self.evaluators = {
-            "RelevanceEvaluator": (RelevanceEvaluator(self.model_config), ["question", "answer", "context"]),
-            "F1ScoreEvaluator": (F1ScoreEvaluator(), ["answer", "ground_truth"]),
-            "GroundednessEvaluator": (GroundednessEvaluator(self.model_config), ["answer", "context"]),
-            "ViolenceEvaluator": (ViolenceEvaluator(self.model_config), ["question", "answer"]),
-            "SexualEvaluator": (SexualEvaluator(self.model_config), ["question", "answer"]),
-            "SelfHarmEvaluator": (SelfHarmEvaluator(self.model_config), ["question", "answer"]),
-            "HateUnfairnessEvaluator": (HateUnfairnessEvaluator(self.model_config), ["question", "answer"]),
-            "CoherenceEvaluator": (CoherenceEvaluator(self.model_config), ["question", "answer"]),
-            "FluencyEvaluator": (FluencyEvaluator(self.model_config), ["question", "answer"]),
-            "SimilarityEvaluator": (SimilarityEvaluator(self.model_config), ["question", "answer", "ground_truth"]),
-            "QAEvaluator": (QAEvaluator(self.model_config), ["question", "answer", "context", "ground_truth"]),
-            "ChatEvaluator": (ChatEvaluator(self.model_config), ["question", "answer", "context", "ground_truth"]),
-            "ContentSafetyEvaluator": (ContentSafetyEvaluator(self.model_config), ["question", "answer", "context", "ground_truth"]),
-            "ContentSafetyChatEvaluator": (ContentSafetyChatEvaluator(self.model_config), ["question", "answer", "context", "ground_truth"]),
-        }
-        self.data: List[Dict[str, Any]] = []
+        try:
+            self.model_config = AzureOpenAIModelConfiguration(
+                azure_endpoint=azure_endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT"),
+                api_key=api_key or os.environ.get("OPENAI_API_KEY"),
+                azure_deployment=azure_deployment or os.environ.get("AZURE_AOAI_COMPLETION_MODEL_DEPLOYMENT_ID"),
+                api_version=api_version or os.environ.get("DEPLOYMENT_VERSION"),
+            )
 
-    def load_csv(self, file_path: str) -> None:
+            self.qa_evaluator = QAEvaluator(model_config=self.model_config, parallel=True)
+
+            self.azure_ai_project = None
+            if subscription_id and resource_group_name and project_name:
+                self.azure_ai_project = {
+                    "subscription_id": subscription_id,
+                    "resource_group_name": resource_group_name,
+                    "project_name": project_name
+                }
+            
+            self.content_safety_evaluator = ContentSafetyEvaluator(
+                project_scope=self.azure_ai_project, parallel=True
+            )
+
+            logger.info("AzureAIQualityEvaluator initialized successfully.")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize AzureAIQualityEvaluator: {e}")
+            raise
+
+    def _convert_to_jsonl(self, data: pd.DataFrame, temp_file: tempfile.NamedTemporaryFile) -> None:
         """
-        Load data from a CSV file and store it as a list of dictionaries.
-        
-        :param file_path: Path to the CSV file.
+        Convert DataFrame to JSONL format and write to a temporary file.
+
+        :param data: DataFrame containing the data.
+        :param temp_file: Temporary file to write the JSONL data.
         """
-        df = pd.read_csv(file_path)
-        self.data = df.to_dict(orient='records')
+        try:
+            for record in data.to_dict(orient='records'):
+                json_record = json.dumps(record)
+                temp_file.write(json_record + '\n')
+            temp_file.flush()
+            logger.info("Data successfully converted to JSONL format.")
+        except Exception as e:
+            logger.error(f"Error converting DataFrame to JSONL: {e}")
+            raise
 
-    def check_required_columns(self, row: Dict[str, Any], required_columns: List[str]) -> bool:
+    def run_chat_quality(self, data_input: Any, 
+                         azure_ai_project: Optional[Dict]=None) -> Any:
         """
-        Check if the required columns are present in the row.
+        Evaluate the quality of chat responses using the QA evaluator.
 
-        :param row: A dictionary representing a row of data.
-        :param required_columns: A list of required columns.
-        :return: True if all required columns are present, False otherwise.
+        :param data_input: A pandas DataFrame or a path to a CSV file containing the data.
+        :return: The result of the evaluation.
         """
-        return all(col in row for col in required_columns)
+        temp_file = None
+        try:
+            if isinstance(data_input, pd.DataFrame):
+                data = data_input
+            elif isinstance(data_input, str):
+                data = pd.read_csv(data_input)
+            else:
+                raise ValueError("data_input must be a pandas DataFrame or a path to a CSV file.")
 
-    def execute_evaluator(self, evaluator_name: str) -> List[Dict[str, Any]]:
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jsonl', mode='w')
+            self._convert_to_jsonl(data, temp_file)
+
+            result = evaluate(
+                data=temp_file.name,
+                evaluators={
+                    "qa_evaluator": self.qa_evaluator,
+                },
+                evaluator_config={
+                    "qa_evaluator": {
+                        "question": "${data.question}",
+                        "answer": "${data.answer}",
+                        "context": "${data.context}",
+                        "ground_truth": "${data.ground_truth}",
+                    },
+                },
+                azure_ai_project=azure_ai_project or self.azure_ai_project
+            )
+            logger.info("Quality evaluation completed successfully.")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error during quality evaluation: {e}")
+            raise
+        finally:
+            try:
+                if temp_file:
+                    os.remove(temp_file.name)
+                    logger.info(f"Temporary file {temp_file.name} removed.")
+            except Exception as e:
+                logger.error(f"Error removing temporary file: {e}")
+
+    def run_chat_content_safety(self, data_input: Any, 
+                                azure_ai_project: Optional[Dict]=None) -> Any:
         """
-        Execute the specified evaluator on the loaded data.
+        Evaluate the content safety of chat responses using the Content Safety evaluator.
 
-        :param evaluator_name: The name of the evaluator to be executed.
-        :return: A list of results from the evaluator.
-        :raises ValueError: If the evaluator is not found or required columns are missing.
+        :param data_input: A pandas DataFrame or a path to a CSV file containing the data.
+        :return: The result of the evaluation.
         """
-        if evaluator_name not in self.evaluators:
-            raise ValueError(f"Evaluator {evaluator_name} not found.")
+        temp_file = None
+        try:
+            if isinstance(data_input, pd.DataFrame):
+                data = data_input
+            elif isinstance(data_input, str):
+                data = pd.read_csv(data_input)
+            else:
+                raise ValueError("data_input must be a pandas DataFrame or a path to a CSV file.")
 
-        evaluator, required_columns = self.evaluators[evaluator_name]
-        results = []
-        for row in self.data:
-            if not self.check_required_columns(row, required_columns):
-                raise ValueError(f"Missing required columns for {evaluator_name}: {required_columns}")
-            result = evaluator(**{col: row[col] for col in required_columns})
-            results.append(result)
-        return results
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jsonl', mode='w')
+            self._convert_to_jsonl(data, temp_file)
 
-    def get_available_evaluators(self) -> List[str]:
-        """
-        Get a list of available evaluators.
+            result = evaluate(
+                data=temp_file.name,
+                evaluators={
+                    "content_safety_evaluator": self.content_safety_evaluator,
+                },
+                evaluator_config={
+                    "content_safety_evaluator": {
+                        "question": "${data.question}",
+                        "answer": "${data.answer}",
+                    },
+                },
+                azure_ai_project=azure_ai_project or self.azure_ai_project
+            )
+            logger.info("Content safety evaluation completed successfully.")
+            return result
 
-        :return: A list of evaluator names.
-        """
-        return list(self.evaluators.keys())
-
+        except Exception as e:
+            logger.error(f"Error during content safety evaluation: {e}")
+            raise
+        finally:
+            try:
+                if temp_file:
+                    os.remove(temp_file.name)
+                    logger.info(f"Temporary file {temp_file.name} removed.")
+            except Exception as e:
+                logger.error(f"Error removing temporary file: {e}")

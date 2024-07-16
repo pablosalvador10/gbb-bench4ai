@@ -26,3 +26,5 @@ psutil
 transformers
 fuzzywuzzy[speedup]
 sentence_transformers
+promptflow-azure
+promptflow-evals
