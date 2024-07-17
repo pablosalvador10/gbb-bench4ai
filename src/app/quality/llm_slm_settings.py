@@ -196,6 +196,12 @@ def understanding_configuration():
     """
     Configure settings for Understanding benchmarks, including the selection of benchmarks like MMLU, MedPub QA, and Truthful QA.
     """
+    # Initialize 'settings_quality' and 'benchmark_selection' in session_state if they don't exist
+    if "settings_quality" not in st.session_state:
+        st.session_state["settings_quality"] = {}
+    if "benchmark_selection" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection"] = []
+
     benchmark_selection = st.multiselect(
         "Choose Benchmark(s) for SLM/LLM assessment:",
         ["MMLU", "MedPub QA", "Truthful QA"],
@@ -214,11 +220,9 @@ def understanding_configuration():
             if benchmark in st.session_state["settings_quality"]["benchmark_selection"] and benchmark not in benchmark_selection:
                 st.session_state["settings_quality"]["benchmark_selection"].remove(benchmark)
     else:
-        # If there is no benchmark_selection, remove "MMLU", "MedPub QA", "Truthful QA" if they exist
         for benchmark in ["MMLU", "MedPub QA", "Truthful QA"]:
             if benchmark in st.session_state["settings_quality"]["benchmark_selection"]:
                 st.session_state["settings_quality"]["benchmark_selection"].remove(benchmark)
-
 
     if "MMLU" in benchmark_selection:
         configure_mmlu_benchmark()

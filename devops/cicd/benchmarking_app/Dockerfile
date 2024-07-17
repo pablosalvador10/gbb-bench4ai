@@ -7,7 +7,10 @@ WORKDIR /app
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
 COPY src /app/src
-COPY my_utils /app/my_utils
+COPY my_utils/ml_logging.py /app/my_utils/ml_logging.py 
+COPY my_utils/__init__.py /app/my_utils/__init__.py  
+COPY my_utils/data/evaluations/dataframe/CompositeChat.csv /app/my_utils/data/evaluations/dataframe/CompositeChat.csv
+COPY my_utils/images/ /app/my_utils/images/
 COPY requirements.txt /app/requirements.txt
 
 RUN mkdir -p /app/.streamlit

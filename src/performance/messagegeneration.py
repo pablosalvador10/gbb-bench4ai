@@ -8,7 +8,7 @@ import math
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 import wonderwords
@@ -227,7 +227,7 @@ class BYOPMessageGenerator(BaseMessagesGenerator):
         messages_tokens = num_tokens_from_messages(messages, self.model)
         return messages, messages_tokens
 
-    def create_chat_format(self, prompt: str) -> List[Dict[str, str]]:
+    def create_chat_format(self, prompt: str, context:Optional[str]=None) -> List[Dict[str, str]]:
         """
         Create the chat format messages based on the prompt and other conditions.
         """
@@ -237,10 +237,20 @@ class BYOPMessageGenerator(BaseMessagesGenerator):
                 f" Please write a response that should be at least {self.max_tokens} tokens long."
             )
 
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ]
+        if context:
+            user_prompt = (f"Given the context: '{context}', carefully consider it and then address the question: '{prompt}'. "
+                           "Ensure your response demonstrates a deep understanding of the context.")
+
+            messages = [
+                        {"role": "system", "content": "You are a helpful assistant. Aim to provide the best response based on the context."},
+                        {"role": "user", "content": user_prompt}  
+                    ]
+        else: 
+
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ]
 
         messages_tokens = num_tokens_from_messages(messages, self.model)
         if self.prevent_server_caching:
@@ -253,10 +263,12 @@ class BYOPMessageGenerator(BaseMessagesGenerator):
         self._cached_messages_and_tokens = [(messages, messages_tokens)]
         return messages
 
-    def generate_messages(self, prompt: str) -> Tuple[Dict[str, str], int]:
+    def generate_messages(self, prompt: str, context:Optional[str]=None) -> Tuple[Dict[str, str], int]:
         """
         Prepare the message content with the addition of the max tokens context.
         Also handle the prevention of server-side caching if needed.
         """
-        messages = self.create_chat_format(prompt)
+        messages = self.create_chat_format(prompt, context)
         return messages, num_tokens_from_messages(messages, self.model)
+
+

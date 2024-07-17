@@ -1,7 +1,6 @@
 import asyncio
 from functools import reduce
 from typing import Any, Dict, List
-import copy
 import dotenv
 import streamlit as st
 
@@ -15,20 +14,18 @@ from src.app.performance.latencydisplay import (create_latency_display_dataframe
                                     display_latency_metrics,
                                     display_token_metrics)
 from src.app.performance.latencysettings import configure_benchmark_settings
-from src.app.managers import (create_benchmark_non_streaming_client,
-                              create_benchmark_streaming_client)
 from src.app.outputformatting import (download_ai_response_as_docx_or_pdf,
                                       download_chat_history)
 from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
                              prompt_message_ai_benchmarking_buddy_latency)
 from src.app.performance.results import BenchmarkPerformanceResult
 from src.performance.aoaihelpers.stats import ModelPerformanceVisualizer
+from src.app.performance.run import run_benchmark_tests
 from my_utils.ml_logging import get_logger
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
 
-# Set up logger
 logger = get_logger()
 
 st.set_page_config(page_title="Performance Insights AI Assistant", page_icon="📊")
@@ -236,79 +233,6 @@ def ask_user_for_result_display_preference(results: BenchmarkPerformanceResult) 
     with col2:
         with st.expander("👥 Run Configuration Details", expanded=False):
             display_human_readable_settings(deployment_names, results)
-
-
-async def run_benchmark_tests(test_status_placeholder: st.container) -> None:
-    """
-    Run the benchmark tests asynchronously, with detailed configuration for each test.
-
-    :param test_status_placeholder: Streamlit placeholder for the test status.
-    """
-    deployment_clients = [
-        (
-            create_benchmark_streaming_client(
-                deployment["key"], deployment["endpoint"], deployment["version"]
-            )
-            if deployment["stream"]
-            else create_benchmark_non_streaming_client(
-                deployment["key"], deployment["endpoint"], deployment["version"]
-            ),
-            deployment_name,
-        )
-        for deployment_name, deployment in st.session_state.deployments.items()
-    ]
-
-    async def safe_run(client, deployment_name):
-        try:
-            await client.run_latency_benchmark_bulk(
-                deployment_names=[deployment_name],
-                max_tokens_list=st.session_state["settings"]["max_tokens_list"],
-                iterations=st.session_state["settings"]["num_iterations"],
-                context_tokens=st.session_state["settings"]["context_tokens"],
-                temperature=st.session_state["settings"]["temperature"],
-                byop=st.session_state["settings"]["prompts"],
-                prevent_server_caching=st.session_state["settings"][
-                    "prevent_server_caching"
-                ],
-                timeout=st.session_state["settings"]["timeout"],
-                top_p=st.session_state["settings"]["top_p"],
-                n=1,
-                presence_penalty=st.session_state["settings"]["presence_penalty"],
-                frequency_penalty=st.session_state["settings"]["frequency_penalty"],
-            )
-        except Exception as e:
-            logger.error(
-                f"An error occurred with deployment '{deployment_name}': {str(e)}",
-                exc_info=True,
-            )
-            st.error(f"An error occurred with deployment '{deployment_name}': {str(e)}")
-
-    logger.info(f"Total number of deployment clients: {len(deployment_clients)}")
-
-    for client, deployment_name in deployment_clients:
-        await safe_run(client, deployment_name)
-
-    try:
-        stats = [
-            client.calculate_and_show_statistics() for client, _ in deployment_clients
-        ]
-        stats_raw = [client.results for client, _ in deployment_clients]
-        st.session_state["benchmark_results"] = stats
-        st.session_state["benchmark_results_raw"] = stats_raw
-        settings_snapshot = copy.deepcopy(st.session_state["settings"])
-        results = BenchmarkPerformanceResult(
-            result=stats, settings=settings_snapshot
-        )
-        st.session_state["results"][results.id] = results.to_dict()
-        test_status_placeholder.markdown(
-            f"Benchmark <span style='color: grey;'>{results.id}</span> Completed",
-            unsafe_allow_html=True,
-        )
-    except Exception as e:
-        logger.error(
-            f"An error occurred while processing the results: {str(e)}", exc_info=True
-        )
-        st.error(f"An error occurred while processing the results: {str(e)}")
 
 
 def display_latency_results(
