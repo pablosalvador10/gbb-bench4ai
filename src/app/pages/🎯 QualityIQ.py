@@ -13,8 +13,8 @@ from src.app.quality.llm_slm_settings import (understanding_configuration,
 from my_utils.ml_logging import get_logger
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
-from src.app.prompts import (SYSTEM_MESSAGE_LATENCY,
-                             prompt_message_ai_benchmarking_buddy_latency)
+from src.app.prompts import (SYSTEM_MESSAGE_QUALITY,
+                             prompt_message_ai_benchmarking_buddy_quality)
 
 from src.app.quality.resources import display_resources
 from src.app.quality.displayquality import display_quality_results
@@ -64,7 +64,7 @@ initial_values = {
     "messages_quality": [
         {
             "role": "system",
-            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+            "content": f"{SYSTEM_MESSAGE_QUALITY}",
         },
         {
             "role": "assistant",
@@ -201,7 +201,7 @@ def initialize_chatbot() -> None:
         st.session_state.messages_quality = [
         {
             "role": "system",
-            "content": f"{SYSTEM_MESSAGE_LATENCY}",
+            "content": f"{SYSTEM_MESSAGE_QUALITY}",
         },
         {
             "role": "assistant",
@@ -233,7 +233,7 @@ def initialize_chatbot() -> None:
 
     prompt = st.chat_input("Ask away!", disabled=st.session_state.disable_chatbot)
     if prompt:
-        prompt_ai_ready = prompt_message_ai_benchmarking_buddy_latency(
+        prompt_ai_ready = prompt_message_ai_benchmarking_buddy_quality(
             st.session_state["results_quality"], prompt
         )
         st.session_state.messages_quality.append({"role": "user", "content": prompt_ai_ready})
@@ -251,7 +251,7 @@ def initialize_chatbot() -> None:
                     messages=[
                         {
                             "role": "system",
-                            "content": (SYSTEM_MESSAGE_LATENCY),
+                            "content": (SYSTEM_MESSAGE_QUALITY),
                         }
                     ]
                     + [

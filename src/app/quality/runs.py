@@ -17,10 +17,6 @@ import copy
 # Set up logger
 logger = get_logger()
 
-
-# Set up logger
-logger = get_logger()
-
 top_bar = st.empty()
 
 
@@ -204,11 +200,9 @@ async def run_benchmark_tests():
                 for deployment_name, deployment in st.session_state.deployments.items():
                     results_retrievals = {}
                     try:
-                        st.info(f"Running retrieval quality evaluation for client {deployment_name}.")
                         df_input = st.session_state["settings_quality"]["retrieval_df"]
                         df_filtered = df_input[df_input['model'] == deployment_name]
                         if not df_filtered.empty:
-                            st.dataframe(df_filtered)
                             metrics, studio_url = clients[0].run_chat_quality(data_input=df_filtered)
                             metrics['studio_url'] = studio_url
                             results_retrievals[deployment_name] = metrics
@@ -225,7 +219,6 @@ async def run_benchmark_tests():
                         st.error(f"Failed to run retrieval quality evaluation for client {deployment_name}. Check logs for details.")
         
                 retrieval_results = pd.DataFrame(data_for_df).set_index('model')
-                st.dataframe(retrieval_results)
 
             # RAI benchmark
             if "rai" in settings.get("benchmark_selection", []):
@@ -235,7 +228,6 @@ async def run_benchmark_tests():
                     results_rai = {}
                     for client in clients:
                         try:
-                            st.info(f"Running RAI quality evaluation for client {client.model_config.azure_deployment}.")
                             df_input = st.session_state["settings_quality"]["rai_df"]
                             df_filtered = df_input[df_input['model'] == client.model_config.azure_deployment]
                             metrics, studio_url = client.run_chat_content_safety(data_input=df_filtered)

@@ -3,6 +3,8 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import streamlit as st
+from my_utils.ml_logging import get_logger
+logger = get_logger()
 
 def create_latency_display_dataframe(stats: List[Dict[str, Any]]) -> pd.DataFrame:
     """
@@ -14,88 +16,93 @@ def create_latency_display_dataframe(stats: List[Dict[str, Any]]) -> pd.DataFram
     Returns:
     - pd.DataFrame: A DataFrame where each row represents the statistics for a particular model configuration, with columns for each statistic.
     """
-    headers = [
-        "Model_MaxTokens",
-        "is_Streaming",
-        "Iterations",
-        "Regions",
-        "Average TTLT (s)",
-        "Median TTLT (s)",
-        "IQR TTLT",
-        "95th Percentile TTLT (s)",
-        "99th Percentile TTLT (s)",
-        "CV TTLT",
-        "Median Prompt Tokens",
-        "IQR Prompt Tokens",
-        "Median Completion Tokens",
-        "IQR Completion Tokens",
-        "95th Percentile Completion Tokens",
-        "99th Percentile Completion Tokens",
-        "CV Completion Tokens",
-        "Average TBT (ms)",
-        "Median TBT (ms)",
-        "IQR TBT",
-        "95th Percentile TBT (ms)",
-        "99th Percentile TBT (ms)",
-        "Average TTFT (ms/s)",
-        "Median TTFT (ms/s)",
-        "IQR TTFT",
-        "95th Percentile TTFT (ms/s)",
-        "99th Percentile TTFT (ms/s)",
-        "Error Rate",
-        "Error Types",
-        "Successful Runs",
-        "Unsuccessful Runs",
-        "Throttle Count",
-        "Throttle Rate",
-        "Best Run",
-        "Worst Run",
-    ]
-
-    table = [
-        [
-            key,
-            data.get("is_Streaming", "N/A"),
-            data.get("number_of_iterations", "N/A"),
-            ", ".join(set([r for r in data.get("regions", []) if r])) or "N/A",
-            data.get("average_ttlt", "N/A"),
-            data.get("median_ttlt", "N/A"),
-            data.get("iqr_ttlt", "N/A"),
-            data.get("percentile_95_ttlt", "N/A"),
-            data.get("percentile_99_ttlt", "N/A"),
-            data.get("cv_ttlt", "N/A"),
-            data.get("median_prompt_tokens", "N/A"),
-            data.get("iqr_prompt_tokens", "N/A"),
-            data.get("median_completion_tokens", "N/A"),
-            data.get("iqr_completion_tokens", "N/A"),
-            data.get("percentile_95_completion_tokens", "N/A"),
-            data.get("percentile_99_completion_tokens", "N/A"),
-            data.get("cv_completion_tokens", "N/A"),
-            data.get("average_tbt", "N/A"),
-            data.get("median_tbt", "N/A"),
-            data.get("iqr_tbt", "N/A"),
-            data.get("percentile_95_tbt", "N/A"),
-            data.get("percentile_99_tbt", "N/A"),
-            data.get("average_ttft", "N/A"),
-            data.get("median_ttft", "N/A"),
-            data.get("iqr_ttft", "N/A"),
-            data.get("percentile_95_ttft", "N/A"),
-            data.get("percentile_99_ttft", "N/A"),
-            data.get("error_rate", "N/A"),
-            data.get("errors_types", "N/A"),
-            data.get("successful_runs", "N/A"),
-            data.get("unsuccessful_runs", "N/A"),
-            data.get("throttle_count", "N/A"),
-            data.get("throttle_rate", "N/A"),
-            json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
-            json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A",
+    try: 
+        headers = [
+            "Model_MaxTokens",
+            "is_Streaming",
+            "Iterations",
+            "Regions",
+            "Average TTLT (s)",
+            "Median TTLT (s)",
+            "IQR TTLT",
+            "95th Percentile TTLT (s)",
+            "99th Percentile TTLT (s)",
+            "CV TTLT",
+            "Median Prompt Tokens",
+            "IQR Prompt Tokens",
+            "Median Completion Tokens",
+            "IQR Completion Tokens",
+            "95th Percentile Completion Tokens",
+            "99th Percentile Completion Tokens",
+            "CV Completion Tokens",
+            "Average TBT (ms)",
+            "Median TBT (ms)",
+            "IQR TBT",
+            "95th Percentile TBT (ms)",
+            "99th Percentile TBT (ms)",
+            "Average TTFT (ms/s)",
+            "Median TTFT (ms/s)",
+            "IQR TTFT",
+            "95th Percentile TTFT (ms/s)",
+            "99th Percentile TTFT (ms/s)",
+            "Error Rate",
+            "Error Types",
+            "Successful Runs",
+            "Unsuccessful Runs",
+            "Throttle Count",
+            "Throttle Rate",
+            "Best Run",
+            "Worst Run",
         ]
-        for stat in stats
-        for key, data in stat.items()
-    ]
 
-    df = pd.DataFrame(table, columns=headers)
-    return df
+        table = [
+            [
+                key,
+                data.get("is_Streaming", "N/A"),
+                data.get("number_of_iterations", "N/A"),
+                ", ".join(set([r for r in data.get("regions", []) if r])) or "N/A",
+                data.get("average_ttlt", "N/A"),
+                data.get("median_ttlt", "N/A"),
+                data.get("iqr_ttlt", "N/A"),
+                data.get("percentile_95_ttlt", "N/A"),
+                data.get("percentile_99_ttlt", "N/A"),
+                data.get("cv_ttlt", "N/A"),
+                data.get("median_prompt_tokens", "N/A"),
+                data.get("iqr_prompt_tokens", "N/A"),
+                data.get("median_completion_tokens", "N/A"),
+                data.get("iqr_completion_tokens", "N/A"),
+                data.get("percentile_95_completion_tokens", "N/A"),
+                data.get("percentile_99_completion_tokens", "N/A"),
+                data.get("cv_completion_tokens", "N/A"),
+                data.get("average_tbt", "N/A"),
+                data.get("median_tbt", "N/A"),
+                data.get("iqr_tbt", "N/A"),
+                data.get("percentile_95_tbt", "N/A"),
+                data.get("percentile_99_tbt", "N/A"),
+                data.get("average_ttft", "N/A"),
+                data.get("median_ttft", "N/A"),
+                data.get("iqr_ttft", "N/A"),
+                data.get("percentile_95_ttft", "N/A"),
+                data.get("percentile_99_ttft", "N/A"),
+                data.get("error_rate", "N/A"),
+                data.get("errors_types", "N/A"),
+                data.get("successful_runs", "N/A"),
+                data.get("unsuccessful_runs", "N/A"),
+                data.get("throttle_count", "N/A"),
+                data.get("throttle_rate", "N/A"),
+                json.dumps(data.get("best_run", {})) if data.get("best_run") else "N/A",
+                json.dumps(data.get("worst_run", {})) if data.get("worst_run") else "N/A",
+            ]
+            for stat in stats
+            for key, data in stat.items()
+        ]
+
+        df = pd.DataFrame(table, columns=headers)
+        return df
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+    
+    
 
 
 def display_full_dataframe(df: pd.DataFrame) -> None:
@@ -145,7 +152,13 @@ def display_full_dataframe(df: pd.DataFrame) -> None:
             """,
             unsafe_allow_html=True,
         )
-    st.write(df.style)
+    try:
+        st.write(df.style)
+
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+        st.error(f"An error occurred, please retry the run. Error details: {e}")
+
 
 
 def display_latency_metrics(df: pd.DataFrame) -> None:
@@ -196,7 +209,13 @@ def display_latency_metrics(df: pd.DataFrame) -> None:
             """,
             unsafe_allow_html=True,
         )
-    st.write(df[latency_cols].style)
+    try:
+        st.write(df[latency_cols].style)
+
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+        st.error(f"😔 An error occurred, please retry the run. Error details: {e}")
+
 
 
 def display_token_metrics(df: pd.DataFrame) -> None:
@@ -239,7 +258,13 @@ def display_token_metrics(df: pd.DataFrame) -> None:
             """,
             unsafe_allow_html=True,
         )
-    st.write(df[token_cols].style)
+
+    try:
+        st.write(df[token_cols].style)
+
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+        st.error(f"😔 An error occurred, please retry the run. Error details: {e}")
 
 
 def display_error_and_throttle_metrics(df):
@@ -280,7 +305,12 @@ def display_error_and_throttle_metrics(df):
             """
         )
 
-    st.write(df[error_and_throttle_cols].style)
+    try:
+        st.write(df[error_and_throttle_cols].style)
+
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+        st.error(f"😔 An error occurred, please retry the run. Error details: {e}")
 
 
 def display_best_and_worst_run_analysis(df):
@@ -316,7 +346,12 @@ def display_best_and_worst_run_analysis(df):
                 }
             )
 
-    quality_df = pd.DataFrame(quality_data)
+    try:
+
+        quality_df = pd.DataFrame(quality_data)
+    
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
 
     with st.expander("📊 Column Descriptions", expanded=False):
         st.markdown(
@@ -336,5 +371,11 @@ def display_best_and_worst_run_analysis(df):
             - **Worst Local Time**: Local time when the worst run was executed.
             """
         )
+    try:
 
-    st.write(quality_df.style)
+        st.write(quality_df.style)
+    
+    except Exception as e:
+        logger.error(f"An error occurred, please retry the run. Error details: {e}")
+        st.error(f"😔 An error occurred, please retry the run. Error details: {e}")
+

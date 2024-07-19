@@ -1143,8 +1143,21 @@ class AzureOpenAIBenchmarkStreaming(AzureOpenAIBenchmarkLatency):
             logger.error(f"Client error: {str(exception)}")
             logger.error(f"Exception type: {type(exception).__name__}")
             logger.error(f"Traceback: {traceback.format_exc()}")
+        
+            http_status_code = "-99"
+            retry_after = None
+        
+            # Check if the exception has the status and headers attributes
+            if hasattr(exception, 'status'):
+                http_status_code = exception.status
+            if hasattr(exception, 'headers') and 'Retry-After' in exception.headers:
+                retry_after = exception.headers['Retry-After']
+                
+            logger.info(f"Retry-After: {retry_after}")
+    
+            # Pass the extracted information to _handle_error
             self._handle_error(
-                deployment_name, max_tokens, time_taken, type(exception).__name__
+                deployment_name, max_tokens, time_taken, http_status_code
             )
         else:
             logger.error(f"Unexpected error: {str(exception)}")

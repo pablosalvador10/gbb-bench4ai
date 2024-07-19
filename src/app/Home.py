@@ -56,7 +56,7 @@ def get_main_content() -> str:
     """
     return f"""
     <h1 style="text-align:center;">
-        Welcome to the Bench4AI 🤖!
+        Welcome to Bench4AI 🤖!
         <br>
         <span style="font-style:italic; font-size:0.4em;"> Your ultimate LLM/SLM benchmarking destination </span> 
         <img src="data:image/png;base64,{get_image_base64('./my_utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
@@ -171,9 +171,9 @@ def get_markdown_content() -> str:
 
     - **👩‍💼 Tech Lead**: "Hey squad! Just caught wind that Azure OpenAI dropped a shiny new model. When are we integrating it into our app?"
 
-    - **👨‍ Senior Engineer**: "Hold your horses! We'll sprint through our benchmarking and circle back... will get back to you! ⏱️"
+    - **👩🏾‍ Product Manager**: "Hold your horses! We'll sprint through our benchmarking and circle back... will get back to you! ⏱️"
 
-    - **🧑‍💻 The Hero**: "Wait... Why not let Bench4AI take it for a spin?"
+    - **🧑‍💻 The Team Hero**: "Wait... Why not let Bench4AI take it for a spin and.."
 
     <div style="text-align: center;">
         <img src="https://media.giphy.com/media/5owckHKAKMoA8/giphy.gif" alt="Speedy AI" style="width: 50%; height: auto;">
@@ -201,8 +201,8 @@ def get_markdown_content() -> str:
 
     - **Navigating the App:** The navigation tool in the top right corner is designed for seamless switching between different sections of the app: 
         - 👋 **Home:** The main page you're currently on.
-        - 📊 **Performance Insights:** Gain in-depth insights into model performance, including throughput and latency analysis.
-        - 🔍 **Quality Metrics:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
+        - 📊 **PerformanceArena:** Gain in-depth insights into model performance, including throughput and latency analysis.
+        - 🔍 **QualityIQ:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
   
     #### 💬 Want to Collaborate or Share Your Feedback?
     - **Join Our Community:** Dive into our [chat group](#) to connect with both experts and enthusiasts alike. Share your thoughts, ask questions, and engage with the community.

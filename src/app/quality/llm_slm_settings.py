@@ -11,7 +11,6 @@ from typing import List, Dict, Any
 # Set up logger
 logger = get_logger()
 
-
 def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
     """
     Initialize Streamlit session state with default values if not already set.
@@ -23,13 +22,13 @@ def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) ->
         if var not in st.session_state:
             st.session_state[var] = initial_values.get(var, None)
 
-
 session_vars = [
     "settings_quality",
     "benchmark_selection_multiselect",
     "benchmark_selection",
     "activated_retrieval",
-    "activated_rai"
+    "activated_rai",
+    "activated_azureaistudio"
 ]
 initial_values = {
     "settings_quality": {},
@@ -87,7 +86,7 @@ def configure_azure_ai_studio(session_key: str):
                     st.session_state['azure_ai_studio_project_name'] = project_name
                     st.success("✅ Azure AI Studio connection details added/updated.")
                     st.session_state[f"activated_azureaistudio"] = True
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.error("❌ All fields are required to connect to Azure AI Studio.")
 
@@ -109,18 +108,15 @@ def handle_deployment_selection(deployment_names, session_key, test):
         )
 
     # Corrected and optimized version
+    disable = True
     if st.session_state.get(f"activated_{test}", False):
-        disable = True
-        if test == "rai":
-            if st.session_state.get("activated_azureaistudio", False):
-                disable = False
-                st.markdown("✅ Test configuration complete and ready for use.")
-        else:
+        if test == "rai" and st.session_state.get("activated_azureaistudio", False):
             disable = False
-            st.markdown("✅ Test configuration complete and ready for use.")
-    else: 
+        elif test != "rai":
+            disable = False
+    
+    if disable:
         st.warning("⚠️ Please visit the 'Bring Your Own Prompts' (BYOP) section to configure your input data for the test.")
-        disable = True
     
     if st.button("Add/Update Test", key=f"add_update_deployments_button_{session_key}", use_container_width=True, disabled=disable):
         st.session_state[session_key] = []
@@ -188,7 +184,7 @@ def generate_responses(test: str):
                 st.success("✅ New DataFrame generated successfully.")
                 st.dataframe(df.head(), hide_index=True)
                 st.session_state[f"activated_{test}"] = True
-                st.rerun()
+                st.experimental_rerun()
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.session_state[f"regenerate_{test}"] = False  # Ensure to reset the flag in case of error
@@ -392,5 +388,3 @@ def configure_custom_benchmark_columns(custom_df):
         "context_col": context_col,
         "custom_df": custom_df
     }
-
-
