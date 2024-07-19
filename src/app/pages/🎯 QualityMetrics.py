@@ -154,10 +154,10 @@ def configure_sidebar() -> None:
         with tab2:
             configure_chatbot()
         with tab3:
-            with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
+            with st.expander("🤖 Set-up BenchBuddy", expanded=False):
                 st.markdown(
                     """       
-                    To fully activate and utilize BenchmarkAI Buddy, 
+                    To fully activate and utilize BenchBuddy, 
                     please go under benchmark center and buddy setting follow these simple steps:
                 
                     1. **Activate Your AOAI Model**:
@@ -183,7 +183,7 @@ def initialize_chatbot() -> None:
     """
     #FIXME: adapt me to QualityMetrics
     st.markdown(
-        "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
+        "<h4 style='text-align: center;'>BenchBuddy 🤖</h4>",
         unsafe_allow_html=True,
     )
 
@@ -280,28 +280,30 @@ def display_configuration_summary(summary_container:st.container):
     """
     settings = st.session_state.get("settings_quality", {})
     benchmark_selection = settings.get("benchmark_selection", [])
+    benchmark_selection_multiselect = settings.get("benchmark_selection_multiselect", [])
+    benchmark = benchmark_selection + benchmark_selection_multiselect
     
     summary_lines = [
         "#### Benchmark Configuration Summary",
         f"- **Benchmark Type:** Quality Benchmark",
-        f"- **Tests:** {', '.join(benchmark_selection)}",
+        f"- **Tests:** {', '.join(benchmark)}",
     ]
 
-    if "MMLU" in benchmark_selection:
+    if "MMLU" in benchmark:
         mmlu_categories = settings.get("mmlu_categories", [])
         mmlu_subsample = settings.get("mmlu_subsample", 0)
         summary_lines.append(f"  - **MMLU Categories:** {', '.join(mmlu_categories)}")
         summary_lines.append(f"  - **MMLU Subsample Percentage:** {mmlu_subsample}%")
 
-    if "MedPub QA" in benchmark_selection:
+    if "MedPub QA" in benchmark:
         medpub_subsample = settings.get("medpub_subsample", 0)
         summary_lines.append(f"  - **MedPub QA Subsample Percentage:** {medpub_subsample}%")
 
-    if "Truthful QA" in benchmark_selection:
+    if "Truthful QA" in benchmark:
         truthful_subsample = settings.get("truthful_subsample", 0)
         summary_lines.append(f"  - **Truthful QA Subsample Percentage:** {truthful_subsample}%")
 
-    if "Custom Evaluation" in benchmark_selection:
+    if "Custom Evaluation" in benchmark:
         custom_settings = settings.get("custom_benchmark", {})
         prompt_col = custom_settings.get("prompt_col", "None")
         ground_truth_col = custom_settings.get("ground_truth_col", "None")
@@ -310,14 +312,14 @@ def display_configuration_summary(summary_container:st.container):
         summary_lines.append(f"  - **Custom Evaluation Ground Truth Column:** {ground_truth_col}")
         summary_lines.append(f"  - **Custom Evaluation Context Column:** {context_col}")
 
-    if "Retrieval" in benchmark_selection:
+    if "Retrieval" in benchmark:
         if f"evaluation_clients_retrieval_BYOP" not in st.session_state["settings_quality"]:
             st.session_state["settings_quality"][f"evaluation_clients_retrieval_df_BYOP"] = False
         
         retrieval_setting = st.session_state["settings_quality"][f"evaluation_clients_retrieval_df_BYOP"]
         summary_lines.append(f"  - Retrieval BYOP Selected: {retrieval_setting}")
 
-    if "RAI" in benchmark_selection:
+    if "RAI" in benchmark:
         if f"evaluation_clients_rai_BYOP" not in st.session_state["settings_quality"]:
             st.session_state["settings_quality"][f"evaluation_clients_rai_df_BYOP"] = False
         

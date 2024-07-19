@@ -4,9 +4,43 @@ import pandas as pd
 from datetime import datetime
 from src.app.managers import create_eval_client
 from my_utils.ml_logging import get_logger
+import asyncio
+from src.app.quality.runs import run_benchmark_quality
+from typing import List, Dict, Any
 
 # Set up logger
 logger = get_logger()
+
+
+def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
+    """
+    Initialize Streamlit session state with default values if not already set.
+
+    :param vars: List of session state variable names.
+    :param initial_values: Dictionary of initial values for the session state variables.
+    """
+    for var in vars:
+        if var not in st.session_state:
+            st.session_state[var] = initial_values.get(var, None)
+
+
+session_vars = [
+    "settings_quality",
+    "benchmark_selection_multiselect",
+    "benchmark_selection",
+    "activated_retrieval",
+    "activated_rai"
+]
+initial_values = {
+    "settings_quality": {},
+    "benchmark_selection_multiselect": [],
+    "benchmark_selection": [],
+    "activated_retrieval" : False,
+    "activated_rai" : False,
+    "activated_azureaistudio" : False,
+}
+
+initialize_session_state(session_vars, initial_values)
 
 # Ensure "settings_quality" exists and is a dictionary
 if "settings_quality" not in st.session_state:
@@ -31,8 +65,12 @@ def configure_azure_ai_studio(session_key: str):
         st.session_state['azure_ai_studio_project_name'] = None
 
     with st.expander("🔍 Azure Remote Tracing (Azure AI Studio)"):
-        if (st.session_state['azure_ai_studio_subscription_id'] is not None) and (st.session_state['azure_ai_studio_resource_group_name'] is not None) and (st.session_state['azure_ai_studio_project_name'] is not None):
-            st.info("Azure AI Studio is already set up. You can update the connection details below.")
+        # Only show the error message if the form is mandatory and the connection details are not yet provided
+        if (st.session_state['azure_ai_studio_subscription_id'] is None or st.session_state['azure_ai_studio_resource_group_name'] is None or st.session_state['azure_ai_studio_project_name'] is None) and session_key == "rai":
+            st.error("❌ Please complete the Azure AI Studio connection details to proceed.")
+            st.warning('''Currently AI-assisted risk and safety metrics are only available in the following regions: East US 2, France Central, UK South,
+                        Sweden Central. Groundedness measurement leveraging Azure AI Content Safety Groundedness Detection is only 
+                        supported following regions: East US 2 and Sweden Central.''')
 
         with st.form(key=f"add_azure_ai_studio_{session_key}", border=True):
             subscription_id = st.text_input("Subscription ID:", value=st.session_state['azure_ai_studio_subscription_id'] or "")
@@ -48,6 +86,8 @@ def configure_azure_ai_studio(session_key: str):
                     st.session_state['azure_ai_studio_resource_group_name'] = resource_group_name
                     st.session_state['azure_ai_studio_project_name'] = project_name
                     st.success("✅ Azure AI Studio connection details added/updated.")
+                    st.session_state[f"activated_azureaistudio"] = True
+                    st.rerun()
                 else:
                     st.error("❌ All fields are required to connect to Azure AI Studio.")
 
@@ -60,88 +100,140 @@ def handle_deployment_selection(deployment_names, session_key, test):
     :param test: The test associated with the deployments.
     """
     # Improved markdown message for better user guidance
-    st.markdown("Please choose a deployment to test:")
-    
-    selected_deployment_names = [
-        name for index, name in enumerate(deployment_names) 
-        if st.checkbox(name, key=f"deployment_checkbox_{name}_{session_key}_{index}")
-    ]
-    
-    # Layout buttons in parallel with a visually appealing format
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Add/Update Test", key=f"add_update_deployments_button_{session_key}", use_container_width=True):
-            st.session_state[session_key] = []
+    st.markdown('''Please select a deployment to begin your evaluation. We recommend choosing your most advanced model instance. 
+                If you have added both GPT-3.5 and GPT-4o (Omni), we suggest opting for Omni for optimal results.''')    
+    selected_deployment_names = st.radio(
+            "Select a deployment",
+            deployment_names,
+            key=f"deployment_radio_{session_key}"
+        )
 
-            for deployment_name in selected_deployment_names:
-                selected_deployment = st.session_state.deployments.get(deployment_name, {})
-                if all(key in selected_deployment for key in ["endpoint", "key", "version"]):
-                    try:
-                        client = create_eval_client(
-                            azure_endpoint=selected_deployment["endpoint"],
-                            api_key=selected_deployment["key"],
-                            azure_deployment=deployment_name,
-                            api_version=selected_deployment["version"],
-                            resource_group_name=st.session_state.get("azure_ai_studio_resource_group_name"),
-                            project_name=st.session_state.get("azure_ai_studio_project_name"),
-                            subscription_id=st.session_state.get("azure_ai_studio_subscription_id")
-                        )
-                        st.session_state[session_key].append(client)
-                    except Exception as e:
-                        logger.error(f"Failed to create evaluation client for {deployment_name}. Error: {e}")
-                        st.error(f"Failed to add {deployment_name} due to an error. Check logs for details.")
-                else:
-                    missing_details = ", ".join([key for key in ["endpoint", "key", "version"] if key not in selected_deployment])
-                    logger.error(f"Missing required deployment details ({missing_details}) for {deployment_name}. Please check the deployment configuration.")
-                    st.error(f"Missing required deployment details ({missing_details}) for {deployment_name}. Please check the deployment configuration.")
-
-            if st.session_state[session_key]:
-                st.success("Selected deployments added for evaluation.")
-                if test not in st.session_state["settings_quality"]["benchmark_selection"]:
-                    st.session_state["settings_quality"]["benchmark_selection"].append(test)
-            else:
-                st.warning("No deployments were added. Please select at least one deployment and ensure all required details are provided.")
-
-    with col2:
-        if st.button("Remove Test", key=f"remove_test_button_{session_key}", use_container_width=True):
-            try:
-                st.session_state["settings_quality"]["benchmark_selection"].remove(test)
-                st.success(f"Test '{test}' removed successfully.")
-            except ValueError:
-                st.error(f"Test '{test}' not found in the selection.")
-
-def handle_byop_upload(session_key: str) -> None:
-    """
-    Handle the BYOP (Bring Your Own Prompts) file upload and store the uploaded data in the session state.
-
-    :param session_key: Key to store the BYOP data in the session state.
-    """
-    byop_option = st.radio("BYOP (Bring Your Own Prompts)", options=["No", "Yes"], index=0, help="Select 'Yes' to bring your own prompts or 'No' to use the default settings.", key=f"byop_option_{session_key}")
-    if byop_option == "Yes":
-        uploaded_file = st.file_uploader("Upload CSV", key=session_key, type="csv", help="Upload a CSV file with prompts for the benchmark tests. The CSV must include the columns: 'question', 'answer', 'context', 'ground_truth'.")
-        if uploaded_file is not None:
-            try:
-                df = pd.read_csv(uploaded_file)
-                required_columns = ['question', 'answer', 'context', 'ground_truth']
-                if not all(column in df.columns for column in required_columns):
-                    st.warning("The uploaded CSV is missing one or more required columns: 'question', 'answer', 'context', 'ground_truth'. Please upload a CSV that includes these columns.")
-                else:
-                    st.session_state["settings_quality"][session_key] = df
-                    st.dataframe(st.session_state["settings_quality"][session_key].head())
-                    st.session_state["settings_quality"][f"{session_key}_BYOP"] = True
-            except Exception as e:
-                st.error(f"An issue occurred while uploading the CSV. Please try again. Error: {e}")
+    # Corrected and optimized version
+    if st.session_state.get(f"activated_{test}", False):
+        disable = True
+        if test == "rai":
+            if st.session_state.get("activated_azureaistudio", False):
+                disable = False
+                st.markdown("✅ Test configuration complete and ready for use.")
         else:
-            st.warning("Please upload a CSV file to proceed or select 'No' to use the default dataset.")
-    else:
+            disable = False
+            st.markdown("✅ Test configuration complete and ready for use.")
+    else: 
+        st.warning("⚠️ Please visit the 'Bring Your Own Prompts' (BYOP) section to configure your input data for the test.")
+        disable = True
+    
+    if st.button("Add/Update Test", key=f"add_update_deployments_button_{session_key}", use_container_width=True, disabled=disable):
+        st.session_state[session_key] = []
+
+        for deployment_name in [selected_deployment_names]:
+            selected_deployment = st.session_state.deployments.get(deployment_name, {})
+            if all(key in selected_deployment for key in ["endpoint", "key", "version"]):
+                try:
+                    client = create_eval_client(
+                        azure_endpoint=selected_deployment["endpoint"],
+                        api_key=selected_deployment["key"],
+                        azure_deployment=deployment_name,
+                        api_version=selected_deployment["version"],
+                        resource_group_name=st.session_state.get("azure_ai_studio_resource_group_name"),
+                        project_name=st.session_state.get("azure_ai_studio_project_name"),
+                        subscription_id=st.session_state.get("azure_ai_studio_subscription_id")
+                    )
+                    st.session_state[session_key].append(client)
+                except Exception as e:
+                    logger.error(f"Failed to create evaluation client for {deployment_name}. Error: {e}")
+                    st.error(f"Failed to add {deployment_name} due to an error. Check logs for details.")
+            else:
+                missing_details = ", ".join([key for key in ["endpoint", "key", "version"] if key not in selected_deployment])
+                logger.error(f"Missing required deployment details ({missing_details}) for {deployment_name}. Please check the deployment configuration.")
+                st.error(f"Missing required deployment details ({missing_details}) for {deployment_name}. Please check the deployment configuration.")
+
+        if st.session_state[session_key]:
+            st.success("Selected deployments added for evaluation.")
+            if test not in st.session_state["settings_quality"]["benchmark_selection"]:
+                st.session_state["settings_quality"]["benchmark_selection"].append(test)
+        else:
+            st.warning("No deployments were added. Please select at least one deployment and ensure all required details are provided.")
+       
+    if st.button("Remove Test", key=f"remove_test_button_{session_key}", use_container_width=True):
         try:
-            default_csv_path = os.path.join("my_utils", "data", "evaluations", "dataframe", "CompositeChat.csv")
-            df = pd.read_csv(default_csv_path)
-            st.session_state["settings_quality"][session_key] = df
-            st.session_state["settings_quality"][f"{session_key}_BYOP"] = False
+            st.session_state["settings_quality"]["benchmark_selection"].remove(test)
+            st.success(f"Test '{test}' removed successfully.")
+        except ValueError:
+            st.error(f"Test '{test}' not found in the selection.")
+
+def generate_responses(test: str):
+    existing_df_key = f"{test}_df"
+    input_df_key = f"{test}_input_df"
+
+    if existing_df_key in st.session_state["settings_quality"]:
+        st.markdown("### Loading the DataFrame from Cache:")  
+        st.dataframe(st.session_state["settings_quality"][existing_df_key].head(), hide_index=True)
+        st.success("✅ The DataFrame is ready for use.")
+
+    if st.session_state.get(f"regenerate_{test}", False) or existing_df_key not in st.session_state["settings_quality"]:
+        try:
+            st.markdown("### Generating Responses...")
+            with st.spinner('Please wait...'):
+                df = asyncio.run(run_benchmark_quality(
+                    df=st.session_state["settings_quality"].get(input_df_key, pd.DataFrame()),
+                    max_tokens=512
+                ))
+
+                if df.empty:
+                    st.warning("No data returned. Using the default dataset.")
+                    df = load_default_dataset()
+                
+                st.session_state["settings_quality"][existing_df_key] = df
+                st.session_state[f"regenerate_{test}"] = False  # Reset the flag after regeneration
+                st.success("✅ New DataFrame generated successfully.")
+                st.dataframe(df.head(), hide_index=True)
+                st.session_state[f"activated_{test}"] = True
+                st.rerun()
         except Exception as e:
-            st.error(f"Failed to load the default dataset. Please ensure the file exists. Error: {e}")
+            st.error(f"An error occurred: {e}")
+            st.session_state[f"regenerate_{test}"] = False  # Ensure to reset the flag in case of error
+
+def load_default_dataset():
+    default_eval_path = os.path.join("my_utils", "data", "evaluations", "dataframe", "golden_eval_dataset.csv")
+    return pd.read_csv(default_eval_path)
+
+def handle_byop_upload(session_key: str):
+    byop_option = st.radio(
+        "Bring Your Own Prompts (BYOP)?", 
+        ["No", "Yes"], 
+        index=0, 
+        key=f"byop_{session_key}", 
+        help="Select 'Yes' to provide a DataFrame with 'Question', 'Context', and 'Ground Truth' columns for custom prompts. Select 'No' to use the default dataset."
+    )
+    if byop_option == "Yes":
+        uploaded_file = st.file_uploader("Upload CSV", type="csv", key=session_key)
+        if uploaded_file:
+            process_uploaded_file(uploaded_file, session_key)
+        else:
+            st.warning("Please upload a CSV file.")
+    else:
+        use_default_dataset(session_key)
+
+def process_uploaded_file(uploaded_file, session_key):
+    df = pd.read_csv(uploaded_file)
+    required_columns = ['question', 'context', 'ground_truth']
+    if all(column in df.columns for column in required_columns):
+        st.session_state["settings_quality"][f"{session_key}_input_df"] = df
+        st.markdown("### Uploaded CSV:")
+        st.dataframe(df.head(), hide_index=True)
+        if st.button("Generate Responses", key=f"generate_{session_key}"):
+            generate_responses(session_key)
+    else:
+        st.error("Uploaded CSV is missing required columns: 'question', 'context', 'ground_truth'.")
+
+def use_default_dataset(session_key: str):
+    df = load_default_dataset()
+    st.session_state["settings_quality"][f"{session_key}_input_df"] = df
+    st.markdown("### Default Dataset Loaded:")
+    st.markdown(f"*Sneak peek of the first five rows:*")
+    st.dataframe(df.head(), hide_index=True)
+    if st.button("Generate Responses", key=f"generate_{session_key}"):
+        generate_responses(session_key)
 
 def configure_retrieval_settings() -> None:
     """
@@ -152,7 +244,7 @@ def configure_retrieval_settings() -> None:
     or using the default evaluation dataset.
     """)
     st.markdown("""
-    Connecting to Azure AI Studio is optional but recommended for enhanced evaluation tracking.
+    Connecting to Azure AI Studio is optional for these section but recommended for enhanced evaluation tracking.
     """)
     configure_azure_ai_studio(session_key="retrieval")
     
@@ -160,12 +252,12 @@ def configure_retrieval_settings() -> None:
 
     with tabs_1_retrieval:
         if "deployments" in st.session_state and st.session_state.deployments:
-            handle_deployment_selection(list(st.session_state.deployments.keys()), "evaluation_clients_retrieval", "Retrieval")
+            handle_deployment_selection(list(st.session_state.deployments.keys()), "evaluation_clients_retrieval", "retrieval")
         else:
             st.info("No deployments available. Please add a deployment in the Deployment Center and select them here later.")
 
     with tabs_2_retrieval:
-        handle_byop_upload("evaluation_clients_retrieval_df")
+        handle_byop_upload(session_key="retrieval")
 
 def configure_rai_settings() -> None:
     """
@@ -175,22 +267,20 @@ def configure_rai_settings() -> None:
     Please select your deployments first. Then, decide if you are bringing your own prompts 
     or using the default evaluation dataset.
     """)
-    st.markdown("""
-    Connecting to Azure AI Studio is optional but recommended for enhanced evaluation tracking.
-    """)
-
+    #FIXME: ADD LOGIC TO DISABLE BUTTONS IF NO AZUREAI STUDIO IS SELECTED
+    st.warning("⚠️ Completing the Azure AI Studio connection details is mandatory for this section.")
     configure_azure_ai_studio(session_key="rai")
     
     tabs_1_rai, tabs_2_rai = st.tabs(["🔍 Select Deployments", "➕ BYOP (Bring Your Own Prompts)"])
 
     with tabs_1_rai:
         if "deployments" in st.session_state and st.session_state.deployments:
-            handle_deployment_selection(list(st.session_state.deployments.keys()), "evaluation_clients_rai", "RAI")
+            handle_deployment_selection(list(st.session_state.deployments.keys()), "evaluation_clients_rai", "rai")
         else:
             st.info("No deployments available. Please add a deployment in the Deployment Center and select them here later.")
 
     with tabs_2_rai:
-        handle_byop_upload("evaluation_clients_rai_df")
+        handle_byop_upload(session_key="rai")
 
 def understanding_configuration():
     """
@@ -199,8 +289,8 @@ def understanding_configuration():
     # Initialize 'settings_quality' and 'benchmark_selection' in session_state if they don't exist
     if "settings_quality" not in st.session_state:
         st.session_state["settings_quality"] = {}
-    if "benchmark_selection" not in st.session_state["settings_quality"]:
-        st.session_state["settings_quality"]["benchmark_selection"] = []
+    if "benchmark_selection_multiselect" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection_multiselect"] = []
 
     benchmark_selection = st.multiselect(
         "Choose Benchmark(s) for SLM/LLM assessment:",
@@ -211,18 +301,7 @@ def understanding_configuration():
                 - 'Truthful QA' for assessing the model's ability to provide truthful answers."""
     )
 
-    if benchmark_selection:
-        for benchmark in benchmark_selection:
-            if benchmark not in st.session_state["settings_quality"]["benchmark_selection"]:
-                st.session_state["settings_quality"]["benchmark_selection"].append(benchmark)
-
-        for benchmark in ["MMLU", "MedPub QA", "Truthful QA"]:
-            if benchmark in st.session_state["settings_quality"]["benchmark_selection"] and benchmark not in benchmark_selection:
-                st.session_state["settings_quality"]["benchmark_selection"].remove(benchmark)
-    else:
-        for benchmark in ["MMLU", "MedPub QA", "Truthful QA"]:
-            if benchmark in st.session_state["settings_quality"]["benchmark_selection"]:
-                st.session_state["settings_quality"]["benchmark_selection"].remove(benchmark)
+    st.session_state["settings_quality"]["benchmark_selection_multiselect"] = benchmark_selection
 
     if "MMLU" in benchmark_selection:
         configure_mmlu_benchmark()

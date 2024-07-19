@@ -56,7 +56,7 @@ def get_main_content() -> str:
     """
     return f"""
     <h1 style="text-align:center;">
-        Welcome to the GBB MaaS Upgrade Hub!
+        Welcome to the Bench4AI 🤖!
         <br>
         <span style="font-style:italic; font-size:0.4em;"> Your ultimate LLM/SLM benchmarking destination </span> 
         <img src="data:image/png;base64,{get_image_base64('./my_utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
@@ -164,7 +164,23 @@ def get_markdown_content() -> str:
     :return: The markdown content.
     """
     return """
-    Our app focuses on dual intent and provides key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter, cost-effective decisions regarding the choice of foundation model for your AI projects. By leveraging the latest AI technology and solid data, specifically your **own data**, it enhances your capabilities.
+    Bench4AI features a user-friendly interface that streamlines the today's complex benchmarking process for your preferred MaaS (a.k.a Gpt-4o) and candidates. 
+    It allows you to bring your own prompts **(BYOP)** for a personalized benchmarking experience with your data. Gain in-depth performance insights with just a few clicks from an extensive library of statistical quality and performance metrics.
+    
+    #### 🛠️ Automating the Daily Adventures of the AI Engineer
+
+    - **👩‍💼 Tech Lead**: "Hey squad! Just caught wind that Azure OpenAI dropped a shiny new model. When are we integrating it into our app?"
+
+    - **👨‍ Senior Engineer**: "Hold your horses! We'll sprint through our benchmarking and circle back... will get back to you! ⏱️"
+
+    - **🧑‍💻 The Hero**: "Wait... Why not let Bench4AI take it for a spin?"
+
+    <div style="text-align: center;">
+        <img src="https://media.giphy.com/media/5owckHKAKMoA8/giphy.gif" alt="Speedy AI" style="width: 50%; height: auto;">
+        <p></p>
+    </div>
+
+    #### 🚀 Ready to Dive In?
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
         <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
@@ -175,10 +191,12 @@ def get_markdown_content() -> str:
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
     </div>
 
-    Our app features a user-friendly interface that streamlines the benchmarking process for your preferred MaaS (a.k.a Gpt-4o). 
-    It allows you to bring your own prompts **(BYOP)** for a personalized benchmarking experience with your data. Discover performance insights and benefit from an extensive quality evaluation for a comprehensive analysis of model performance.
+    <div style="text-align: center;">
+        Oh, and say hi to BenchBuddy 🤖! Your go-to AI pal for all things benchmarking.
+    </div>
 
     #### 🌟 Getting Started
+
     To kick things off, we recommend watching the above introductory video for a smooth start.. If you have any questions, the 'How-To Guide' in the sidebar offers a comprehensive step-by-step walkthrough.
 
     - **Navigating the App:** The navigation tool in the top right corner is designed for seamless switching between different sections of the app: 

@@ -10,7 +10,7 @@ def configure_benchmarkbudyy_model_settings() -> dict:
 
     :return: A dictionary containing the settings values.
     """
-    with st.expander("BenchmarkBuddy Settings", expanded=False):
+    with st.expander("BenchBuddy Settings", expanded=False):
         # Ensure 'settings' exists in 'session_state'
         if "settings_buddy" not in st.session_state:
             st.session_state["settings_buddy"] = {}
@@ -103,7 +103,7 @@ def init_brain_chatbot(error_client_buddy: st.container) -> None:
             seed=555,
             stream=True,
         )
-        st.toast("BenchmarkAI Buddy 🤖 successfully configured.")
+        st.toast("BenchBuddy 🤖 successfully configured.")
         error_client_buddy.empty()
         st.session_state["disable_chatbot"] = False
     except Exception as e:
@@ -133,10 +133,10 @@ def configure_chatbot() -> None:
 
     if not all_keys_exist or "azure_openai_manager" not in st.session_state or not st.session_state.get("azure_openai_manager"):
         error_client_buddy.error(
-            "Chatbot capabilities are currently disabled. To activate and fully utilize BenchmarkAI buddy knowledge, please configure the AOAI model."
+            "Chatbot capabilities are currently disabled. To activate and fully utilize BenchBuddy knowledge, please configure the AOAI model."
         )
 
-    with st.expander("Configure Buddy's Brain (AOAI)", expanded=not all_keys_exist):
+    with st.expander("Configure BenchBuddy's Brain (AOAI)", expanded=not all_keys_exist):
         st.write(
             "Add the AOAI-model to empower Buddy with advanced cognitive capabilities."
         )

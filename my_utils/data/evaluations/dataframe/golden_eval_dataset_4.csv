@@ -1,0 +1,21 @@
+question,context,ground_truth,count
+What is the capital of France?,France is a country in Europe. Its capital is Paris. Citations: ['Encyclopedia Britannica'],The capital of France is Paris.,20
+Who developed the theory of relativity?,The theory of relativity was developed by Albert Einstein. Citations: ['NASA Archive'],The theory of relativity was developed by Albert Einstein.,20
+What is the speed of light?,"Light travels at a constant speed in a vacuum, which is 299,792,458 meters per second. Citations: ['Physics Today']","Light travels at a speed of 299,792,458 meters per second.",20
+What is the tallest mountain in the world?,The tallest mountain in the world is Mount Everest. Citations: ['National Geographic'],The world's tallest mountain is Mount Everest.,20
+Who is the author of '1984'?,The author of '1984' is George Orwell. Citations: ['Literary Review'],The author of '1984' is George Orwell.,20
+What is the capital of Japan?,Japan's capital is Tokyo. Citations: ['Japan Official Tourism Website'],Japan's capital is Tokyo.,20
+Who painted the Mona Lisa?,The Mona Lisa was painted by Leonardo da Vinci. Citations: ['Louvre Museum'],The Mona Lisa was painted by Leonardo da Vinci.,20
+What is the largest planet in our solar system?,The largest planet in our solar system is Jupiter. Citations: ['NASA Solar System Exploration'],The largest planet in our solar system is Jupiter.,20
+What is the chemical symbol for water?,The chemical symbol for water is H2O. Citations: ['Chemical Society'],The chemical symbol for water is H2O.,20
+What is the largest ocean on Earth?,The largest ocean on Earth is the Pacific Ocean. Citations: ['Oceanic Administration'],The largest ocean on Earth is the Pacific Ocean.,20
+What is the capital of Germany?,Germany is known for its beer and sausages.,The capital of Germany is Berlin.,20
+What is the smallest planet in our solar system?,The Great Wall of China is one of the largest structures built by humans.,Mercury is the smallest planet in our solar system.,20
+Who wrote 'Hamlet'?,"The Colosseum is located in Rome, Italy.",William Shakespeare wrote 'Hamlet'.,20
+What is the chemical formula for carbon dioxide?,Venus is the second planet from the Sun.,The chemical formula for carbon dioxide is CO2.,20
+What is the largest desert in the world?,Mount Everest is the highest mountain on Earth.,The largest desert in the world is the Sahara Desert.,20
+What is the tallest building in the world?,The Amazon rainforest is the largest rainforest in the world.,The tallest building in the world is the Burj Khalifa.,20
+Who discovered penicillin?,The Dead Sea is known for its high salinity.,Alexander Fleming discovered penicillin.,20
+What is the largest country by area?,The Pyramids of Giza are located in Egypt.,The largest country by area is Russia.,20
+What is the longest river in the world?,The Eiffel Tower is a famous landmark in Paris.,The longest river in the world is the Nile.,20
+Who invented the telephone?,The Great Barrier Reef is the largest coral reef system.,Alexander Graham Bell invented the telephone.,20

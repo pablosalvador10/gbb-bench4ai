@@ -133,6 +133,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         temperature: Optional[int] = 0,
         byop: Optional[List] = None,
         context: Optional[List] = None,
+        ground_truth: Optional[List] = None,
         context_tokens: Optional[int] = None,
         prevent_server_caching: Optional[bool] = True,
         timeout: int = 60,
@@ -163,46 +164,30 @@ class AzureOpenAIBenchmarkLatency(ABC):
         """
         result = [] 
         if byop:
+            iterations = len(byop)
             for deployment_name in deployment_names:
                 for max_tokens in max_tokens_list:
-                    if context:
-                        for item in byop:
-                            for context_item in context:
-                                log_system_info()
-                                response = await self.make_call(
-                                    deployment_name=deployment_name,
-                                    max_tokens=max_tokens,
-                                    temperature=temperature,
-                                    context_tokens=context_tokens,
-                                    prevent_server_caching=prevent_server_caching,
-                                    timeout=timeout,
-                                    prompt=item,
-                                    context=context_item,
-                                    top_p=top_p,
-                                    n=n,
-                                    presence_penalty=presence_penalty,
-                                    frequency_penalty=frequency_penalty,
-                                )
-                                result.append(response)
-                                await asyncio.sleep(same_model_interval)
-                    else: 
-                        for item in byop:
-                            log_system_info()
-                            response = await self.make_call(
-                                deployment_name=deployment_name,
-                                max_tokens=max_tokens,
-                                temperature=temperature,
-                                context_tokens=context_tokens,
-                                prevent_server_caching=prevent_server_caching,
-                                timeout=timeout,
-                                prompt=item,
-                                top_p=top_p,
-                                n=n,
-                                presence_penalty=presence_penalty,
-                                frequency_penalty=frequency_penalty,
-                            )
-                            result.append(response)
-                            await asyncio.sleep(same_model_interval)
+                    for i in range(iterations):
+                        current_context = context[i] if context is not None and i < len(context) else None
+                        current_ground_truth = ground_truth[i] if ground_truth is not None and i < len(ground_truth) else None
+                        log_system_info()
+                        response = await self.make_call(
+                            deployment_name=deployment_name,
+                            max_tokens=max_tokens,
+                            temperature=temperature,
+                            context_tokens=context_tokens,
+                            prevent_server_caching=prevent_server_caching,
+                            timeout=timeout,
+                            prompt=byop[i],
+                            context=current_context,
+                            top_p=top_p,
+                            n=n,
+                            presence_penalty=presence_penalty,
+                            frequency_penalty=frequency_penalty,
+                        )
+                        current_result = [byop[i], current_context, response, current_ground_truth]
+                        result.append(current_result)
+                        await asyncio.sleep(same_model_interval)
         else:
             for deployment_name in deployment_names:
                 for max_tokens in max_tokens_list:
@@ -214,6 +199,8 @@ class AzureOpenAIBenchmarkLatency(ABC):
                             temperature=temperature,
                             context_tokens=context_tokens,
                             prevent_server_caching=prevent_server_caching,
+                            context=None,
+                            prompt=None,
                             timeout=timeout,
                             top_p=top_p,
                             n=n,
@@ -236,6 +223,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
         context_tokens: Optional[int] = None,
         byop: Optional[List] = None,
         context: Optional[List] = None,
+        ground_truth: Optional[List] = None,
         prevent_server_caching: Optional[bool] = True,
         timeout: int = 60,
         top_p: int = 1,
@@ -273,17 +261,21 @@ class AzureOpenAIBenchmarkLatency(ABC):
 
         if byop:
             byop_chunks = split_list_into_variable_parts(byop)
-            if context:
-                if len(context) != len(byop):
-                    raise ValueError("context and byop must have the same length.")
-                context_chunks = split_list_into_variable_parts(context)
-                byop_context_pairs = zip(byop_chunks, context_chunks)
-            else:
-                byop_context_pairs = [(chunk, None) for chunk in byop_chunks]
-
+            iterations = len(byop_chunks)
+            if context is not None: 
+                if ground_truth is not None:
+                    if not (len(context) == len(byop) == len(ground_truth)):
+                        raise ValueError("context, byop, and ground_truth must have the same number of elements.")
+                    else: 
+                        context_chunks = split_list_into_variable_parts(context)
+                else:
+                    raise ValueError("context, byop, and ground_truth must have the same number of elements.")
+            if ground_truth:
+                ground_truth_chunks = split_list_into_variable_parts(ground_truth)
+          
             for deployment_name in deployment_names:
                 for max_tokens in max_tokens_list:
-                    for byop_chunk, context_chunk in byop_context_pairs:
+                    for i in range(iterations):
                         tasks.append(
                             run_and_collect(
                                 deployment_names=[deployment_name],
@@ -292,8 +284,9 @@ class AzureOpenAIBenchmarkLatency(ABC):
                                 same_model_interval=same_model_interval,
                                 different_model_interval=different_model_interval,
                                 temperature=temperature,
-                                byop=byop_chunk,
-                                context=context_chunk,
+                                byop=byop_chunks[i],
+                                context=context_chunks[i] if context else None,
+                                ground_truth=ground_truth_chunks[i] if ground_truth else None,
                                 context_tokens=context_tokens,
                                 prevent_server_caching=prevent_server_caching,
                                 timeout=timeout,
@@ -303,28 +296,6 @@ class AzureOpenAIBenchmarkLatency(ABC):
                                 frequency_penalty=frequency_penalty,
                             )
                         )
-            else: 
-                for deployment_name in deployment_names:
-                    for max_tokens in max_tokens_list:
-                        for byop_chunk in byop_chunks:
-                            tasks.append(
-                                run_and_collect(
-                                    deployment_names=[deployment_name],
-                                    max_tokens_list=[max_tokens],
-                                    iterations=iterations,
-                                    same_model_interval=same_model_interval,
-                                    different_model_interval=different_model_interval,
-                                    temperature=temperature,
-                                    byop=byop_chunk,
-                                    context_tokens=context_tokens,
-                                    prevent_server_caching=prevent_server_caching,
-                                    timeout=timeout,
-                                    top_p=top_p,
-                                    n=n,
-                                    presence_penalty=presence_penalty,
-                                    frequency_penalty=frequency_penalty,
-                                )
-                            )
         else:
             tasks = [
                 run_and_collect(
@@ -335,6 +306,7 @@ class AzureOpenAIBenchmarkLatency(ABC):
                     different_model_interval=different_model_interval,
                     temperature=temperature,
                     byop=None,
+                    context=None,
                     context_tokens=context_tokens,
                     prevent_server_caching=prevent_server_caching,
                     timeout=timeout,

@@ -2,16 +2,18 @@ import os
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from requests.exceptions import ConnectionError, RequestException 
 from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
 from my_utils.ml_logging import get_logger
 import asyncio
+import traceback
 import concurrent.futures
 import copy
+from typing import List, Dict, Any
 from src.app.quality.results import BenchmarkQualityResult
 from src.app.managers import (create_benchmark_non_streaming_client,
                               create_benchmark_streaming_client)
 import copy
-from src.app.performance.results import BenchmarkPerformanceResult
 # Set up logger
 logger = get_logger()
 
@@ -20,6 +22,33 @@ logger = get_logger()
 logger = get_logger()
 
 top_bar = st.empty()
+
+
+def initialize_session_state(vars: List[str], initial_values: Dict[str, Any]) -> None:
+    """
+    Initialize Streamlit session state with default values if not already set.
+
+    :param vars: List of session state variable names.
+    :param initial_values: Dictionary of initial values for the session state variables.
+    """
+    for var in vars:
+        if var not in st.session_state:
+            st.session_state[var] = initial_values.get(var, None)
+
+
+session_vars = [
+    "settings_quality",
+    "benchmark_selection_multiselect",
+    "benchmark_selection"
+]
+initial_values = {
+    "settings_quality": {},
+    "benchmark_selection_multiselect": [],
+    "benchmark_selection": []
+}
+
+initialize_session_state(session_vars, initial_values)
+
 
 # Function to get the task list for the selected benchmark
 def get_task_list(test: str = None):
@@ -131,12 +160,11 @@ async def run_benchmark_tests():
     :return: None
     """
     try:
-        results = []
-        results_retrievals = {}
-        results_rai = {}
+        results = []        
         if "results_quality" not in st.session_state:
             st.session_state["results_quality"] = {}
         
+        # Initialize dataframes
         results_df = pd.DataFrame()
         truthful_results = pd.DataFrame()
         mmlu_results = pd.DataFrame()
@@ -145,79 +173,96 @@ async def run_benchmark_tests():
         rai_results = pd.DataFrame()
 
         settings = st.session_state.get("settings_quality", {})
-        if "benchmark_selection" in settings:
-            if "MMLU" in settings["benchmark_selection"]:
+
+        # Run benchmarks based on settings
+        if "benchmark_selection_multiselect" in settings:
+            if "MMLU" in settings["benchmark_selection_multiselect"]:
                 mmlu_tasks = get_task_list(test="mmlu")
                 mmlu_stats = await asyncio.gather(*mmlu_tasks)
                 mmlu_results = pd.concat(mmlu_stats)
                 results.append(mmlu_results)
 
-            if "MedPub QA" in settings["benchmark_selection"]:
+            if "MedPub QA" in settings["benchmark_selection_multiselect"]:
                 logger.info("Running MedPub QA benchmark")
                 medpub_tasks = get_task_list(test="medpub")
                 medpub_stats = await asyncio.gather(*medpub_tasks)
                 medpub_results = pd.concat(medpub_stats)
                 results.append(medpub_results)
 
-            if "Truthful QA" in settings["benchmark_selection"]:
+            if "Truthful QA" in settings["benchmark_selection_multiselect"]:
                 logger.info("Running Truthful QA benchmark")
                 truthful_tasks = get_task_list(test="truthfulqa")
                 truthful_stats = await asyncio.gather(*truthful_tasks)
                 truthful_results = pd.concat(truthful_stats)
                 results.append(truthful_results)
 
-            if "Custom Evaluation" in settings["benchmark_selection"]:
-                logger.info("Running Custom Evaluation")
-                custom_tasks = get_task_list(test="custom")
-                custom_stats = await asyncio.gather(*custom_tasks)
-                custom_results = pd.concat(custom_stats)
-                results.append(custom_results)
-
-            if "Retrieval" in settings.get("benchmark_selection", []):
+        if "benchmark_selection" in settings:
+            # Retrieval benchmark
+            if "retrieval" in settings.get("benchmark_selection", []):
                 clients = st.session_state.get("evaluation_clients_retrieval", [])
-                for client in clients:
-                    try:
-                        metrics, studio_url = client.run_chat_quality(data_input=st.session_state["settings_quality"]["evaluation_clients_retrieval_df"])
-                        deployment_name = client.model_config.azure_deployment
-                        # Add studio_url to the metrics dictionary
-                        metrics['studio_url'] = studio_url
-                        results_retrievals[deployment_name] = metrics
-                        logger.info(f"Retrieval quality evaluation for {deployment_name} completed.")
-                    except Exception as e:
-                        logger.error(f"Failed to run retrieval quality evaluation for client {client}: {e}")
-                        st.error(f"Failed to run retrieval quality evaluation for client {client}. Check logs for details.")
-
                 data_for_df = []
-
-                for model_name, metrics in results_retrievals.items():
-                    row_data = metrics.copy()  
-                    row_data['model'] = model_name 
-                    data_for_df.append(row_data)
-
-                retrieval_results = pd.DataFrame(data_for_df).set_index('model')
-
-            if "RAI" in settings.get("benchmark_selection", []):
-                clients = st.session_state.get("evaluation_clients_rai", [])
-                for client in clients:
+                for deployment_name, deployment in st.session_state.deployments.items():
+                    results_retrievals = {}
                     try:
-                        metrics, studio_url = client.run_chat_content_safety(data_input=st.session_state["settings_quality"]["evaluation_clients_rai_df"])
-                        deployment_name = client.model_config.azure_deployment
-                        metrics['studio_url'] = studio_url
-                        results_rai[deployment_name] = metrics
-                        logger.info(f"RAI quality evaluation for {deployment_name} completed.")
+                        st.info(f"Running retrieval quality evaluation for client {deployment_name}.")
+                        df_input = st.session_state["settings_quality"]["retrieval_df"]
+                        df_filtered = df_input[df_input['model'] == deployment_name]
+                        if not df_filtered.empty:
+                            st.dataframe(df_filtered)
+                            metrics, studio_url = clients[0].run_chat_quality(data_input=df_filtered)
+                            metrics['studio_url'] = studio_url
+                            results_retrievals[deployment_name] = metrics
+                            logger.info(f"Retrieval quality evaluation for {deployment_name} completed.")
+        
+                            for model_name, metrics in results_retrievals.items():
+                                row_data = metrics.copy()
+                                row_data['model'] = model_name
+                                data_for_df.append(row_data)
+                        else:
+                            logger.error(f"Failed to run retrieval quality evaluation for client {deployment_name}")
                     except Exception as e:
-                        logger.error(f"Failed to run RAI quality evaluation for client {client}: {e}")
-                        st.error(f"Failed to run RAI quality evaluation for client {client}. Check logs for details.")
+                        logger.error(f"Failed to run retrieval quality evaluation for client {deployment_name}: {e}")
+                        st.error(f"Failed to run retrieval quality evaluation for client {deployment_name}. Check logs for details.")
+        
+                retrieval_results = pd.DataFrame(data_for_df).set_index('model')
+                st.dataframe(retrieval_results)
 
+            # RAI benchmark
+            if "rai" in settings.get("benchmark_selection", []):
+                clients = st.session_state.get("evaluation_clients_rai", [])
                 data_for_df_rai = []
-                
-                for model_name, metrics in results_rai.items():
-                    row_data = metrics.copy()  
-                    row_data['model'] = model_name 
-                    data_for_df_rai.append(row_data)
+                for deployment_name, deployment in st.session_state.deployments.items():
+                    results_rai = {}
+                    for client in clients:
+                        try:
+                            st.info(f"Running RAI quality evaluation for client {client.model_config.azure_deployment}.")
+                            df_input = st.session_state["settings_quality"]["rai_df"]
+                            df_filtered = df_input[df_input['model'] == client.model_config.azure_deployment]
+                            metrics, studio_url = client.run_chat_content_safety(data_input=df_filtered)
+                            metrics['studio_url'] = studio_url
+                            results_rai[deployment_name] = metrics
+                            logger.info(f"RAI quality evaluation for {deployment_name} completed.")
+                            for model_name, metrics in results_rai.items():
+                                row_data = metrics.copy()
+                                row_data['model'] = model_name
+                                data_for_df_rai.append(row_data)
+                        except RequestException as e:
+                            if isinstance(e.__cause__, ConnectionError):
+                                logger.warning(f"Connection was forcibly closed by the remote host for client {client.model_config.azure_deployment}. Proceeding with an empty DataFrame.")
+                                st.warning(f"The system failed to retrieve data for client {client.model_config.azure_deployment} due to a connection issue. Proceeding with an empty DataFrame.")
+                                rai_results = pd.DataFrame()
+                            else:
+                                logger.error(f"Failed to run RAI quality evaluation for client {client.model_config.azure_deployment}. Exception: {e}")
+                                st.error(f"Failed to run RAI quality evaluation for client {client.model_config.azure_deployment}. Check logs for details.")
+                                rai_results = pd.DataFrame()
+                        except Exception as e:
+                            logger.error(f"Failed to run RAI quality evaluation for client {client.model_config.azure_deployment}. Exception: {e}")
+                            st.error(f"Failed to run RAI quality evaluation for client {client.model_config.azure_deployment}. Check logs for details.")
+                            rai_results = pd.DataFrame()
                 
                 rai_results = pd.DataFrame(data_for_df_rai).set_index('model')
 
+            # Combine results into a dictionary
             results_df = pd.concat(results)
             results_df = results_df if isinstance(results_df, pd.DataFrame) else pd.DataFrame()
             truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
@@ -226,7 +271,7 @@ async def run_benchmark_tests():
             results_retrievals = retrieval_results if isinstance(retrieval_results, pd.DataFrame) else pd.DataFrame()
             results_rai = rai_results if isinstance(rai_results, pd.DataFrame) else pd.DataFrame()
             results = {
-                "all_results": results_df,
+                "understanding_results": results_df,
                 "truthful_results": truthful_results,
                 "mmlu_results": mmlu_results,
                 "medpub_results": medpub_results,
@@ -241,11 +286,25 @@ async def run_benchmark_tests():
         top_bar.error(f"An error occurred: {str(e)}")
 
 
-async def run_benchmark_quality(test_status_placeholder: st.container) -> None:
+async def run_evaluation_benchmark(session_key):
+    try:
+        df = asyncio.run(run_benchmark_quality(df=st.session_state["settings_quality"][f"{session_key}_df"],
+                                                max_tokens=st.session_state["settings_quality"][f"max_tokens_{session_key}"]))
+        if df.empty:
+            st.info("🚫 No data returned. Switching to default dataset. 🔄")
+            default_eval_path = os.path.join("my_utils", "data", "evaluations", "dataframe", "golden_eval_dataset.csv")
+            df = pd.read_csv(default_eval_path)
+        return df
+    except Exception as e:
+        raise e
+
+async def run_benchmark_quality(df: pd.DataFrame, max_tokens: int) -> pd.DataFrame:
     """
     Run the benchmark tests asynchronously, with detailed configuration for each test.
 
-    :param test_status_placeholder: Streamlit placeholder for the test status.
+    :param df: DataFrame containing the data for the benchmark tests.
+    :param max_tokens: Maximum number of tokens to use in the benchmark tests.
+    :return: DataFrame with the results of the benchmark tests.
     """
     deployment_clients = [
         (
@@ -261,55 +320,37 @@ async def run_benchmark_quality(test_status_placeholder: st.container) -> None:
         for deployment_name, deployment in st.session_state.deployments.items()
     ]
 
+    prompts = df["question"].tolist()
+    context = df["context"].tolist()
+    ground_truth = df["ground_truth"].tolist()
+
+    all_results = []
+    
     async def safe_run(client, deployment_name):
         try:
-            await client.run_latency_benchmark_bulk(
-                deployment_names=[deployment_name],
-                max_tokens_list=st.session_state["settings"]["max_tokens_list"],
-                iterations=st.session_state["settings"]["num_iterations"],
-                context_tokens=st.session_state["settings"]["context_tokens"],
-                temperature=st.session_state["settings"]["temperature"],
-                byop=st.session_state["settings"]["prompts"],
-                context=st.session_state["settings"]["context"],
-                prevent_server_caching=st.session_state["settings"][
-                    "prevent_server_caching"
-                ],
-                timeout=st.session_state["settings"]["timeout"],
-                top_p=st.session_state["settings"]["top_p"],
-                n=1,
-                presence_penalty=st.session_state["settings"]["presence_penalty"],
-                frequency_penalty=st.session_state["settings"]["frequency_penalty"],
+            return await client.run_latency_benchmark_bulk(
+                deployment_names=[deployment_name], byop=prompts, context=context, ground_truth=ground_truth, max_tokens_list=[max_tokens]
             )
         except Exception as e:
             logger.error(
                 f"An error occurred with deployment '{deployment_name}': {str(e)}",
                 exc_info=True,
             )
-            st.error(f"An error occurred with deployment '{deployment_name}': {str(e)}")
+            return []
 
     logger.info(f"Total number of deployment clients: {len(deployment_clients)}")
 
     for client, deployment_name in deployment_clients:
-        await safe_run(client, deployment_name)
-
+        results = await safe_run(client, deployment_name)
+        modified_results = [result + [deployment_name] for result in results]
+        all_results.extend(modified_results)
+    final_df = pd.DataFrame()
     try:
-        stats = [
-            client.calculate_and_show_statistics() for client, _ in deployment_clients
-        ]
-        stats_raw = [client.results for client, _ in deployment_clients]
-        st.session_state["benchmark_results"] = stats
-        st.session_state["benchmark_results_raw"] = stats_raw
-        settings_snapshot = copy.deepcopy(st.session_state["settings"])
-        results = BenchmarkPerformanceResult(
-            result=stats, settings=settings_snapshot
-        )
-        st.session_state["results"][results.id] = results.to_dict()
-        test_status_placeholder.markdown(
-            f"Benchmark <span style='color: grey;'>{results.id}</span> Completed",
-            unsafe_allow_html=True,
-        )
+        if all_results:
+            # Update the DataFrame creation to include the deployment name
+            final_df = pd.DataFrame(all_results, columns=['question', 'context', 'answer', 'ground_truth', 'model'])
     except Exception as e:
         logger.error(
             f"An error occurred while processing the results: {str(e)}", exc_info=True
         )
-        st.error(f"An error occurred while processing the results: {str(e)}")
+    return final_df  

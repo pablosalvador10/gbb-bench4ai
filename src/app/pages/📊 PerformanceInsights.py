@@ -123,10 +123,10 @@ def configure_sidebar() -> None:
             with tab2:
                 configure_chatbot()
             with tab3:
-                with st.expander("🤖 Set-up BenchmarkAI Buddy", expanded=False):
+                with st.expander("🤖 Set-up BenchBuddy", expanded=False):
                     st.markdown(
                         """       
-                        To fully activate and utilize BenchmarkAI Buddy, 
+                        To fully activate and utilize BenchBuddy, 
                         please go under benchmark center and buddy setting follow these simple steps:
                     
                         1. **Activate Your AOAI Model**:
@@ -413,7 +413,7 @@ def initialize_chatbot() -> None:
     Initialize a chatbot interface for user interaction with enhanced features.
     """
     st.markdown(
-        "<h4 style='text-align: center;'>BenchmarkAI Buddy 🤖</h4>",
+        "<h4 style='text-align: center;'>BenchBuddy 🤖</h4>",
         unsafe_allow_html=True,
     )
 
