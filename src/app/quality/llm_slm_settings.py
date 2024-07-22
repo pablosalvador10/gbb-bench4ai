@@ -39,15 +39,8 @@ initial_values = {
     "activated_azureaistudio" : False,
 }
 
+#FIXME: initialize_session_state at main script to avoid errors
 initialize_session_state(session_vars, initial_values)
-
-# Ensure "settings_quality" exists and is a dictionary
-if "settings_quality" not in st.session_state:
-    st.session_state["settings_quality"] = {}
-
-# Ensure "benchmark_selection" exists within "settings_quality" and is a list
-if "benchmark_selection" not in st.session_state["settings_quality"]:
-    st.session_state["settings_quality"]["benchmark_selection"] = []
 
 def configure_azure_ai_studio(session_key: str):
     """
@@ -99,10 +92,10 @@ def handle_deployment_selection(deployment_names, session_key, test):
     :param test: The test associated with the deployments.
     """
     # Improved markdown message for better user guidance
-    st.markdown('''Please select a deployment to begin your evaluation. We recommend choosing your most advanced model instance. 
-                If you have added both GPT-3.5 and GPT-4o (Omni), we suggest opting for Omni for optimal results.''')    
+    st.markdown('''Please select a model to serve as the "Evaluator Brain" for the GPT evaluation. We recommend choosing your most advanced model instance. 
+                For example, If you have added both GPT-3.5 and GPT-4o (Omni), we suggest opting for Omni for optimal results.''')    
     selected_deployment_names = st.radio(
-            "Select a deployment",
+            "Select Your Evaluator",
             deployment_names,
             key=f"deployment_radio_{session_key}"
         )
@@ -144,50 +137,60 @@ def handle_deployment_selection(deployment_names, session_key, test):
                 st.error(f"Missing required deployment details ({missing_details}) for {deployment_name}. Please check the deployment configuration.")
 
         if st.session_state[session_key]:
-            st.success("Selected deployments added for evaluation.")
+            if "settings_quality" not in st.session_state:
+                st.session_state["settings_quality"] = {}
+            if "benchmark_selection" not in st.session_state["settings_quality"]:
+                st.session_state["settings_quality"]["benchmark_selection"] = []
+            st.success("Test added for evaluation.")
             if test not in st.session_state["settings_quality"]["benchmark_selection"]:
                 st.session_state["settings_quality"]["benchmark_selection"].append(test)
         else:
             st.warning("No deployments were added. Please select at least one deployment and ensure all required details are provided.")
        
-    if st.button("Remove Test", key=f"remove_test_button_{session_key}", use_container_width=True):
-        try:
-            st.session_state["settings_quality"]["benchmark_selection"].remove(test)
-            st.success(f"Test '{test}' removed successfully.")
-        except ValueError:
-            st.error(f"Test '{test}' not found in the selection.")
+    if test in st.session_state["settings_quality"]["benchmark_selection"]:
+        if st.button("Remove Test", key=f"remove_test_button_{session_key}", use_container_width=True):
+            try:
+                st.session_state["settings_quality"]["benchmark_selection"].remove(test)
+                st.success(f"Test '{test}' removed successfully.")
+            except ValueError:
+                st.error(f"Test '{test}' not found in the selection.")
+
+def get_deployments_names():
+    if "deployments" in st.session_state and st.session_state.deployments:
+        deployment_names = []
+        for deployment_name, _ in st.session_state.deployments.items():
+            deployment_names.append(deployment_name)
+        return list(set(deployment_names))
+    else:
+        return "No deployments available or the list is empty"
 
 def generate_responses(test: str):
     existing_df_key = f"{test}_df"
     input_df_key = f"{test}_input_df"
+    try:
+        deployments = get_deployments_names()  
+        deployments_str = ", ".join(deployments)
 
-    if existing_df_key in st.session_state["settings_quality"]:
-        st.markdown("### Loading the DataFrame from Cache:")  
-        st.dataframe(st.session_state["settings_quality"][existing_df_key].head(), hide_index=True)
-        st.success("✅ The DataFrame is ready for use.")
+        with st.spinner(f'🔄 Generating responses from input data for deployments: {deployments_str}. Please wait...'):
+            # Your code to generate responses goes here
+            df = asyncio.run(run_benchmark_quality(
+                df=st.session_state["settings_quality"].get(input_df_key, pd.DataFrame()),
+                max_tokens=512
+            ))
 
-    if st.session_state.get(f"regenerate_{test}", False) or existing_df_key not in st.session_state["settings_quality"]:
-        try:
-            st.markdown("### Generating Responses...")
-            with st.spinner('Please wait...'):
-                df = asyncio.run(run_benchmark_quality(
-                    df=st.session_state["settings_quality"].get(input_df_key, pd.DataFrame()),
-                    max_tokens=512
-                ))
-
-                if df.empty:
-                    st.warning("No data returned. Using the default dataset.")
-                    df = load_default_dataset()
-                
-                st.session_state["settings_quality"][existing_df_key] = df
-                st.session_state[f"regenerate_{test}"] = False  # Reset the flag after regeneration
-                st.success("✅ New DataFrame generated successfully.")
-                st.dataframe(df.head(), hide_index=True)
-                st.session_state[f"activated_{test}"] = True
-                st.experimental_rerun()
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-            st.session_state[f"regenerate_{test}"] = False  # Ensure to reset the flag in case of error
+            if df.empty:
+                st.warning("No data returned. Using the default dataset.")
+                df = load_default_dataset()
+            
+            st.session_state["settings_quality"][existing_df_key] = df
+            st.session_state[f"regenerate_{test}"] = False  # Reset the flag after regeneration
+            st.success("✅ New DataFrame generated successfully.")
+            st.dataframe(df.head(), hide_index=True)
+            st.session_state[f"activated_{test}"] = True
+            st.experimental_rerun()
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        st.session_state[f"regenerate_{test}"] = False  # Ensure to reset the flag in case of error
 
 def load_default_dataset():
     default_eval_path = os.path.join("my_utils", "data", "evaluations", "dataframe", "golden_eval_dataset.csv")
@@ -202,7 +205,7 @@ def handle_byop_upload(session_key: str):
         help="Select 'Yes' to provide a DataFrame with 'Question', 'Context', and 'Ground Truth' columns for custom prompts. Select 'No' to use the default dataset."
     )
     if byop_option == "Yes":
-        uploaded_file = st.file_uploader("Upload CSV", type="csv", key=session_key)
+        uploaded_file = st.file_uploader("Upload CSV", accept_multiple_files=False, type="csv", key=session_key, help="Upload a CSV file with 'Question', 'Context', and 'Ground Truth' columns for custom prompts. Only one file at a time is needed and allowed.")        
         if uploaded_file:
             process_uploaded_file(uploaded_file, session_key)
         else:
@@ -210,41 +213,76 @@ def handle_byop_upload(session_key: str):
     else:
         use_default_dataset(session_key)
 
+
+def load_pregenerate_responses(session_key: str):
+    existing_df_key = f"{session_key}_df"
+    df = st.session_state["settings_quality"].get(f"{session_key}_df", pd.DataFrame())
+    if existing_df_key in st.session_state["settings_quality"]:
+        st.markdown("### 🔄 Loaded Test Dataset")
+        st.markdown("The dataset shown below has been loaded from a previous run and is now actively selected for use in ongoing tests.")      
+        st.markdown(f"<small>*sneak peek of random five rows:*</small>", unsafe_allow_html=True)
+        if len(st.session_state["settings_quality"][existing_df_key]) >= 5:
+            st.dataframe(st.session_state["settings_quality"][existing_df_key].sample(5), hide_index=True)
+        else:
+            st.dataframe(st.session_state["settings_quality"][existing_df_key].tail(), hide_index=True)
+        unique_deployments = df['deployment'].unique()
+        unique_deployments_list = sorted(list(unique_deployments))
+        if unique_deployments_list:
+            deployments_str = ", ".join(unique_deployments_list)
+            message = (f"✅ Data generated by deployments: {deployments_str}. "
+                       "For new deployments integration or test dataset updates, select 'Regenerate Responses'.")
+            st.markdown(message)
+
 def process_uploaded_file(uploaded_file, session_key):
+    existing_df_key = f"{session_key}_df"
     df = pd.read_csv(uploaded_file)
     required_columns = ['question', 'context', 'ground_truth']
     if all(column in df.columns for column in required_columns):
         st.session_state["settings_quality"][f"{session_key}_input_df"] = df
-        st.markdown("### Uploaded CSV:")
+        st.markdown("### Uploaded Input Data:")
         st.dataframe(df.head(), hide_index=True)
-        if st.button("Generate Responses", key=f"generate_{session_key}"):
+        load_pregenerate_responses(session_key)
+        button_label = "Regenerate Responses" if existing_df_key in st.session_state["settings_quality"] else "Generate Responses"
+    
+        if st.button(button_label, key=f"generate_{session_key}"):
             generate_responses(session_key)
+
     else:
         st.error("Uploaded CSV is missing required columns: 'question', 'context', 'ground_truth'.")
 
 def use_default_dataset(session_key: str):
+    existing_df_key = f"{session_key}_df"
     df = load_default_dataset()
     st.session_state["settings_quality"][f"{session_key}_input_df"] = df
-    st.markdown("### Default Dataset Loaded:")
-    st.markdown(f"*Sneak peek of the first five rows:*")
+    st.markdown("### Default Input Dataset Loaded:")
+    st.markdown(f"<small>*sneak peek of the first five rows:*</small>", unsafe_allow_html=True)
     st.dataframe(df.head(), hide_index=True)
-    if st.button("Generate Responses", key=f"generate_{session_key}"):
+    load_pregenerate_responses(session_key)
+
+    button_label = "Regenerate Responses" if existing_df_key in st.session_state["settings_quality"] else "Generate Responses"
+    
+    if st.button(button_label, key=f"generate_{session_key}"):
         generate_responses(session_key)
 
 def configure_retrieval_settings() -> None:
     """
     Configure settings for Retrieval benchmarks, including deployment selection and BYOP (Bring Your Own Prompts) option.
     """
+    if "settings_quality" not in st.session_state:
+        st.session_state["settings_quality"] = {}
+    if "benchmark_selection_multiselect" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection_multiselect"] = []
+    if "benchmark_selection" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection"] = []
     st.markdown("""
-    Please select your deployments first. Then, decide if you are bringing your own prompts 
-    or using the default evaluation dataset.
+    Begin by selecting your Evaluator. Next, choose between utilizing your own prompts or opting for the pre-existing evaluation dataset.
     """)
     st.markdown("""
     Connecting to Azure AI Studio is optional for these section but recommended for enhanced evaluation tracking.
     """)
     configure_azure_ai_studio(session_key="retrieval")
     
-    tabs_1_retrieval, tabs_2_retrieval = st.tabs(["🔍 Select Deployments", "➕ BYOP (Bring Your Own Prompts)"])
+    tabs_1_retrieval, tabs_2_retrieval = st.tabs(["🔍 Select Evaluator", "➕ BYOP (Bring Your Own Prompts)"])
 
     with tabs_1_retrieval:
         if "deployments" in st.session_state and st.session_state.deployments:
@@ -259,15 +297,22 @@ def configure_rai_settings() -> None:
     """
     Configure settings for Responsible AI (RAI) benchmarks, including deployment selection and BYOP (Bring Your Own Prompts) option.
     """
-    st.markdown("""
-    Please select your deployments first. Then, decide if you are bringing your own prompts 
-    or using the default evaluation dataset.
-    """)
+    # Initialize 'settings_quality' and 'benchmark_selection' in session_state if they don't exist
+    if "settings_quality" not in st.session_state:
+        st.session_state["settings_quality"] = {}
+    if "benchmark_selection_multiselect" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection_multiselect"] = []
+    # Ensure "benchmark_selection" exists within "settings_quality" and is a list
+    if "benchmark_selection" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection"] = []
     #FIXME: ADD LOGIC TO DISABLE BUTTONS IF NO AZUREAI STUDIO IS SELECTED
+    st.markdown("""
+    Begin by selecting your Evaluator. Next, choose between utilizing your own prompts or opting for the pre-existing evaluation dataset.
+    """)
     st.warning("⚠️ Completing the Azure AI Studio connection details is mandatory for this section.")
     configure_azure_ai_studio(session_key="rai")
     
-    tabs_1_rai, tabs_2_rai = st.tabs(["🔍 Select Deployments", "➕ BYOP (Bring Your Own Prompts)"])
+    tabs_1_rai, tabs_2_rai = st.tabs(["🔍 Select Evaluator", "➕ BYOP (Bring Your Own Prompts)"])
 
     with tabs_1_rai:
         if "deployments" in st.session_state and st.session_state.deployments:
@@ -287,6 +332,9 @@ def understanding_configuration():
         st.session_state["settings_quality"] = {}
     if "benchmark_selection_multiselect" not in st.session_state["settings_quality"]:
         st.session_state["settings_quality"]["benchmark_selection_multiselect"] = []
+    # Ensure "benchmark_selection" exists within "settings_quality" and is a list
+    if "benchmark_selection" not in st.session_state["settings_quality"]:
+        st.session_state["settings_quality"]["benchmark_selection"] = []
 
     benchmark_selection = st.multiselect(
         "Choose Benchmark(s) for SLM/LLM assessment:",
@@ -388,3 +436,4 @@ def configure_custom_benchmark_columns(custom_df):
         "context_col": context_col,
         "custom_df": custom_df
     }
+

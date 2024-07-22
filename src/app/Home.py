@@ -107,11 +107,11 @@ def create_support_center_content():
         "How to Collaborate on the Project": """
             ### 🛠️ Resource Links
             - **GitHub Repository:** [Access the GitHub repo](https://github.com/pablosalvador10/gbb-ai-upgrade-llm)
-            - **Feedback Form:** [Share your feedback](https://example.com/feedback-form)
+            - **Feedback Form:** [Share your feedback](https://forms.office.com/r/gr8jK9cxuT)
 
             ### 💬 Want to Collaborate or Share Your Feedback?
-            - **Join Our Community:** Connect with experts and enthusiasts in our [community forums](#).
-            - **Provide Feedback:** Use our [feedback form](#) or [GitHub Issues](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues) to share your thoughts and suggestions.
+            - **Join Our Community:** Connect with experts and enthusiasts in our [community forums](https://forms.office.com/r/qryYbe23T0).
+            - **Provide Feedback:** Use our [feedback form](https://forms.office.com/r/gr8jK9cxuT) or [GitHub Issues](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues) to share your thoughts and suggestions.
         """,
         "How to Navigate Through the App": """
             ### 🌐 Navigating the App
@@ -131,7 +131,7 @@ def create_support_center_content():
 
             [🔗 Open an Issue on GitHub](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues)
 
-            Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://example.com/feedback-form) to fill out our form. 
+            Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://forms.office.com/r/gr8jK9cxuT) to fill out our form. 
 
             🙏 **Thank you for contributing!** Your insights are invaluable to us.
         """,

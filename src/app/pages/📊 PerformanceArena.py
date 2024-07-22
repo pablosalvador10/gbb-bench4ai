@@ -274,7 +274,7 @@ def display_latency_results(
             - **Visual Insights Section**: Use this section to draw conclusions by run with complex interactions.
             - **Benchmark Buddy**: Utilize this tool for an interactive, engaging "GPT" like analysis experience.
 
-            💡 **Tip**: To enhance your performance strategies, delve into optimizing and troubleshooting latency systems and metrics. [Discover more in the full article.](#)
+            💡 **Tip**: To enhance your performance strategies, delve into optimizing and troubleshooting latency systems and metrics. Discover more in the full [article](#) (available soon)
             """
         )
 
@@ -508,6 +508,8 @@ def main() -> None:
     """
     Main function to run the Streamlit app.
     """
+    initialize_session_state(session_vars, initial_values)
+
     configure_sidebar()
 
     st.sidebar.divider()

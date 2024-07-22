@@ -9,7 +9,7 @@ ENV PYTHONPATH "${PYTHONPATH}:/app"
 COPY src /app/src
 COPY my_utils/ml_logging.py /app/my_utils/ml_logging.py 
 COPY my_utils/__init__.py /app/my_utils/__init__.py  
-COPY my_utils/data/evaluations/dataframe/CompositeChat.csv /app/my_utils/data/evaluations/dataframe/CompositeChat.csv
+COPY my_utils/data/evaluations/dataframe/golden_eval_dataset.csv /app/my_utils/data/evaluations/dataframe/golden_eval_dataset.csv
 COPY my_utils/images/ /app/my_utils/images/
 COPY requirements.txt /app/requirements.txt
 

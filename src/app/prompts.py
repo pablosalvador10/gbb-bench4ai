@@ -308,6 +308,8 @@ def prompt_message_ai_benchmarking_buddy_latency(BenchmarkingResults, queries):
             
             Here are the benchmarks for analysis: {BenchmarkingResults}
             Here are the queries to address: {queries}
+            
+            Please be concise and precise in your responses, focusing on the key metrics and data points relevant to the user's queries and take your time.
             """
     return prompt
 
@@ -355,7 +357,6 @@ def prompt_message_ai_benchmarking_buddy_latency(BenchmarkingResults, queries):
             """
     return prompt
 
-import streamlit as st
 from datetime import datetime
 
 class CustomEncoder(json.JSONEncoder):

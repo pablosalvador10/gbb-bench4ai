@@ -286,7 +286,7 @@ def display_configuration_summary(summary_container:st.container):
     summary_lines = [
         "#### Benchmark Configuration Summary",
         f"- **Benchmark Type:** Quality Benchmark",
-        f"- **Tests:** {', '.join(benchmark)}",
+        f"- **Tests Selected for Run:** {', '.join(benchmark)}",
     ]
 
     if "MMLU" in benchmark:
@@ -350,6 +350,8 @@ def main():
     #FIXME: Add page title and icon
     #st.set_page_config(page_title="Quality Benchmarking", page_icon="🎯 ")
 
+    initialize_session_state(session_vars, initial_values)
+
     configure_sidebar()
 
     results_container = st.container()
@@ -369,18 +371,18 @@ def main():
         else:
             button_label = "Start Benchmark"
         run_benchmark = st.button(button_label)
-        if run_benchmark:
+        with results_container:
             if run_benchmark:
+                summary_container.warning(
+                        "Warning: Editing sidebar while benchmark is running will kill the job."
+                    )
                 with st.spinner(
                     "🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"
                 ):
-                    top_bar.warning(
-                        "Warning: Editing sidebar while benchmark is running will kill the job."
-                    )
                     asyncio.run(run_benchmark_tests())
-                    top_bar.empty()
-        else:
-            display_configuration_summary(summary_container)
+                summary_container.empty()
+            else:
+                display_configuration_summary(summary_container)
 
     selected_run_key = None
     # Tab for viewing historical benchmarks
