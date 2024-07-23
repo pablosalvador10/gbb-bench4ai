@@ -153,6 +153,16 @@ def display_support_center():
     with tab2:
         st.markdown(content["Feedback"])
 
+# #### 🚀 Ready to Dive In?
+
+    # <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
+    #     <iframe src="https://www.loom.com/share/2988afbc761c4348b5299ed55895f128?sid=f7369149-4ab2-4204-8580-0bbdc6a38616" 
+    #     frameborder="0" 
+    #     webkitallowfullscreen 
+    #     mozallowfullscreen 
+    #     allowfullscreen 
+    #     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    # </div>
 
 @st.cache_data
 def get_markdown_content() -> str:
@@ -178,17 +188,6 @@ def get_markdown_content() -> str:
     <div style="text-align: center;">
         <img src="https://media.giphy.com/media/5owckHKAKMoA8/giphy.gif" alt="Speedy AI" style="width: 50%; height: auto;">
         <p></p>
-    </div>
-
-    #### 🚀 Ready to Dive In?
-
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
-        <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
-        frameborder="0" 
-        webkitallowfullscreen 
-        mozallowfullscreen 
-        allowfullscreen 
-        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
     </div>
 
     <div style="text-align: center;">

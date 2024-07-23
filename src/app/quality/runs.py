@@ -240,7 +240,7 @@ async def run_benchmark_tests() -> None:
                 rai_results = pd.DataFrame(data_for_df_rai).set_index('deployment')
 
             # Combine results into a dictionary
-            results_df = pd.concat(results, ignore_index=True) if results else pd.DataFrame()
+            results_df = pd.concat(results) if results else pd.DataFrame()
             truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
             mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
             medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()

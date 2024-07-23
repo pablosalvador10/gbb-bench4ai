@@ -25,9 +25,13 @@ def create_tabs_for_non_empty_dataframes(results, results_container: st.containe
             with tab:
                 if key == "understanding_results":
                     if 'test' in df.columns:
-                        df_with_test_index = df.set_index('test', append=True)
-                        tab.dataframe(df_with_test_index, hide_index=False)
-                        logger.info(f"Displayed understanding_results with 'test' column for key: {key}")
+                        try:
+                            df_with_test_index = df.set_index('test', append=True)
+                            tab.dataframe(df_with_test_index, hide_index=False)
+                            logger.info(f"Displayed understanding_results with 'test' column for key: {key}")
+                        except KeyError as e:
+                            logger.error(f"Error setting 'test' as index: {e}")
+                            st.error(f"An error occurred: {e}")
                     else:
                         logger.warning("'test' column not found in understanding_results DataFrame.")
                         tab.dataframe(df, hide_index=False)
@@ -274,7 +278,7 @@ def display_quality_results(results_container: st.container, id: str):
             results_rai = results.get("rai_results", pd.DataFrame()).drop(columns=['studio_url'], errors='ignore')
             if not results_rai.empty:
                 df_reset = results_rai.reset_index()
-                df_reset.rename(columns={df_reset.columns[0]: 'model'}, inplace=True)
+                df_reset.rename(columns={df_reset.columns[0]: 'deployment'}, inplace=True)
                 
                 df_long = df_reset.melt(id_vars=['deployment'], var_name='Metric', value_name='Value')
                 
