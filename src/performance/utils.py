@@ -4,7 +4,7 @@ import pandas as pd
 import tiktoken
 from fuzzywuzzy import process
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 logger = get_logger()
 

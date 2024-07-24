@@ -1,0 +1,6 @@
+question,context,ground_truth,count
+What is the capital of France?,France is a country in Europe. Its capital is Paris. Citations: ['Encyclopedia Britannica'],The capital of France is Paris.,20
+Who developed the theory of relativity?,The theory of relativity was developed by Albert Einstein. Citations: ['NASA Archive'],The theory of relativity was developed by Albert Einstein.,20
+What is the speed of light?,"Light travels at a constant speed in a vacuum, which is 299,792,458 meters per second. Citations: ['Physics Today']","Light travels at a speed of 299,792,458 meters per second.",20
+What is the tallest mountain in the world?,The tallest mountain in the world is Mount Everest. Citations: ['National Geographic'],The world's tallest mountain is Mount Everest.,20
+Who is the author of '1984'?,The author of '1984' is George Orwell. Citations: ['Literary Review'],The author of '1984' is George Orwell.,20

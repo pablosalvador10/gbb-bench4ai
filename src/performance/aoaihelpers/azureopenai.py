@@ -13,7 +13,7 @@ from openai import AzureOpenAI
 
 from src.performance.aoaihelpers.tokenizer import AzureOpenAITokenizer
 from src.performance.aoaihelpers.utils import extract_rate_limit_and_usage_info
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Load environment variables from .env file
 load_dotenv()

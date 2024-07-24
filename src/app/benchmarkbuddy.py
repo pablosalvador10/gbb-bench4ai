@@ -10,7 +10,7 @@ def configure_benchmarkbudyy_model_settings() -> dict:
 
     :return: A dictionary containing the settings values.
     """
-    with st.expander("BenchmarkBuddy Settings", expanded=False):
+    with st.expander("BenchBuddy Settings", expanded=False):
         # Ensure 'settings' exists in 'session_state'
         if "settings_buddy" not in st.session_state:
             st.session_state["settings_buddy"] = {}
@@ -61,72 +61,145 @@ def configure_benchmarkbudyy_model_settings() -> dict:
     return st.session_state["settings_buddy"]
 
 
-def configure_chatbot() -> None:
-    error_client_buddy = st.empty()
-    if "azure_openai_manager" not in st.session_state:
-        error_client_buddy.error(
-            "Chatbot capabilities are currently disabled. To activate and fully utilize BenchmarkAI buddy knowledge, please configure the AOAI model."
+def update_chatbot_configuration():
+    """
+    Update the chatbot configuration based on the selected deployment.
+    """
+    if "deployments" in st.session_state and st.session_state.deployments:
+        deployment_names = list(st.session_state.deployments.keys())
+        selected_deployment_name = st.radio(
+            label="Select a deployment to use:",
+            options=deployment_names,
+            label_visibility="visible"
         )
 
-    with st.expander("Configure Buddy's Brain (AOAI)", expanded=False):
-        st.write(
-            "Add the AOAI-model to empower Buddy with advanced cognitive capabilities."
-        )
-        with st.form("add_deployment_chatbot"):
-            st.session_state[
-                "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"
-            ] = st.text_input(
-                "Deployment id",
-                help="Enter the deployment ID for Azure OpenAI.",
-                placeholder="e.g., chat-gpt-1234abcd",
-            )
-            st.session_state["AZURE_OPENAI_KEY_CHATBOT"] = st.text_input(
-                "Azure OpenAI Key",
-                help="Enter your Azure OpenAI key.",
-                type="password",
-                placeholder="e.g., sk-ab*****..",
-            )
-            st.session_state["AZURE_OPENAI_API_ENDPOINT_CHATBOT"] = st.text_input(
-                "API Endpoint",
-                help="Enter the API endpoint for Azure OpenAI.",
-                placeholder="e.g., https://api.openai.com/v1",
-            )
-            st.session_state["AZURE_OPENAI_API_VERSION_CHATBOT"] = st.text_input(
-                "API Version",
-                help="Enter the API version for Azure OpenAI.",
-                placeholder="e.g., 2024-02-15-preview",
-            )
-            submitted_buddy = st.form_submit_button("Add Deployment")
+        if st.button("Update Chatbot Configuration"):
+            selected_deployment = st.session_state.deployments[selected_deployment_name]
+            st.session_state["AZURE_OPENAI_KEY_CHATBOT"] = selected_deployment["key"]
+            st.session_state["AZURE_OPENAI_API_ENDPOINT_CHATBOT"] = selected_deployment["endpoint"]
+            st.session_state["AZURE_OPENAI_API_VERSION_CHATBOT"] = selected_deployment["version"]
+            st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"] = selected_deployment_name
+            st.success(f"Chatbot configuration updated with deployment: {selected_deployment_name}")
+    else:
+        st.info("😔 No deployments available. Head over to the Deployment Center to add your first deployment.")
 
-    if submitted_buddy:
-        try:
-            st.session_state["azure_openai_manager"] = create_azure_openai_manager(
+def init_brain_chatbot(error_client_buddy: st.container) -> None: 
+    try:
+        st.session_state["azure_openai_manager"] = create_azure_openai_manager(
                 api_key=st.session_state["AZURE_OPENAI_KEY_CHATBOT"],
                 azure_endpoint=st.session_state["AZURE_OPENAI_API_ENDPOINT_CHATBOT"],
                 api_version=st.session_state["AZURE_OPENAI_API_VERSION_CHATBOT"],
-                deployment_id=st.session_state[
-                    "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"
-                ],
+                deployment_id=st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"],
             )
-            stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
-                model=st.session_state.azure_openai_manager.chat_model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Test: Verify setup.",
-                    }
-                ]
-                + [{"role": "user", "content": "test"}],
-                max_tokens=2,
-                seed=555,
-                stream=True,
-            )
-            st.toast("BenchmarkAI Buddy 🤖 successfully configured.")
-            error_client_buddy.empty()
-            st.session_state["disable_chatbot"] = False
-        except Exception as e:
-            st.warning(
-                f"An issue occurred while initializing the Azure OpenAI manager. {e} Please try again. If the issue persists, verify your configuration."
-            )
+        stream = st.session_state.azure_openai_manager.openai_client.chat.completions.create(
+            model=st.session_state.azure_openai_manager.chat_model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Test: Verify setup.",
+                }
+            ] + [{"role": "user", "content": "test"}],
+            max_tokens=2,
+            seed=555,
+            stream=True,
+        )
+        st.toast("BenchBuddy 🤖 successfully configured.")
+        error_client_buddy.empty()
+        st.session_state["disable_chatbot"] = False
+    except Exception as e:
+        st.warning(
+            f"An issue occurred while initializing the Azure OpenAI manager. {e} Please try again. If the issue persists, verify your configuration."
+        )
 
+def configure_chatbot() -> None:
+    """
+    Configure the chatbot capabilities within the Streamlit application.
+
+    This function ensures that the necessary configurations for the chatbot are available in the session state.
+    If not, it provides an interface for the user to configure and activate the chatbot.
+    """
+    error_client_buddy = st.empty()
+
+    # List of required configuration keys
+    required_keys = [
+        "AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT",
+        "AZURE_OPENAI_KEY_CHATBOT",
+        "AZURE_OPENAI_API_ENDPOINT_CHATBOT",
+        "AZURE_OPENAI_API_VERSION_CHATBOT"
+    ]
+
+    # Check if all required keys are present in the session state
+    all_keys_exist = all(key in st.session_state for key in required_keys)
+
+    if not all_keys_exist or "azure_openai_manager" not in st.session_state or not st.session_state.get("azure_openai_manager"):
+        error_client_buddy.error(
+            "Chatbot capabilities are currently disabled. To activate and fully utilize BenchBuddy knowledge, please configure the AOAI model."
+        )
+
+    with st.expander("Configure BenchBuddy's Brain (AOAI)", expanded=not all_keys_exist):
+        st.write(
+            "Add the AOAI-model to empower Buddy with advanced cognitive capabilities."
+        )
+
+        tabs_1_buddy, tabs_2_buddy = st.tabs(["🔍 Select Deployment", "➕ Add Deployment"])
+
+        with tabs_1_buddy:
+            if "deployments" in st.session_state and st.session_state.deployments:
+                deployment_names = list(st.session_state.deployments.keys())
+                selected_deployment_name = st.radio(
+                    label="Select a deployment to use:",
+                    options=deployment_names,
+                    label_visibility="visible"
+                )
+
+                submitted_buddy = st.button("Add/Update Deployment", use_container_width=True)
+
+                if submitted_buddy:
+                    selected_deployment = st.session_state.deployments[selected_deployment_name]
+                    st.session_state["AZURE_OPENAI_KEY_CHATBOT"] = selected_deployment["key"]
+                    st.session_state["AZURE_OPENAI_API_ENDPOINT_CHATBOT"] = selected_deployment["endpoint"]
+                    st.session_state["AZURE_OPENAI_API_VERSION_CHATBOT"] = selected_deployment["version"]
+                    st.session_state["AZURE_AOAI_CHAT_MODEL_NAME_DEPLOYMENT_ID_CHATBOT"] = selected_deployment_name
+                    init_brain_chatbot(error_client_buddy)
+
+            else:
+                st.info("😔 No deployments available. Head over to the Deployment Center to add your first deployment.")
+
+        with tabs_2_buddy:
+            with st.form("add_deployment_chatbot"):
+                for key in required_keys:
+                    placeholder_text = _get_placeholder_text(key)
+                    input_type = "password" if "KEY" in key else "default"
+                    st.session_state[key] = st.text_input(
+                        key.split("_")[-1].replace("CHATBOT", "").title().replace("_", " "),
+                        help=f"Enter your {key.split('_')[-1].replace('CHATBOT', '').replace('_', ' ').title()}.",
+                        type=input_type,
+                        placeholder=placeholder_text,
+                    )
+                submitted_buddy = st.form_submit_button("Add Deployment")
+
+            if submitted_buddy:
+                init_brain_chatbot(error_client_buddy)
+                
     configure_benchmarkbudyy_model_settings()
+
+    if st.session_state["azure_openai_manager"]:
+            st.markdown(f'''Buddy is now responsive, thanks to the deployment: `{st.session_state["azure_openai_manager"].chat_model_name}`.''')
+
+
+def _get_placeholder_text(key: str) -> str:
+    """
+    Get placeholder text based on the configuration key.
+
+    :param key: The configuration key.
+    :return: Placeholder text.
+    """
+    if "KEY" in key:
+        return "e.g., sk-ab*****.."
+    elif "DEPLOYMENT_ID" in key:
+        return "e.g., chat-gpt-1234abcd"
+    elif "ENDPOINT" in key:
+        return "e.g., https://api.openai.com/v1"
+    elif "VERSION" in key:
+        return "e.g., 2024-02-15-preview"
+    return ""

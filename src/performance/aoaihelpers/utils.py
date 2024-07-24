@@ -13,7 +13,7 @@ from requests import Response
 from scipy import stats
 
 from src.performance.aoaihelpers.constants import AZURE_REGION_TO_TIMEZONE
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()

@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from utils.ml_logging import get_logger
+from my_utils.ml_logging import get_logger
 
 # Set up logger
 logger = get_logger()

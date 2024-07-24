@@ -82,7 +82,7 @@ def configure_default_settings() -> None:
         "Number of Iterations",
         min_value=1,
         max_value=100,
-        value=50,
+        value=5,
         help="Select the number of iterations for each benchmark test.",
     )
     prompts = None

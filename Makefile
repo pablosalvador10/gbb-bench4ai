@@ -89,7 +89,7 @@ evals_test:
 
 # Target to run the Streamlit app locally
 run_streamlit:
-	streamlit run src/app/Home.py
+	streamlit run src/app/Home.py --server.enableXsrfProtection False
 
 streamlite_conf: 
 	streamlit config show

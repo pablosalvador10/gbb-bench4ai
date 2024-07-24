@@ -1,0 +1,10 @@
+{"answer": "Paris is the capital of France.", "ground_truth": "The capital of France is Paris."}
+{"answer": "Albert Einstein developed the theory of relativity.", "ground_truth": "The theory of relativity was developed by Albert Einstein."}
+{"answer": "The speed of light is approximately 299,792,458 meters per second.", "ground_truth": "Light travels at a speed of 299,792,458 meters per second."}
+{"answer": "Mount Everest is the tallest mountain in the world.", "ground_truth": "The world's tallest mountain is Mount Everest."}
+{"answer": "George Orwell is the author of '1984'.", "ground_truth": "The author of '1984' is George Orwell."}
+{"answer": "Tokyo is the capital of Japan.", "ground_truth": "Japan's capital is Tokyo."}
+{"answer": "Leonardo da Vinci painted the Mona Lisa.", "ground_truth": "The Mona Lisa was painted by Leonardo da Vinci."}
+{"answer": "Jupiter is the largest planet in our solar system.", "ground_truth": "The largest planet in our solar system is Jupiter."}
+{"answer": "H2O is the chemical symbol for water.", "ground_truth": "The chemical symbol for water is H2O."}
+{"answer": "The Pacific Ocean is the largest ocean on Earth.", "ground_truth": "The largest ocean on Earth is the Pacific Ocean."}

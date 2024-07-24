@@ -56,16 +56,13 @@ def get_main_content() -> str:
     """
     return f"""
     <h1 style="text-align:center;">
-        Welcome to the GBB MaaS Upgrade Hub!
+        Welcome to Bench4AI 🤖!
         <br>
         <span style="font-style:italic; font-size:0.4em;"> Your ultimate LLM/SLM benchmarking destination </span> 
-        <img src="data:image/png;base64,{get_image_base64('./utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
+        <img src="data:image/png;base64,{get_image_base64('./my_utils/images/azure_logo.png')}" alt="RAG logo" style="width:25px;height:25px;">        
         <br>
     </h1>
     """
-
-
-import streamlit as st
 
 
 @st.cache_data()
@@ -110,11 +107,11 @@ def create_support_center_content():
         "How to Collaborate on the Project": """
             ### 🛠️ Resource Links
             - **GitHub Repository:** [Access the GitHub repo](https://github.com/pablosalvador10/gbb-ai-upgrade-llm)
-            - **Feedback Form:** [Share your feedback](https://example.com/feedback-form)
+            - **Feedback Form:** [Share your feedback](https://forms.office.com/r/gr8jK9cxuT)
 
             ### 💬 Want to Collaborate or Share Your Feedback?
-            - **Join Our Community:** Connect with experts and enthusiasts in our [community forums](#).
-            - **Provide Feedback:** Use our [feedback form](#) or [GitHub Issues](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues) to share your thoughts and suggestions.
+            - **Join Our Community:** Connect with experts and enthusiasts in our [community forums](https://forms.office.com/r/qryYbe23T0).
+            - **Provide Feedback:** Use our [feedback form](https://forms.office.com/r/gr8jK9cxuT) or [GitHub Issues](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues) to share your thoughts and suggestions.
         """,
         "How to Navigate Through the App": """
             ### 🌐 Navigating the App
@@ -134,7 +131,7 @@ def create_support_center_content():
 
             [🔗 Open an Issue on GitHub](https://github.com/pablosalvador10/gbb-ai-upgrade-llm/issues)
 
-            Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://example.com/feedback-form) to fill out our form. 
+            Don't worry if you can't access GitHub! We'd still love to hear your ideas or suggestions for improvements. Just click [here](https://forms.office.com/r/gr8jK9cxuT) to fill out our form. 
 
             🙏 **Thank you for contributing!** Your insights are invaluable to us.
         """,
@@ -156,6 +153,16 @@ def display_support_center():
     with tab2:
         st.markdown(content["Feedback"])
 
+# #### 🚀 Ready to Dive In?
+
+    # <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
+    #     <iframe src="https://www.loom.com/share/2988afbc761c4348b5299ed55895f128?sid=f7369149-4ab2-4204-8580-0bbdc6a38616" 
+    #     frameborder="0" 
+    #     webkitallowfullscreen 
+    #     mozallowfullscreen 
+    #     allowfullscreen 
+    #     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    # </div>
 
 @st.cache_data
 def get_markdown_content() -> str:
@@ -167,27 +174,34 @@ def get_markdown_content() -> str:
     :return: The markdown content.
     """
     return """
-    Our app focuses on dual intent and provides key performance metrics such as latency, throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter, cost-effective decisions regarding the choice of foundation model for your AI projects. By leveraging the latest AI technology and solid data, specifically your **own data**, it enhances your capabilities.
+    Bench4AI features a user-friendly interface that streamlines the today's complex benchmarking process for your preferred MaaS (a.k.a Gpt-4o) and candidates. 
+    It allows you to bring your own prompts **(BYOP)** for a personalized benchmarking experience with your data. Gain in-depth performance insights with just a few clicks from an extensive library of statistical quality and performance metrics.
+    
+    #### 🛠️ Automating the Daily Adventures of the AI Engineer
 
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); width: 80%; margin: auto;">
-        <iframe src="https://www.loom.com/embed/9c6592b16c5b4785805ce87393601dfd?sid=bcc2e170-9295-427c-ae11-b89489f3ab6b" 
-        frameborder="0" 
-        webkitallowfullscreen 
-        mozallowfullscreen 
-        allowfullscreen 
-        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    - **👩‍💼 Tech Lead**: "Hey squad! Just caught wind that Azure OpenAI dropped a shiny new model. When are we integrating it into our app?"
+
+    - **👩🏾‍ Product Manager**: "Hold your horses! We'll sprint through our benchmarking and circle back... will get back to you! ⏱️"
+
+    - **🧑‍💻 The Team Hero**: "Wait... Why not let Bench4AI take it for a spin and.."
+
+    <div style="text-align: center;">
+        <img src="https://media.giphy.com/media/5owckHKAKMoA8/giphy.gif" alt="Speedy AI" style="width: 50%; height: auto;">
+        <p></p>
     </div>
 
-    Our app features a user-friendly interface that streamlines the benchmarking process for your preferred MaaS (a.k.a Gpt-4o). 
-    It allows you to bring your own prompts **(BYOP)** for a personalized benchmarking experience with your data. Discover performance insights and benefit from an extensive quality evaluation for a comprehensive analysis of model performance.
+    <div style="text-align: center;">
+        Oh, and say hi to BenchBuddy 🤖! Your go-to AI pal for all things benchmarking.
+    </div>
 
     #### 🌟 Getting Started
+
     To kick things off, we recommend watching the above introductory video for a smooth start.. If you have any questions, the 'How-To Guide' in the sidebar offers a comprehensive step-by-step walkthrough.
 
     - **Navigating the App:** The navigation tool in the top right corner is designed for seamless switching between different sections of the app: 
         - 👋 **Home:** The main page you're currently on.
-        - 📊 **Performance Insights:** Gain in-depth insights into model performance, including throughput and latency analysis.
-        - 🔍 **Quality Metrics:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
+        - 📊 **PerformanceArena:** Gain in-depth insights into model performance, including throughput and latency analysis.
+        - 🔍 **QualityIQ:** Assess the accuracy and reliability of your AI models with detailed quality metrics.
   
     #### 💬 Want to Collaborate or Share Your Feedback?
     - **Join Our Community:** Dive into our [chat group](#) to connect with both experts and enthusiasts alike. Share your thoughts, ask questions, and engage with the community.
@@ -269,8 +283,6 @@ def load_default_deployment(
     ):
         st.session_state.deployments[default_deployment["name"]] = default_deployment
 
-
-import streamlit as st
 
 
 def add_deployment_aoai_form() -> None:
@@ -431,7 +443,7 @@ def create_benchmark_center() -> None:
     of model family from a dropdown menu. Currently, it supports the "AOAI" model
     family and provides a placeholder for future expansion to other model families.
     """
-    with st.expander("Add Your MaaS Deployment", expanded=False):
+    with st.expander("➕ Add Your MaaS Deployment", expanded=False):
         operation = st.selectbox(
             "Choose Model Family:",
             ("AOAI", "Other"),
