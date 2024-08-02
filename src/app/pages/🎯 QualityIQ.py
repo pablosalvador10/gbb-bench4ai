@@ -1,15 +1,15 @@
 import asyncio
+import pandas as pd
 from typing import Any, Dict, List
 
 import dotenv
 import streamlit as st
 
-from src.app.quality.runs import run_benchmark_tests
+from src.app.quality.quality_config import dataset_config
+from src.app.quality.quality_runs import run_quality_tests
 
 from src.app.benchmarkbuddy import configure_chatbot
-from src.app.quality.llm_slm_settings import (understanding_configuration, 
-                                              configure_retrieval_settings,
-                                              configure_rai_settings)
+
 from my_utils.ml_logging import get_logger
 from src.app.Home import (create_benchmark_center, display_deployments,
                           load_default_deployment)
@@ -44,7 +44,7 @@ session_vars = [
     "messages_quality",
     "log_messages_quality",
     "deployments",
-    "settings_quality",
+    "quality_settings",
     "results_quality",
     "disable_chatbot",
     "azure_openai_manager"
@@ -76,7 +76,7 @@ initial_values = {
     ],
     "log_messages_quality": [],
     "deployments": {},
-    "settings_quality": {},
+    "quality_settings": {},
     "results_quality": {},
     "disable_chatbot": True,
     "azure_openai_manager": None,
@@ -84,9 +84,6 @@ initial_values = {
 
 initialize_session_state(session_vars, initial_values)
 
-# initialize metrics list
-metrics_list = ["Accuracy", "Answer Similarity"]
-context_metrics_list = ["Context Similarity"]
 
 def configure_sidebar() -> None:
     """
@@ -101,55 +98,69 @@ def configure_sidebar() -> None:
         display_deployments()
 
         st.sidebar.divider()
-
         st.markdown("## 🎛️ Benchmark Center")
-       
         tab1, tab2, tab3 = st.sidebar.tabs(
                 ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
             )
         with tab1:
-            st.markdown("""
-            ## Focus your LLM/SLM benchmark
+            st.multiselect(
+                "Select Deployments to Test",
+                list(st.session_state.deployments.keys()),
+                key="quality_deployments",
+                help="Select the deployments you want to test.",
+            )
+            if len(st.session_state.get("quality_deployments")) < 0 :
+                st.warning("Please select a deployment to test.")
 
-            - **🧠 Understanding**: Evaluate the reasoning and overall performance using well-known datasets like MMLU, MedPub, and TruthfulQA.
-            - **⚙️ Retrieval System/QA**: Assess an LLM-based system as a whole, considering context and understand domani-specific accuracy.
-            - **🛡️ RAI (Responsible AI)**: Ensure the model meets responsible AI standards.
-            """)
+            data_type = st.radio("Select Dataset Type", ["Custom Dataset (Recommended)", "Public Datasets"])
 
-            # Create inner tabs for detailed configuration
-            tab1_inner, tab2_inner, tab3_inner = st.tabs(["🧠 Understanding", "⚙️ Retrieval System/QA", "🛡️ RAI"])
+            if data_type == "Custom Dataset (Recommended)":
+                st.session_state["quality_settings"]["type"] = "custom"
+                dataset_config(custom_select=True, mmlu_select=False, medpub_select=False, truthful_select=False)
+                st.markdown(" ### Setup Evaluation Metrics")
 
-            with tab1_inner:
-                with st.expander("📊 What metrics are we evaluating?", expanded=False): 
-                    st.markdown("""
-                        - **MMLU**: Measures domain knowledge across multiple fields.
-                        - **MedPub**: Evaluates understanding of medical literature.
-                        - **TruthfulQA**: Tests for truthfulness in responses.
-                    """)
-                understanding_configuration()
+                evaluator_deployment_name = st.radio(
+                        "Select Your Evaluator Model",
+                        st.session_state.deployments.keys(),
+                        key=f"evaluator_deployment_name",
+                        help="Select the model to serve as the 'Evaluator Brain' for the GPT evaluations. Recommend choosing your most advanced model",
+                    )
+                
+                st.markdown("Azure AI Metrics - Language")
+                st.checkbox("GPT Fluency", key="FluencyEvaluator", help="Measures the fluency of the generated text.[1 -> 5]")
+                st.checkbox("GPT Coherence", key="CoherenceEvaluator", help="Measures the coherence of the generated text.[1 -> 5]")
 
-            with tab2_inner:
-                # Add any additional configuration or content for System
-                with st.expander("📊 What metrics are we evaluating?", expanded=False): 
-                    st.markdown("""
-                    - `f1_score`: Range [0, 1]
-                    - `gpt_groundedness`: Range [0, 5]
-                    - `gpt_relevance`: Range [0, 5]
-                    - `gpt_coherence`: Range [0, 5]
-                    - `gpt_fluency`: Range [0, 5]
-                    - `gpt_similarity`: Range [0, 5]
-                    """)
-                configure_retrieval_settings()
+                st.markdown("Azure AI Metrics - Retrieval")
+                st.checkbox("GPT Relevance", key="RelevanceEvaluator", help="Measures the relevance of the generated text.[1 -> 5]")
+                st.checkbox("GPT Groundedness", key="GroundednessEvaluator", help="Measures the groundedness of the generated text in the context.[1 -> 5]")
 
-            with tab3_inner:
-                with st.expander("📊 What metrics are we evaluating?", expanded=False):
-                    st.markdown("""
-                    - `self_harm_defect_rate`: Range [0, 1]
-                    - `sexual_defect_rate`: Range [0, 1]
-                    - `hate_unfairness_defect_rate`: Range [0, 1]
-                    - `violence_defect_rate`: Range [0, 1]
-                    """)
-                configure_rai_settings()
+                st.markdown("Azure AI Metrics - Performance")
+                st.checkbox("GPT Similarity", key="SimilarityEvaluator", help="Measures the similarity of the ground truth and generated text.[1 -> 5]")
+                st.checkbox("F1 Score", key="F1ScoreEvaluator", help="Measures the F1 score betweem ground truth and generated text.[0 -> 1]")
+
+                st.markdown("Azure AI Metrics - Responsible AI")
+                st.checkbox("Violence Evaluator", key="ViolenceEvaluator", help="Measures the presence of violent content in the generated text.[0 -> 1]")
+                st.checkbox("Sexual Evaluator", key="SexualEvaluator", help="Measures the presence of sexual content in the generated text.[0 -> 1]")
+                st.checkbox("Self Harm Evaluator", key="SelfHarmEvaluator", help="Measures the presence of self-harm content in the generated text.[0 -> 1]")
+                st.checkbox("Hate/Unfairness Evaluator", key="HateUnfairnessEvaluator", help="Measures the presence of hate speech or unfair content in the generated text.[0 -> 1]")
+
+                ## This is IMPORTANT - update *keys* if new metrics are added ##
+                keys = ["FluencyEvaluator", "CoherenceEvaluator", "RelevanceEvaluator", "GroundednessEvaluator", "SimilarityEvaluator", "ViolenceEvaluator", "SexualEvaluator", "SelfHarmEvaluator", "HateUnfairnessEvaluator", "F1ScoreEvaluator"]
+                evals_to_run = [key for key in keys if st.session_state.get(key, False)]
+                st.session_state["quality_settings"]["evals_to_run"] = evals_to_run
+
+            elif data_type == "Public Datasets":
+                st.session_state["quality_settings"]["type"] = "public"
+                st.write("### Public Benchmark Settings")
+                mmlu_select = st.checkbox("MMLU", key="mmlu", help="Measures domain knowledge across multiple fields.")
+                medpub_select = st.checkbox("MedPub QA",key="medpub", help="Evaluates understanding of medical literature.")
+                truthful_select = st.checkbox("Truthful QA", key="truthful", help="Tests for truthfulness in responses.")
+                dataset_config(custom_select=False, mmlu_select=mmlu_select, medpub_select=medpub_select, truthful_select=truthful_select)
+
+                ## This is IMPORTANT - update *keys* if new datasets are added ##
+                keys = ["mmlu", "medpub", "truthful"]
+                evals_to_run = [key for key in keys if st.session_state.get(key, False)]
+                st.session_state["quality_settings"]["evals_to_run"] = evals_to_run
                           
         with tab2:
             configure_chatbot()
@@ -373,16 +384,10 @@ def main():
         run_benchmark = st.button(button_label)
         with results_container:
             if run_benchmark:
-                summary_container.warning(
-                        "Warning: Editing sidebar while benchmark is running will kill the job."
-                    )
-                with st.spinner(
-                    "🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"
-                ):
-                    asyncio.run(run_benchmark_tests())
+                summary_container.warning("Warning: Editing sidebar while benchmark is running will kill the job.")
+                with st.spinner("🚀 Running benchmark... Please be patient, this might take a few minutes. 🕒"):
+                    asyncio.run(run_quality_tests())
                 summary_container.empty()
-            else:
-                display_configuration_summary(summary_container)
 
     selected_run_key = None
     # Tab for viewing historical benchmarks

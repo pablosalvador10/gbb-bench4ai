@@ -53,18 +53,6 @@ class Eval:
                 f"Unrecognized log level: {log_level}. Defaulting to INFO"
             )
 
-    def load_data(
-        self, dataset: str, subset: str, split: str, flatten: bool = False
-    ) -> pd.DataFrame:
-        # Download dataset
-        self.logger.info(f"Loading {dataset} data")
-        hf_data = load_dataset(dataset, subset, split=split)
-        if flatten:
-            hf_data = hf_data.flatten()
-        df = hf_data.to_pandas()
-        self.logger.info(f"Load Complete. {df.shape[0]} rows.")
-        return df
-
     def _score(self, generated: str, correct: str) -> int:
         self.logger.debug(f"Scoring {str(generated)} vs. {str(correct)}")
         try:

@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from requests.exceptions import ConnectionError, RequestException
-from src.quality.evals import MMLU, CustomEval, PubMedQA, TruthfulQA
+from src.quality.public_evals import MMLU, PubMedQA, TruthfulQA
 from my_utils.ml_logging import get_logger
 import asyncio
 import traceback
@@ -127,6 +127,7 @@ def run_retrieval_quality_for_client(client: Any) -> Tuple[str, Dict[str, Any]]:
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         return client.model_config.azure_deployment, None
+
 
 async def run_benchmark_tests() -> None:
     """

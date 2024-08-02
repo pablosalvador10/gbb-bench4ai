@@ -1,4 +1,4 @@
-,task_id,prompt,ground_truth,test,entry_point
+,task_id,question,ground_truth,answer,context
 0,HumanEval/0,"from typing import List
 
 
