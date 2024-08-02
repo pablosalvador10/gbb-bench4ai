@@ -127,22 +127,22 @@ def configure_sidebar() -> None:
                     )
                 
                 st.markdown("Azure AI Metrics - Language")
-                st.checkbox("GPT Fluency", key="FluencyEvaluator", help="Measures the fluency of the generated text.[1 -> 5]")
-                st.checkbox("GPT Coherence", key="CoherenceEvaluator", help="Measures the coherence of the generated text.[1 -> 5]")
+                st.checkbox("GPT Fluency", key="fluency", help="Measures the fluency of the generated text.[1 -> 5]")
+                st.checkbox("GPT Coherence", key="coherence", help="Measures the coherence of the generated text.[1 -> 5]")
 
                 st.markdown("Azure AI Metrics - Retrieval")
-                st.checkbox("GPT Relevance", key="RelevanceEvaluator", help="Measures the relevance of the generated text.[1 -> 5]")
-                st.checkbox("GPT Groundedness", key="GroundednessEvaluator", help="Measures the groundedness of the generated text in the context.[1 -> 5]")
+                st.checkbox("GPT Relevance", key="relevance", help="Measures the relevance of the generated text.[1 -> 5]")
+                st.checkbox("GPT Groundedness", key="groundedness", help="Measures the groundedness of the generated text in the context.[1 -> 5]")
 
                 st.markdown("Azure AI Metrics - Performance")
-                st.checkbox("GPT Similarity", key="SimilarityEvaluator", help="Measures the similarity of the ground truth and generated text.[1 -> 5]")
-                st.checkbox("F1 Score", key="F1ScoreEvaluator", help="Measures the F1 score betweem ground truth and generated text.[0 -> 1]")
+                st.checkbox("GPT Similarity", key="similarity", help="Measures the similarity of the ground truth and generated text.[1 -> 5]")
+                st.checkbox("F1 Score", key="f1score", help="Measures the F1 score betweem ground truth and generated text.[0 -> 1]")
 
                 st.markdown("Azure AI Metrics - Responsible AI")
-                st.checkbox("Violence Evaluator", key="ViolenceEvaluator", help="Measures the presence of violent content in the generated text.[0 -> 1]")
-                st.checkbox("Sexual Evaluator", key="SexualEvaluator", help="Measures the presence of sexual content in the generated text.[0 -> 1]")
-                st.checkbox("Self Harm Evaluator", key="SelfHarmEvaluator", help="Measures the presence of self-harm content in the generated text.[0 -> 1]")
-                st.checkbox("Hate/Unfairness Evaluator", key="HateUnfairnessEvaluator", help="Measures the presence of hate speech or unfair content in the generated text.[0 -> 1]")
+                st.checkbox("Violence Evaluator", key="violencevaluator", help="Measures the presence of violent content in the generated text.[0 -> 1]")
+                st.checkbox("Sexual Evaluator", key="sexualevaluator", help="Measures the presence of sexual content in the generated text.[0 -> 1]")
+                st.checkbox("Self Harm Evaluator", key="selfharmevaluator", help="Measures the presence of self-harm content in the generated text.[0 -> 1]")
+                st.checkbox("Hate/Unfairness Evaluator", key="hateunfairnessevaluator", help="Measures the presence of hate speech or unfair content in the generated text.[0 -> 1]")
 
                 ## This is IMPORTANT - update *keys* if new metrics are added ##
                 keys = ["FluencyEvaluator", "CoherenceEvaluator", "RelevanceEvaluator", "GroundednessEvaluator", "SimilarityEvaluator", "ViolenceEvaluator", "SexualEvaluator", "SelfHarmEvaluator", "HateUnfairnessEvaluator", "F1ScoreEvaluator"]

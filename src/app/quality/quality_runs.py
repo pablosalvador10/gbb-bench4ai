@@ -3,18 +3,10 @@ import asyncio
 import pandas as pd
 import copy
 from my_utils.ml_logging import get_logger
-from promptflow.core import AzureOpenAIModelConfiguration
-from promptflow.evals.evaluators import (
-    RelevanceEvaluator,
-    F1ScoreEvaluator,
-    GroundednessEvaluator,
-    CoherenceEvaluator,
-    FluencyEvaluator,
-    SimilarityEvaluator,
-)
+
 from src.quality.public_evals import MMLU, PubMedQA, TruthfulQA
+from src.quality.azure_ai_evals import AzureAIEvaluator
 from src.app.quality.results import BenchmarkQualityResult
-from promptflow.evals.evaluate import evaluate
 from datasets import load_dataset
 from typing import List, Dict
 
@@ -43,7 +35,7 @@ def _get_evaluator_deployment() -> Dict:
             return deployment
     
     st.error("Evaluator deployment not found.")
-    return None
+    return {}
 
 def load_public_data(dataset: str, subset: str, split: str, flatten: bool = False) -> pd.DataFrame:
         # Download dataset
@@ -71,19 +63,25 @@ async def run_quality_tests() -> None:
     # Run custom Benchmark
     if st.session_state["quality_settings"]["type"] == "custom":
         evals_to_run = st.session_state["quality_settings"]["evals_to_run"]
+
+        # Setup dataset
         df = st.session_state["quality_settings"]["custom_dataset"]["custom_df"]
         sample_size = st.session_state["quality_settings"]["custom_dataset"]["custom_subsample"]
+        df = df.sample(frac=sample_size, replace=False).reset_index()
+
         if df == None or sample_size == None:
             st.errror("Please upload a dataset and select the columns to run the benchmark.")
             return
 
         # generate responses for each deployment
 
-        # instanstiate evaluator class based on evaluator model
+        # instanstiate evaluator class
         eval_deployment_config = _get_evaluator_deployment()
+        client = AzureAIEvaluator(eval_deployment_config, evals_to_run)
 
-        # Initialize the evaluators based on evals_to_run
+        # Run Benchmarks
         logger.info("Running custom benchmark...")
+        client.run_tests(df)
 
 
 
