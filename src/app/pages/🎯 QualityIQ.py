@@ -97,21 +97,25 @@ def configure_sidebar() -> None:
         create_benchmark_center()
         display_deployments()
 
+        # Select deployments to test
+        st.multiselect(
+                "Select Deployments to Test",
+                list(st.session_state.deployments.keys()),
+                key="quality_deployments",
+                help="Select the deployments you want to test.",
+            )
+        
+        # FIXME: Not displaying
+        if len(st.session_state.get("quality_deployments")) < 0 :
+                st.warning("Please select a deployment to test.")
+
         st.sidebar.divider()
         st.markdown("## 🎛️ Benchmark Center")
         tab1, tab2, tab3 = st.sidebar.tabs(
                 ["⚙️ Run Settings", "🤖 Buddy Settings", "📘 How-To Guide"]
             )
         with tab1:
-            st.multiselect(
-                "Select Deployments to Test",
-                list(st.session_state.deployments.keys()),
-                key="quality_deployments",
-                help="Select the deployments you want to test.",
-            )
-            if len(st.session_state.get("quality_deployments")) < 0 :
-                st.warning("Please select a deployment to test.")
-
+            
             data_type = st.radio("Select Dataset Type", ["Custom Dataset (Recommended)", "Public Datasets"])
 
             if data_type == "Custom Dataset (Recommended)":
@@ -119,7 +123,7 @@ def configure_sidebar() -> None:
                 dataset_config(custom_select=True, mmlu_select=False, medpub_select=False, truthful_select=False)
                 st.markdown(" ### Setup Evaluation Metrics")
 
-                evaluator_deployment_name = st.radio(
+                st.radio(
                         "Select Your Evaluator Model",
                         st.session_state.deployments.keys(),
                         key=f"evaluator_deployment_name",
@@ -145,7 +149,7 @@ def configure_sidebar() -> None:
                 st.checkbox("Hate/Unfairness Evaluator", key="hateunfairnessevaluator", help="Measures the presence of hate speech or unfair content in the generated text.[0 -> 1]")
 
                 ## This is IMPORTANT - update *keys* if new metrics are added ##
-                keys = ["FluencyEvaluator", "CoherenceEvaluator", "RelevanceEvaluator", "GroundednessEvaluator", "SimilarityEvaluator", "ViolenceEvaluator", "SexualEvaluator", "SelfHarmEvaluator", "HateUnfairnessEvaluator", "F1ScoreEvaluator"]
+                keys = ["fluency", "coherence", "relevance", "groundedness", "similarity", "f1score", "violencevaluator", "sexualevaluator", "selfharmevaluator", "hateunfairnessevaluator"]
                 evals_to_run = [key for key in keys if st.session_state.get(key, False)]
                 st.session_state["quality_settings"]["evals_to_run"] = evals_to_run
 

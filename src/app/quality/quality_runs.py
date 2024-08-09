@@ -5,7 +5,7 @@ import copy
 from my_utils.ml_logging import get_logger
 
 from src.quality.public_evals import MMLU, PubMedQA, TruthfulQA
-from src.quality.azure_ai_evals import AzureAIEvaluator
+from src.quality.azure_ai_evals import AzureAIEval
 from src.app.quality.results import BenchmarkQualityResult
 from datasets import load_dataset
 from typing import List, Dict
@@ -54,7 +54,7 @@ async def run_quality_tests() -> None:
         st.error("No deployments selected for evaluation.")
         return
     
-    # Initialize dataframes
+    # Initialize results dataframes
     results_df = pd.DataFrame()
     truthful_results = pd.DataFrame()
     mmlu_results = pd.DataFrame()
@@ -65,24 +65,32 @@ async def run_quality_tests() -> None:
         evals_to_run = st.session_state["quality_settings"]["evals_to_run"]
 
         # Setup dataset
-        df = st.session_state["quality_settings"]["custom_dataset"]["custom_df"]
-        sample_size = st.session_state["quality_settings"]["custom_dataset"]["custom_subsample"]
-        df = df.sample(frac=sample_size, replace=False).reset_index()
-
-        if df == None or sample_size == None:
-            st.errror("Please upload a dataset and select the columns to run the benchmark.")
-            return
-
-        # generate responses for each deployment
+        df = st.session_state['quality_settings']['custom_df']
+        sample_size = st.session_state["quality_settings"]["custom_subsample"]
+        df = df.sample(frac=sample_size/100, replace=False).reset_index()
+        
 
         # instanstiate evaluator class
         eval_deployment_config = _get_evaluator_deployment()
-        client = AzureAIEvaluator(eval_deployment_config, evals_to_run)
+        client = AzureAIEval(eval_deployment_config, evals_to_run)
 
         # Run Benchmarks
         logger.info("Running custom benchmark...")
-        client.run_tests(df)
+        print(f"DEBUG: {df.columns}")
+        print(f"DEBUG: {evals_to_run} | {eval_deployment_config}")
+        results = client.run_tests(df)
+        results_df = pd.DataFrame(results_dict['rows']).drop(columns=['inputs.prompt', 'inputs.context', 'inputs.ground_truth','inputs.index', "inputs.answer"]).groupby("inputs.deployment").mean().reset_index()
 
+        print(f"****RESULTS****\n\n {results_df} \n\n *************")
+        '''results_dict = {
+            "custom_results": results
+        }
+
+        settings_snapshot = copy.deepcopy(st.session_state.get("quality_settings", {}))
+        results_quality = BenchmarkQualityResult(result=results_dict, settings=settings_snapshot)
+        st.session_state["results_quality"][results_quality.id] = results_quality.to_dict()
+        logger.info("Custom Benchmark results successfully stored in session state")
+        '''
 
 
     #### Run public Benchmark ####
@@ -157,12 +165,13 @@ async def run_quality_tests() -> None:
                 results.append(truthful_results)
 
         results_df = pd.concat(results) if results else pd.DataFrame()
-        # truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
+        truthful_results = truthful_results if isinstance(truthful_results, pd.DataFrame) else pd.DataFrame()
         mmlu_results = mmlu_results if isinstance(mmlu_results, pd.DataFrame) else pd.DataFrame()
-        # medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
+        medpub_results = medpub_results if isinstance(medpub_results, pd.DataFrame) else pd.DataFrame()
+
+        print(f"Truthful results:\n{truthful_results}")
 
         results_dict = {
-                "understanding_results": results_df,
                 "truthful_results": truthful_results,
                 "mmlu_results": mmlu_results,
                 "medpub_results": medpub_results
@@ -172,8 +181,6 @@ async def run_quality_tests() -> None:
         results_quality = BenchmarkQualityResult(result=results_dict, settings=settings_snapshot)
         st.session_state["results_quality"][results_quality.id] = results_quality.to_dict()
         logger.info(" Public Benchmark results successfully stored in session state")
-
-
 
     else:
         st.warning("Invalid Benchmark type. Must be either custom or public.")

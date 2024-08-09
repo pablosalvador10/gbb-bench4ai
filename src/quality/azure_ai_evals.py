@@ -13,6 +13,7 @@ from promptflow.evals.evaluators import (
 )
 from promptflow.evals.evaluate import evaluate
 
+
 import pandas as pd
 import streamlit as st
 import tempfile
@@ -56,7 +57,7 @@ class AzureAIEval:
             evaluators["similarity"] = similarity
 
         if "f1score" in self.eval_metrics:
-            f1score = F1ScoreEvaluator(model_config=self.model_config)
+            f1score = F1ScoreEvaluator()
             evaluators["f1_score"] = f1score
 
         if "violenceevaluator" in self.eval_metrics:
@@ -114,7 +115,7 @@ class AzureAIEval:
         if "f1score" in self.eval_metrics:
             evaluator_config["f1_score"] = {
                 "answer": "${data.answer}",
-                "groud_truth": "${data.ground_truth}"
+                "ground_truth": "${data.ground_truth}"
             }
 
         if "violenceevaluator" in self.eval_metrics:
@@ -141,9 +142,6 @@ class AzureAIEval:
                 "question": "${data.prompt}"
             }
 
-        
-
-        # TODO Add other configs
 
         return evaluator_config
    
@@ -164,7 +162,7 @@ class AzureAIEval:
             self.logger.error(f"Error converting DataFrame to JSONL: {e}")
             raise
     
-    def run_tests(self, data: str) -> None:
+    def run_tests(self, data: pd.DataFrame) -> None:
 
         evaluators = self._get_evaluators()
         evaluator_configs = self._get_evaluator_config()

@@ -164,9 +164,7 @@ def get_deployments_names():
     else:
         return "No deployments available or the list is empty"
 
-def generate_responses(test: str):
-    existing_df_key = f"{test}_df"
-    input_df_key = f"{test}_input_df"
+def generate_responses(custom_df: pd.DataFrame) -> pd.DataFrame:
     try:
         deployments = get_deployments_names()  
         deployments_str = ", ".join(deployments)
@@ -174,23 +172,15 @@ def generate_responses(test: str):
         with st.spinner(f'🔄 Generating responses from input data for deployments: {deployments_str}. Please wait...'):
             # Your code to generate responses goes here
             df = asyncio.run(run_benchmark_quality(
-                df=st.session_state["settings_quality"].get(input_df_key, pd.DataFrame()),
+                df=custom_df,
                 max_tokens=512
             ))
-
-            if df.empty:
-                st.warning("No data returned. Using the default dataset.")
-                df = load_default_dataset()
             
-            st.session_state["settings_quality"][existing_df_key] = df
-            st.session_state[f"regenerate_{test}"] = False  # Reset the flag after regeneration
-            st.success("✅ New DataFrame generated successfully.")
-            st.dataframe(df.head(), hide_index=True)
-            st.session_state[f"activated_{test}"] = True
-            st.experimental_rerun()
+            st.session_state['quality_settings']['custom_dataset']['custom_df'] = df
+            st.success("✅ Answers generated successfully.")
+        return df
     except Exception as e:
         st.error(f"An error occurred: {e}")
-        st.session_state[f"regenerate_{test}"] = False  # Ensure to reset the flag in case of error
 
 def load_default_dataset():
     default_eval_path = os.path.join("my_utils", "data", "evaluations", "dataframe", "golden_eval_dataset.csv")

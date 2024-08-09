@@ -309,7 +309,7 @@ async def run_benchmark_quality(df: pd.DataFrame, max_tokens: int) -> pd.DataFra
             for deployment_name, deployment in st.session_state.deployments.items()
         ]
 
-        prompts = df["question"].tolist()
+        prompts = df["prompt"].tolist()
         context = df["context"].tolist()
         ground_truth = df["ground_truth"].tolist()
 
@@ -336,7 +336,7 @@ async def run_benchmark_quality(df: pd.DataFrame, max_tokens: int) -> pd.DataFra
         
         final_df = pd.DataFrame()
         if all_results:
-            final_df = pd.DataFrame(all_results, columns=['question', 'context', 'answer', 'ground_truth', 'deployment'])
+            final_df = pd.DataFrame(all_results, columns=['prompt', 'context', 'answer', 'ground_truth', 'deployment'])
         return final_df
     except Exception as e:
         logger.error(

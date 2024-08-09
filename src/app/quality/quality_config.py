@@ -1,10 +1,38 @@
 import pandas as pd
 import streamlit as st
+import asyncio
+from src.app.quality.runs import run_benchmark_quality
+
 
 '''
 Helper functions to configure dataset options for Quality Page
 All required variables are stored in the session state ['quality_settings']
 '''
+
+def get_deployments_names():
+    if "deployments" in st.session_state and st.session_state.deployments:
+        deployment_names = []
+        for deployment_name, _ in st.session_state.deployments.items():
+            deployment_names.append(deployment_name)
+        return list(set(deployment_names))
+    else:
+        return "No deployments available or the list is empty"
+
+def generate_responses(custom_df: pd.DataFrame) -> pd.DataFrame:
+    try:
+        deployments = get_deployments_names()  
+        deployments_str = ", ".join(deployments)
+
+        with st.spinner(f'🔄 Generating responses from input data for deployments: {deployments_str}. Please wait...'):
+            # Your code to generate responses goes here
+            df = asyncio.run(run_benchmark_quality(
+                df=custom_df,
+                max_tokens=512
+            ))
+        return df
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+
 
 def __custom_dataset_options() -> None:
     # Upload custom dataset and configure columns
@@ -30,22 +58,11 @@ def __custom_dataset_options() -> None:
             index=cols.index("None"),
         )
         context_col = st.selectbox(
-            label="Select 'Context' column (optional)",
+            label="Select 'Context' column",
             options=cols,
             index=cols.index("None"),
-            help="Select the context column if available. Otherwise leave as 'None'",
+            help="Select the context column",
         )
-
-        if context_col != "None":
-            custom_df.rename(
-                columns={prompt_col: "prompt", ground_truth_col: "ground_truth", context_col: "context"},
-                inplace=True,
-            )
-        else:
-            custom_df.rename(
-                columns={prompt_col: "prompt", ground_truth_col: "ground_truth"},
-                inplace=True,
-            )
 
         custom_subsample = st.slider(
             f"Select Custom benchmark subsample %. {custom_df.shape[0]} rows found",
@@ -53,10 +70,21 @@ def __custom_dataset_options() -> None:
             max_value=100,
         )
 
-        st.session_state["quality_settings"]["custom_dataset"] = {
-            "custom_df": custom_df,
-            "custom_subsample": custom_subsample
-        }
+        
+        st.write("Generate Answers to be used in the custom evaluation") 
+        generate_answers = st.button("Generate Answers")
+        if generate_answers:
+            custom_df.rename(
+                columns={prompt_col: "prompt", ground_truth_col: "ground_truth", context_col: "context"},
+                inplace=True,
+            )
+            st.session_state['quality_settings']['custom_df'] = generate_responses(custom_df)
+            st.session_state['quality_settings']['custom_subsample'] = custom_subsample
+            # FIXME: Get this success message to stay after selecting evaluation types | Also auto-detect answer column
+            st.success("✅ Answers generated successfully.")
+
+    else:
+        st.warning("Please upload your custom dataset to continue.")
 
     return
 
@@ -127,8 +155,5 @@ def dataset_config(custom_select:bool = False, mmlu_select:bool = False, medpub_
 
     if truthful_select:
         __truthful_dataset_options()
-
-    if generic_select:
-        pass
 
     return
