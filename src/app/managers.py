@@ -1,5 +1,7 @@
 from src.aoai.azure_openai import AzureOpenAIManager
 from src.quality.gpt_evals import AzureAIQualityEvaluator
+from azure.ai.inference.models import ChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
 from src.performance.latencytest import (AzureOpenAIBenchmarkNonStreaming,
                                          AzureOpenAIBenchmarkStreaming)
 
@@ -22,6 +24,22 @@ def create_azure_openai_manager(
         azure_endpoint=azure_endpoint,
         api_version=api_version,
         chat_model_name=deployment_id,
+    )
+
+def create_chat_completions_client(endpoint: str, credential: str) -> ChatCompletionsClient:
+    """
+    Create a ChatCompletionsClient instance with the given endpoint and credential.
+
+    Parameters:
+    endpoint (str): The endpoint URL for the Azure AI service.
+    credential (str): The key credential for the Azure AI service.
+
+    Returns:
+    ChatCompletionsClient: An instance of ChatCompletionsClient.
+    """
+    return ChatCompletionsClient(
+        endpoint=endpoint,
+        credential=AzureKeyCredential(credential),
     )
 
 

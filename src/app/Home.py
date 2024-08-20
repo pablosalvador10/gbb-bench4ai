@@ -9,8 +9,9 @@ from typing import Any, Dict, Optional
 # Load environment variables
 import dotenv
 import streamlit as st
+from azure.ai.inference.models import SystemMessage, UserMessage
 
-from src.app.managers import create_azure_openai_manager
+from src.app.managers import create_azure_openai_manager, create_chat_completions_client
 
 # Load environment variables if not already loaded
 dotenv.load_dotenv(".env")
@@ -433,6 +434,105 @@ def display_deployments() -> None:
         )
 
 
+def add_deployment_maas_form() -> None:
+    """
+    Render the form to add a new model deployment.
+
+    This function provides a form in the Streamlit sidebar to add a new deployment, allowing users to specify deployment details.
+    """
+    with st.form("add_deployment_maas_form"):
+        deployment_name = st.text_input(
+            "Deployment ID",
+            help="Enter the deployment ID for the model.",
+            placeholder="e.g., model-deployment-1234abcd",
+        )
+        deployment_key = st.text_input(
+            "API Key",
+            help="Enter your API key.",
+            type="password",
+            placeholder="e.g., sk-ab*****..",
+        )
+        deployment_endpoint = st.text_input(
+            "API Endpoint",
+            help="Enter the API endpoint for the model.",
+            placeholder="e.g., https://api.model.com/v1",
+        )
+        model_family = st.selectbox(
+            "Model Family",
+            [
+                "Phi-3 family of models",
+                "Cohere Embed V3 family of models",
+                "Cohere Command R family of models",
+                "Meta Llama 2 chat family of models",
+                "Meta Llama 3 instruct family of models",
+                "Mistral-Small",
+                "Mistral-Large",
+                "Jais family of models",
+                "Jamba family of models",
+            ],
+            help="Select the model family for the deployment.",
+        )
+        # Streaming mode is fixed to non-streaming and disabled
+        streaming_mode = st.radio(
+            "Streaming Mode",
+            ["Non-Streaming"],
+            index=0,
+            disabled=True,
+            help="Streaming mode is fixed to Non-Streaming and cannot be changed.",
+        )
+        
+        submitted = st.form_submit_button("Add Deployment")
+
+        if submitted:
+            if (
+                deployment_name
+                and deployment_key
+                and deployment_endpoint
+                and model_family
+            ):
+                if "deployments" not in st.session_state:
+                    st.session_state.deployments = {}
+                try:
+                    test_client = create_chat_completions_client(
+                        endpoint=deployment_endpoint,
+                        credential=deployment_key,
+                    )
+
+                    response = test_client.complete(
+                        messages=[
+                            SystemMessage(
+                                content="You are an AI assistant. Your task is to respond with a simple test message."
+                            ),
+                            UserMessage(content="test"),
+                        ],
+                        model_extras={"safe_mode": True, 
+                                      "temperature": 0, 
+                                      "max_tokens": 2},
+                    )
+
+                    result_phi_3 = response.choices[0].message.content
+                except Exception as e:
+                    st.warning(
+                        f"""An issue occurred while initializing the model manager. {e} Please try again. If the issue persists,
+                                    verify your configuration."""
+                    )
+                    return
+
+                if deployment_name not in st.session_state.deployments:
+                    st.session_state.deployments[deployment_name] = {
+                        "key": deployment_key,
+                        "endpoint": deployment_endpoint,
+                        "model_family": model_family,
+                        "streaming_mode": streaming_mode,
+                    }
+                    st.toast(f"Deployment '{deployment_name}' added successfully.")
+                    st.rerun()
+                else:
+                    st.error(
+                        f"A deployment with the name '{deployment_name}' already exists."
+                    )
+
+
 def create_benchmark_center() -> None:
     """
     Creates a benchmark center UI component in a Streamlit application.
@@ -452,9 +552,9 @@ def create_benchmark_center() -> None:
             placeholder="Select a Benchmark",
         )
         if operation == "AOAI":
-            add_deployment_aoai_form()  # This function needs to be defined elsewhere in your code.
+            add_deployment_aoai_form()
         else:
-            st.info("Other deployment options will be available soon.")
+            add_deployment_maas_form()
 
 
 def main() -> None:
