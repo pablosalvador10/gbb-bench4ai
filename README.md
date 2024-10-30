@@ -7,7 +7,7 @@
 ![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-ai-upgrade-llm)
 ![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
 
-Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics regarding model latency/throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
+Welcome to the MaaS LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics regarding model latency/throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
 <br>
 
 ## What Makes This Project Different? 🚀
@@ -21,11 +21,6 @@ Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on
 - **Light Python SDK**: Tailored for performance-centric evaluations, our SDK facilitates extensive analysis across latency, throughput, and a suite of quality metrics. Designed for bulk processing, it streamlines the assessment of multiple models simultaneously, ensuring a thorough comparison.
 
 - **Built from Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
-
-Check out how our v0.01 prototype is shaping up:
-
-![alt text](image.png)
-
 
 ## What's Next? ✨
 
