@@ -3,9 +3,9 @@
 [![Open Source Love](https://firstcontributions.github.io/open-source-badges/badges/open-source-v1/open-source.svg)](https://github.com/firstcontributions/open-source-badges)
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![AI](https://img.shields.io/badge/AI-enthusiast-7F52FF.svg)
-![GitHub stars](https://img.shields.io/github/stars/pablosalvador10/gbb-ai-upgrade-llm?style=social)
-![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-ai-upgrade-llm)
-![License](https://img.shields.io/github/license/pablosalvador10/gbb-ai-upgrade-llm)
+![GitHub stars](https://img.shields.io/github/stars/pablosalvador10/gbb-bench4ai?style=social)
+![Issues](https://img.shields.io/github/issues/pablosalvador10/gbb-bench4ai)
+![License](https://img.shields.io/github/license/pablosalvador10/gbb-bench4ai)
 
 Welcome to the ultimate MaaS (LLM/SLM) benchmarking hub. This project focuses on dual intent, providing key performance metrics regarding model latency/throughput, and quality. It's a one-stop shop for benchmarking MaaS, helping you make smarter decisions regarding the choice of foundation model for your AI projects based on an in-depth performance analysis.
 <br>
