@@ -21,7 +21,7 @@ Welcome to the MaaS LLM/SLM) benchmarking hub. This project focuses on dual inte
 - **Light Python SDK**: Tailored for performance-centric evaluations, our SDK facilitates extensive analysis across latency, throughput, and a suite of quality metrics. Designed for bulk processing, it streamlines the assessment of multiple models simultaneously, ensuring a thorough comparison.
 
 - **Built from Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
-- 
+
 ## How to Get Started 🔍
 First things first, let's get your development environment set up:
 
