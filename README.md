@@ -21,22 +21,7 @@ Welcome to the MaaS LLM/SLM) benchmarking hub. This project focuses on dual inte
 - **Light Python SDK**: Tailored for performance-centric evaluations, our SDK facilitates extensive analysis across latency, throughput, and a suite of quality metrics. Designed for bulk processing, it streamlines the assessment of multiple models simultaneously, ensuring a thorough comparison.
 
 - **Built from Expertise-Driven Design for Large Enterprise AI Systems**: Drawing from deep experience in building large-scale enterprise AI systems with special focuses on Azure OpenAI (AOAI) implementations. It guides you through best practices and effective troubleshooting strategies for latency, throughput, and various quality metrics to optimize performance later on.
-
-## What's Next? ✨
-
-We're currently in full/fun development mode and adding features as we speak. Please look at the [CHANGELOG](./CHANGELOG.md) for a detailed overview. Here's what's coming next:
-
-> [IMPORTANT NOTE]
-> For the current version, our current focus is primarily on Azure OpenAI (AOAI) deployments
-
-- **Expanding Our MaaS Offerings**: Enhancing our Model-as-a-Service (MaaS) portfolio, with a focus on the pay-as-you-go models available on Azure. This initiative aims to offer more flexible access to cutting-edge AI capabilities, such as SLMs, emphasizing performance optimization and scalability.
-
-- **Adoption of PaaS Models**: We're working om expanding our scope to include Platform-as-a-Service (PaaS) models, with a special focus on SLMs (Specialized Language Models) like Phi-3, and other open source options deployed on Azure infrastructure.
-
-- **Embedded Model Benchmarking**: Enhancing our benchmarking suite to include embedding models, focusing on performance metrics in constrained environments.
-
-- **State-of-the-Art Quality Metrics Suite**: We're continuing to add different types of model evaluation metrics. The next additions will include OpenAI based metrics such as GPT4 evaluations and Ada3 embedding cosine similarity.
-
+- 
 ## How to Get Started 🔍
 First things first, let's get your development environment set up:
 
